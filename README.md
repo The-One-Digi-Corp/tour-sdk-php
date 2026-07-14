@@ -6,8 +6,9 @@ both target the same contract served by `travelo-api`.
 ## Install
 
 Consumers sitting next to this repo (e.g. `be-partner`) resolve it from disk;
-everyone else resolves it from git. Declare both — Composer takes `path` when the
-sibling directory exists and falls back to `vcs` on CI/servers where it does not.
+everyone else resolves it from git. Declare both: `path` wins when the sibling
+directory exists, and on CI/servers where it does not, that repository yields
+nothing and Composer falls through to `vcs`.
 
 ```json
 {
@@ -18,6 +19,20 @@ sibling directory exists and falls back to `vcs` on CI/servers where it does not
     "require": { "theonedigi/tour-sdk-php": "^0.1" }
 }
 ```
+
+Two things that will waste an afternoon otherwise:
+
+- **`path` must come first.** Repositories are canonical by priority order: if the
+  `vcs` repo is listed first and offers only `dev-*` branches, it *blocks* the
+  lower-priority `path` repo instead of deferring to it, and the install fails with
+  "does not match your constraint". Note `composer config repositories.x …`
+  **prepends**, so adding the two in reading order gets you the broken order.
+- **`vcs` only works once a matching tag exists.** A constraint like `^0.1` cannot be
+  satisfied by branches. Tag `v0.1.0` on `main` before any consumer relies on the
+  `vcs` path; until then only machines with the sibling directory can install.
+
+`composer.json` carries an explicit `version` because the `path` repository cannot
+infer one unless HEAD sits exactly on a tag. Bump it together with each tag.
 
 ## Usage
 
