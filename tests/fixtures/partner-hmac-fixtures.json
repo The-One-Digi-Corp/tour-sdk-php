@@ -1,0 +1,35 @@
+{
+  "algorithm": "HMAC-SHA256",
+  "client_id": "travelo_test_client",
+  "secret": "travelo_test_secret",
+  "timestamp": "1782276240",
+  "fixtures": [
+    {
+      "name": "search-tours-empty-body",
+      "method": "GET",
+      "path": "api/partner/tours",
+      "body": "",
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "string_to_sign": "travelo_test_client\n1782276240\nGET\napi/partner/tours\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "signature": "5341f4948fee264fa180ffad868b1c9cd17a67c42d9821f307a64c69e69ac356"
+    },
+    {
+      "name": "tour-detail-empty-body",
+      "method": "GET",
+      "path": "api/partner/tours/TOUR-HCM-01",
+      "body": "",
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "string_to_sign": "travelo_test_client\n1782276240\nGET\napi/partner/tours/TOUR-HCM-01\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "signature": "b0976228f05c348dbc3d8c8746b32ff734c1dc187824d4d5ef074a66d8b03646"
+    },
+    {
+      "name": "quote-json-body",
+      "method": "POST",
+      "path": "api/partner/bookings/quote",
+      "body": "{\"tour_code\":\"TOUR-HCM-01\",\"departure_date\":\"2026-08-15\",\"adult_quantity\":2,\"child_quantity\":1,\"infant_quantity\":0}",
+      "body_sha256": "54ac29bc35e75113f362a8db82e572055dc27bce57a846d3ed3b8f9d1e3d9928",
+      "string_to_sign": "travelo_test_client\n1782276240\nPOST\napi/partner/bookings/quote\n54ac29bc35e75113f362a8db82e572055dc27bce57a846d3ed3b8f9d1e3d9928",
+      "signature": "8720a4a39a2843aff8f2561a5141ac38ff20dc8dba38e6dc3177e975f75a6112"
+    }
+  ]
+}
