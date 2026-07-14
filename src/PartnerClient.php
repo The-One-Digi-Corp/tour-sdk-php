@@ -19,8 +19,14 @@ use TheOneDigi\TourSdk\Resource\TourResource;
  * travelo-api sees them ("api/partner/bookings") so the signed path matches the
  * server's `$request->path()` exactly. A trailing "/api" on the base is stripped
  * defensively, since existing .env files carry it.
+ *
+ * Not final: consumers type-hint this class directly and need to double it in
+ * their own tests. Making it final pushes every consumer into writing a
+ * pass-through wrapper of their own, which is duplication with no payoff.
+ * Prefer injecting a fake Guzzle handler (see the `$http` argument) when you want
+ * the signing and URL building exercised for real.
  */
-final class PartnerClient
+class PartnerClient
 {
     public const SDK_NAME = 'tour-sdk-php';
     public const SDK_VERSION = '0.1.0';

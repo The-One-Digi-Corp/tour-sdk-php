@@ -14,8 +14,10 @@ use TheOneDigi\TourSdk\PartnerClient;
  * Holds never confirmed are expired server-side and their seats released.
  *
  * Read calls need the `tour:read` scope, writes need `tour:book`.
+ *
+ * Not final: consumers inject and double this directly.
  */
-final class BookingResource
+class BookingResource
 {
     private const BASE = 'api/partner/bookings';
 

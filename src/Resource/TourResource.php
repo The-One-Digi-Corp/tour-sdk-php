@@ -12,8 +12,10 @@ use TheOneDigi\TourSdk\PartnerClient;
  * Every method returns the unwrapped `data` object. Paginated responses carry
  * their metadata inside it (current_page / total / per_page / last_page next to
  * the collection), so nothing is lost by dropping the envelope.
+ *
+ * Not final: consumers inject and double this directly.
  */
-final class TourResource
+class TourResource
 {
     private const BASE = 'api/partner/tours';
 
