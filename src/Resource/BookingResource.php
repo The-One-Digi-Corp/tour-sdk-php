@@ -4,115 +4,99 @@ declare(strict_types=1);
 
 namespace TheOneDigi\TourSdk\Resource;
 
-use TheOneDigi\TourSdk\PartnerClient;
-
-/**
- * Partner booking endpoints.
- *
- * Two-step booking: create() reserves the slot (PENDING_PAYMENT) and starts the
- * hold TTL; the partner collects payment on their side, then calls confirm().
- * Holds never confirmed are expired server-side and their seats released.
- *
- * Read calls need the `tour:read` scope, writes need `tour:book`.
- *
- * Not final: consumers inject and double this directly.
- */
-class BookingResource
+class BookingResource extends ArrayBackedResource
 {
-    private const BASE = 'api/partner/bookings';
-
-    public function __construct(private readonly PartnerClient $client)
-    {
-    }
-
-    /**
-     * Authoritative price for a selection. Use to fail fast before holding a slot —
-     * the amount actually charged must come from create()'s response.
-     *
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
-    public function quote(array $payload): array
-    {
-        return $this->client->data($this->client->post(self::BASE . '/quote', $payload));
-    }
-
-    /**
-     * Reserves a slot. Persist $idempotencyKey BEFORE calling: on a timeout the
-     * outcome is unknown, and retrying with the same key returns the same booking
-     * instead of double-booking.
-     *
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
-    public function create(array $payload, string $idempotencyKey): array
-    {
-        return $this->client->data($this->client->post(self::BASE, $payload, [
-            'X-Partner-Idempotency-Key' => $idempotencyKey,
-            'X-Idempotency-Key' => $idempotencyKey,
-            'Idempotency-Key' => $idempotencyKey,
-        ]));
-    }
+    public readonly int|string|null $id;
+    public readonly string $orderCode;
+    public readonly int|string|null $status;
+    public readonly float $subTotal;
+    public readonly float $discount;
+    public readonly float $total;
+    public readonly float $cost;
+    public readonly string $currency;
+    public readonly string $baseCurrency;
+    public readonly float $inputSubTotal;
+    public readonly float $inputDiscount;
+    public readonly float $inputTotal;
+    public readonly float $inputCost;
+    public readonly string $inputCurrency;
+    public readonly int $inputCurrencyVersion;
+    public readonly float $inputCurrencyExchangeRate;
+    public readonly float $commissionRate;
+    public readonly float $commissionAmount;
+    public readonly ?string $promotionCode;
+    public readonly ?string $name;
+    public readonly ?string $email;
+    public readonly ?string $email2;
+    public readonly ?string $dialCode;
+    public readonly ?string $phone;
+    public readonly ?string $paidAt;
+    public readonly ?string $createdAt;
+    public readonly ?BookingDetailResource $detail;
 
     /**
-     * Marks payment received: PENDING_PAYMENT → IN_PROGRESS. Idempotent.
-     * Call only after the money is actually settled.
-     *
-     * @return array<string, mixed>
+     * @var list<BookingApplicantResource>
      */
-    public function confirm(string $code): array
-    {
-        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . '/confirm'));
-    }
+    public readonly array $applicants;
 
     /**
-     * Releases the hold and its slots. Safe to call more than once.
-     *
-     * @return array<string, mixed>
+     * @var array<string, mixed>|null
      */
-    public function cancel(string $code): array
-    {
-        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . '/cancel'));
-    }
+    public readonly ?array $refund;
 
     /**
-     * @return array<string, mixed>
+     * @param array<string, mixed> $attributes
      */
-    public function show(string $code): array
+    public function __construct(array $attributes)
     {
-        return $this->client->data($this->client->get(self::BASE . '/' . rawurlencode($code)));
+        parent::__construct($attributes);
+
+        $this->id = $this->scalar('id');
+        $this->orderCode = $this->string('order_code');
+        $this->status = $this->scalar('status');
+        $this->subTotal = $this->float('sub_total');
+        $this->discount = $this->float('discount');
+        $this->total = $this->float('total');
+        $this->cost = $this->float('cost');
+        $this->currency = $this->string('currency');
+        $this->baseCurrency = $this->string('base_currency', $this->currency);
+        $this->inputSubTotal = $this->float('input_sub_total', $this->subTotal);
+        $this->inputDiscount = $this->float('input_discount', $this->discount);
+        $this->inputTotal = $this->float('input_total', $this->total);
+        $this->inputCost = $this->float('input_cost', $this->cost);
+        $this->inputCurrency = $this->string('input_currency', $this->currency);
+        $this->inputCurrencyVersion = $this->int('input_currency_version', 1);
+        $this->inputCurrencyExchangeRate = $this->float('input_currency_exchange_rate', 1.0);
+        $this->commissionRate = $this->float('commission_rate');
+        $this->commissionAmount = $this->float('commission_amount');
+        $this->promotionCode = $this->nullableString('promotion_code');
+        $this->name = $this->nullableString('name');
+        $this->email = $this->nullableString('email');
+        $this->email2 = $this->nullableString('email2');
+        $this->dialCode = $this->nullableString('dial_code');
+        $this->phone = $this->nullableString('phone');
+        $this->paidAt = $this->nullableString('paid_at');
+        $this->createdAt = $this->nullableString('created_at');
+
+        $detail = $attributes['tour_booking_detail'] ?? null;
+        $this->detail = is_array($detail) ? BookingDetailResource::fromArray($detail) : null;
+
+        $this->applicants = self::resourceList(
+            $this->array('tour_booking_applicants'),
+            BookingApplicantResource::class,
+        );
+
+        $refund = $attributes['tour_booking_refund'] ?? null;
+        $this->refund = is_array($refund) ? $refund : null;
     }
 
-    /**
-     * Paginated list. Pagination lives inside `data` alongside `bookings`
-     * (current_page / total / per_page / last_page), so unwrapping keeps it.
-     *
-     * @param array<string, mixed> $filters
-     * @return array<string, mixed>
-     */
-    public function list(array $filters = []): array
+    public function payableAmount(): float
     {
-        return $this->client->data($this->client->get(self::BASE, $filters));
+        return $this->inputTotal;
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
-    public function checkPromotion(array $payload): array
+    public function payableCurrency(): string
     {
-        return $this->client->data($this->client->post(self::BASE . '/check-promotion', $payload));
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
-    public function updateApplicant(string $code, int $applicantId, array $payload): array
-    {
-        return $this->client->data($this->client->post(
-            self::BASE . '/' . rawurlencode($code) . '/applicant/' . $applicantId,
-            $payload,
-        ));
+        return $this->inputCurrency;
     }
 }

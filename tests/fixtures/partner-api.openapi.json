@@ -5646,9 +5646,6 @@
                 "maxItems": 2,
                 "additionalItems": false
               },
-              "payment_gateway_id": {
-                "type": "string"
-              },
               "promotion_code": {
                 "type": "string"
               },
@@ -5845,7 +5842,6 @@
               "input_currency",
               "sub_total_amounts",
               "total_amounts",
-              "payment_gateway_id",
               "promotion_code",
               "name",
               "email",

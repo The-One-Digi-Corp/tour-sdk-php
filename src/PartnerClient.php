@@ -9,8 +9,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use TheOneDigi\TourSdk\Exception\ApiException;
 use TheOneDigi\TourSdk\Exception\ConfigurationException;
 use TheOneDigi\TourSdk\Exception\TransportException;
-use TheOneDigi\TourSdk\Resource\BookingResource;
-use TheOneDigi\TourSdk\Resource\TourResource;
+use TheOneDigi\TourSdk\Api\BookingApi;
+use TheOneDigi\TourSdk\Api\TourApi;
 
 /**
  * HTTP client for the Travelo Partner API.
@@ -88,14 +88,14 @@ class PartnerClient
         return preg_replace('#/api$#', '', $trimmed) ?? $trimmed;
     }
 
-    public function bookings(): BookingResource
+    public function bookings(): BookingApi
     {
-        return new BookingResource($this);
+        return new BookingApi($this);
     }
 
-    public function tours(): TourResource
+    public function tours(): TourApi
     {
-        return new TourResource($this);
+        return new TourApi($this);
     }
 
     /**

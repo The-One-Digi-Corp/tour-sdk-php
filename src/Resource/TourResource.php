@@ -4,132 +4,64 @@ declare(strict_types=1);
 
 namespace TheOneDigi\TourSdk\Resource;
 
-use TheOneDigi\TourSdk\PartnerClient;
-
-/**
- * Tour catalog endpoints. All read-only and all requiring the `tour:read` scope.
- *
- * Every method returns the unwrapped `data` object. Paginated responses carry
- * their metadata inside it (current_page / total / per_page / last_page next to
- * the collection), so nothing is lost by dropping the envelope.
- *
- * Not final: consumers inject and double this directly.
- */
-class TourResource
+class TourResource extends ArrayBackedResource
 {
-    private const BASE = 'api/partner/tours';
-
-    public function __construct(private readonly PartnerClient $client)
-    {
-    }
-
-    /**
-     * Paginated tour search. Returns `{current_page, total, per_page, last_page, tours}`.
-     *
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
-     */
-    public function list(array $params = []): array
-    {
-        return $this->client->data($this->client->get(self::BASE, $params));
-    }
+    public readonly int|string|null $id;
+    public readonly string $code;
+    public readonly string $name;
+    public readonly string $currency;
+    public readonly ?string $slug;
+    public readonly ?string $durationText;
+    public readonly ?string $duration;
+    public readonly ?string $thumbnail;
+    public readonly float $basePrice;
+    public readonly ?string $averageRating;
+    public readonly int $totalReviews;
 
     /**
-     * Filter vocabulary: categories, types, sub_types, travel_styles, tags, destinations.
-     *
-     * @return array<string, mixed>
+     * @var array<string, mixed>
      */
-    public function references(): array
-    {
-        return $this->client->data($this->client->get(self::BASE . '/references'));
-    }
+    public readonly array $translations;
 
     /**
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
+     * @var list<TourPriceResource>
      */
-    public function seasonal(array $params = []): array
-    {
-        return $this->client->data($this->client->get(self::BASE . '/get-seasonal', $params));
-    }
+    public readonly array $prices;
 
     /**
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
+     * @var list<TourCalendarResource>
      */
-    public function featured(array $params = []): array
-    {
-        return $this->client->data($this->client->get(self::BASE . '/get-featured', $params));
-    }
+    public readonly array $calendars;
 
     /**
-     * @param array<string, mixed> $params Expects at least `tour_code`.
-     * @return array<string, mixed>
+     * @var list<array<string, mixed>>
      */
-    public function similar(array $params): array
-    {
-        return $this->client->data($this->client->get(self::BASE . '/get-similar', $params));
-    }
+    public readonly array $images;
 
     /**
-     * @return array<string, mixed>
+     * @param array<string, mixed> $attributes
      */
-    public function show(string $code): array
+    public function __construct(array $attributes)
     {
-        return $this->client->data($this->client->get(self::BASE . '/' . rawurlencode($code)));
-    }
+        parent::__construct($attributes);
 
-    /**
-     * Departure calendar for a tour.
-     *
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
-     */
-    public function calendars(string $code, array $params = []): array
-    {
-        return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode($code) . '/calendars', $params),
-        );
-    }
-
-    /**
-     * Remaining seats and unit prices for one departure date. This is what the
-     * "availability" check in a storefront is built on.
-     *
-     * Reads only — it reserves nothing. Seats are held by creating a booking.
-     *
-     * @param array<string, mixed> $params Expects `date`, usually `pax`.
-     * @return array<string, mixed>
-     */
-    public function calendarByDate(string $code, array $params): array
-    {
-        return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode($code) . '/calendar-by-date', $params),
-        );
-    }
-
-    /**
-     * Note the path segment is the tour **id**, not the code, unlike the calendar
-     * endpoints above.
-     *
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
-     */
-    public function reviews(int|string $tourId, array $params = []): array
-    {
-        return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . '/get-list-reviews', $params),
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
-     */
-    public function reviewImages(int|string $tourId, array $params = []): array
-    {
-        return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . '/get-all-image-reviews', $params),
-        );
+        $this->id = $this->scalar('id');
+        $this->code = $this->string('code');
+        $this->name = $this->string('name');
+        $this->currency = $this->string('currency');
+        $this->slug = $this->nullableString('slug');
+        $this->durationText = $this->nullableString('duration_text');
+        $this->duration = $this->nullableString('duration');
+        $this->thumbnail = $this->nullableString('thumbnail');
+        $this->basePrice = $this->float('base_price');
+        $this->averageRating = $this->nullableString('average_rating');
+        $this->totalReviews = $this->int('total_reviews');
+        $this->translations = $this->array('translations');
+        $this->prices = self::resourceList($this->array('prices'), TourPriceResource::class);
+        $this->calendars = self::resourceList($this->array('calendars'), TourCalendarResource::class);
+        $this->images = array_values(array_filter(
+            $this->array('images'),
+            static fn (mixed $item): bool => is_array($item),
+        ));
     }
 }

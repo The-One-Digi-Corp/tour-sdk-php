@@ -136,6 +136,25 @@ final class ContractCoverageTest extends TestCase
         self::assertSame([], $unknown, "This SDK calls endpoints the contract does not declare:\n  " . implode("\n  ", $unknown));
     }
 
+    public function test_partner_booking_schema_does_not_expose_local_payment_storage(): void
+    {
+        $spec = json_decode(
+            (string) file_get_contents(__DIR__ . '/fixtures/partner-api.openapi.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        $variant = $spec['components']['schemas']['PartnerBookingResource']['anyOf'][0] ?? [];
+        $properties = $variant['properties'] ?? [];
+        $required = $variant['required'] ?? [];
+
+        foreach (['payment_gateway_id', 'payment_history', 'payment_histories'] as $field) {
+            self::assertArrayNotHasKey($field, $properties);
+            self::assertNotContains($field, $required);
+        }
+    }
+
     public function test_each_sdk_method_hits_the_url_the_contract_declares(): void
     {
         foreach ($this->operations($client = $this->client()) as $operation => $call) {
