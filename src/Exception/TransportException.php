@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TheOneDigi\TourSdk\Exception;
 
+use Throwable;
+
 /**
  * The request never produced an HTTP response (DNS, connect, timeout).
  *
@@ -12,4 +14,19 @@ namespace TheOneDigi\TourSdk\Exception;
  */
 class TransportException extends TourSdkException
 {
+    public function __construct(
+        string $message = '',
+        int $code = 0,
+        ?Throwable $previous = null,
+        public readonly ?string $method = null,
+        public readonly ?string $path = null,
+        public readonly ?string $url = null,
+    ) {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public function isNetworkFailure(): bool
+    {
+        return true;
+    }
 }

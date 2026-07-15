@@ -200,8 +200,15 @@ final class PartnerClientTest extends TestCase
             new \GuzzleHttp\Exception\ConnectException('timeout', new \GuzzleHttp\Psr7\Request('POST', 'x')),
         ]);
 
-        $this->expectException(TransportException::class);
-
-        $client->bookings()->confirm('TB-1');
+        try {
+            $client->bookings()->confirm('TB-1');
+            self::fail('Expected TransportException.');
+        } catch (TransportException $e) {
+            self::assertTrue($e->isNetworkFailure());
+            self::assertSame('POST', $e->method);
+            self::assertSame('api/partner/bookings/TB-1/confirm', $e->path);
+            self::assertSame('http://localhost:8000/api/partner/bookings/TB-1/confirm', $e->url);
+            self::assertStringContainsString('did not return a response', $e->getMessage());
+        }
     }
 }

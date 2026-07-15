@@ -173,13 +173,18 @@ class PartnerClient
             $options['body'] = $rawBody;
         }
 
+        $url = $this->baseUrl . '/' . $signedPath;
+
         try {
-            $response = $this->http->request($method, $this->baseUrl . '/' . $signedPath, $options);
+            $response = $this->http->request($method, $url, $options);
         } catch (GuzzleException $e) {
             throw new TransportException(
                 "Partner API {$method} /{$signedPath} did not return a response: " . $e->getMessage(),
                 0,
                 $e,
+                $method,
+                $signedPath,
+                $url,
             );
         }
 

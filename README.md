@@ -730,7 +730,9 @@ try {
 ```
 
 `TransportException` means no HTTP response was received. Treat write outcomes as
-unknown. For `create()`, retry with the same idempotency key.
+unknown. For `create()`, retry with the same idempotency key. The exception
+also exposes `method`, `path`, and `url`, so consumer backends can log the
+network target and return a clear `503 Service Unavailable` response.
 
 `ConfigurationException` means required client config is missing.
 
