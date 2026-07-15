@@ -235,7 +235,6 @@ final class OpenApiDtoGenerator
     private const ENVELOPES = [
         'partnerToursSearch' => 'TourListResource',
         'partnerAccountListBookings' => 'BookingListResource',
-        'partnerCheckoutQuote' => 'BookingQuoteResource',
         'partnerToursGetAvailability' => 'TourCalendarDateResource',
     ];
 

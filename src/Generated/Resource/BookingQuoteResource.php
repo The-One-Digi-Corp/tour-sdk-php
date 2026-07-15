@@ -9,7 +9,7 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI schema the `data` of POST /bookings/quote (partnerCheckoutQuote).
+ * Generated from OpenAPI schema BookingQuoteResource.
  *
  * AUTO FIELDS and AUTO HYDRATION are rewritten by composer generate:contract.
  * MANUAL FIELDS and MANUAL HYDRATION survive regeneration — put hand-written
@@ -18,25 +18,17 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 class BookingQuoteResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
-    public readonly bool $isAvailable;
-    /* END AUTO FIELDS */
-
-    /* BEGIN MANUAL FIELDS */
-    // The contract gives these no type at all — PartnerBookingController::quote
-    // returns the service's array straight to success(), and Scramble will not
-    // resolve app(Service::class)->method(). Everything below is `mixed` in AUTO,
-    // which is useless to a caller doing arithmetic on a price.
-    //
-    // Shape verified against travelo-api's own response by
-    // tests/Feature/PartnerContractSnapshotTest (POST /bookings/quote).
     public readonly float $subTotal;
     public readonly float $discount;
     public readonly float $total;
     public readonly float $cost;
     public readonly string $currency;
-    public readonly int $remainingSlots;
-    /** @var array<string, mixed> */
-    public readonly array $prices;
+    public readonly ?BookingQuotePriceResource $prices;
+    public readonly bool $isAvailable;
+    public readonly ?int $remainingSlots;
+    /* END AUTO FIELDS */
+
+    /* BEGIN MANUAL FIELDS */
     /* END MANUAL FIELDS */
 
     /**
@@ -47,22 +39,19 @@ class BookingQuoteResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
+        $this->subTotal = $this->float('sub_total');
+        $this->discount = $this->float('discount');
+        $this->total = $this->float('total');
+        $this->cost = $this->float('cost');
+        $this->currency = $this->string('currency');
+        $this->prices = is_array($this->get('prices')) ? BookingQuotePriceResource::fromArray($this->get('prices')) : null;
         $this->isAvailable = $this->bool('is_available');
+        $this->remainingSlots = $this->nullableInt('remaining_slots');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();
     }
 
     /* BEGIN MANUAL HYDRATION */
-    protected function hydrateManual(): void
-    {
-        $this->subTotal = $this->float('sub_total');
-        $this->discount = $this->float('discount');
-        $this->total = $this->float('total');
-        $this->cost = $this->float('cost');
-        $this->currency = $this->string('currency');
-        $this->remainingSlots = $this->int('remaining_slots');
-        $this->prices = $this->array('prices');
-    }
     /* END MANUAL HYDRATION */
 }

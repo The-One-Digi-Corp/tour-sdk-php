@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Generated\Resource\BookingListResource;
+use TheOneDigi\TourSdk\Generated\Resource\BookingQuotePriceResource;
 use TheOneDigi\TourSdk\Generated\Resource\BookingQuoteResource;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDateResource;
@@ -92,7 +93,8 @@ final class ResourceMappingTest extends TestCase
         self::assertInstanceOf(BookingQuoteResource::class, $quote);
         self::assertTrue($quote->isAvailable);
         self::assertSame(9, $quote->remainingSlots);
-        self::assertSame(33.57, $quote->prices['adult_price']);
+        self::assertInstanceOf(BookingQuotePriceResource::class, $quote->prices);
+        self::assertSame(33.57, $quote->prices->adultPrice);
     }
 
     public function test_tour_resources(): void

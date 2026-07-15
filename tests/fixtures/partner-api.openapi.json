@@ -111,7 +111,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -360,7 +360,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -864,7 +864,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -1023,29 +1023,7 @@
                       "const": "Success"
                     },
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "sub_total": {},
-                        "discount": {},
-                        "total": {},
-                        "cost": {},
-                        "currency": {},
-                        "prices": {},
-                        "is_available": {
-                          "type": "boolean"
-                        },
-                        "remaining_slots": {}
-                      },
-                      "required": [
-                        "sub_total",
-                        "discount",
-                        "total",
-                        "cost",
-                        "currency",
-                        "prices",
-                        "is_available",
-                        "remaining_slots"
-                      ]
+                      "$ref": "#/components/schemas/BookingQuoteResource"
                     }
                   },
                   "required": [
@@ -1253,7 +1231,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -1551,7 +1529,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -1783,7 +1761,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -2049,7 +2027,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -2331,7 +2309,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -2869,7 +2847,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -3120,7 +3098,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -3348,7 +3326,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -3605,7 +3583,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -3884,7 +3862,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -4144,7 +4122,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -4375,7 +4353,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -4637,7 +4615,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -4989,7 +4967,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -5308,7 +5286,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784108025"
+            "example": "1784108741"
           },
           {
             "name": "X-Partner-Signature",
@@ -5541,6 +5519,69 @@
       }
     },
     "schemas": {
+      "BookingQuotePriceResource": {
+        "type": "object",
+        "properties": {
+          "adult_price": {
+            "type": "number"
+          },
+          "child_price": {
+            "type": "number"
+          },
+          "infant_price": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "adult_price",
+          "child_price",
+          "infant_price"
+        ],
+        "title": "BookingQuotePriceResource"
+      },
+      "BookingQuoteResource": {
+        "type": "object",
+        "properties": {
+          "sub_total": {
+            "type": "number"
+          },
+          "discount": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "prices": {
+            "$ref": "#/components/schemas/BookingQuotePriceResource"
+          },
+          "is_available": {
+            "type": "boolean"
+          },
+          "remaining_slots": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "sub_total",
+          "discount",
+          "total",
+          "cost",
+          "currency",
+          "prices",
+          "is_available",
+          "remaining_slots"
+        ],
+        "title": "BookingQuoteResource"
+      },
       "CategoryResource": {
         "type": "object",
         "properties": {
