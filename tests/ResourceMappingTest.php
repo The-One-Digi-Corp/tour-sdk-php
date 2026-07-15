@@ -10,12 +10,12 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use TheOneDigi\TourSdk\PartnerClient;
-use TheOneDigi\TourSdk\Resource\BookingListResource;
-use TheOneDigi\TourSdk\Resource\BookingQuoteResource;
-use TheOneDigi\TourSdk\Resource\BookingResource;
-use TheOneDigi\TourSdk\Resource\TourCalendarDateResource;
-use TheOneDigi\TourSdk\Resource\TourListResource;
-use TheOneDigi\TourSdk\Resource\TourResource;
+use TheOneDigi\TourSdk\Generated\Resource\BookingListResource;
+use TheOneDigi\TourSdk\Generated\Resource\BookingQuoteResource;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
+use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDateResource;
+use TheOneDigi\TourSdk\Generated\Resource\TourListResource;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerTourResource;
 
 final class ResourceMappingTest extends TestCase
 {
@@ -49,14 +49,14 @@ final class ResourceMappingTest extends TestCase
 
         $booking = $client->bookings()->createResource(['tour_code' => 'T-1'], 'idem-1');
 
-        self::assertInstanceOf(BookingResource::class, $booking);
+        self::assertInstanceOf(PartnerBookingResource::class, $booking);
         self::assertSame('TB123ABC', $booking->orderCode);
         self::assertSame(33.57, $booking->payableAmount());
         self::assertSame('USD', $booking->payableCurrency());
         self::assertSame(15.0, $booking->commissionRate);
-        self::assertSame(1, $booking->detail?->tourPriceGroupId);
-        self::assertSame(33.57, $booking->detail?->inputAdultPrice);
-        self::assertSame('Customer Name', $booking->applicants[0]->fullName);
+        self::assertSame(1, $booking->tourBookingDetail?->tourPriceGroupId);
+        self::assertSame(33.57, $booking->tourBookingDetail?->inputAdultPrice);
+        self::assertSame('Customer Name', $booking->tourBookingApplicants[0]->fullName);
         self::assertSame('kept-for-forward-compat', $booking->get('new_future_field'));
         self::assertSame('kept-for-forward-compat', $booking->toArray()['new_future_field']);
     }
@@ -113,7 +113,7 @@ final class ResourceMappingTest extends TestCase
         $list = $client->tours()->listResources();
         $date = $client->tours()->calendarByDateResource('T-1', ['date' => '2026-08-01']);
 
-        self::assertInstanceOf(TourResource::class, $tour);
+        self::assertInstanceOf(PartnerTourResource::class, $tour);
         self::assertSame('T-1', $tour->code);
         self::assertSame(33.57, $tour->prices[0]->adultPrice);
         self::assertInstanceOf(TourListResource::class, $list);

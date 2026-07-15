@@ -32,6 +32,7 @@ PHP `>= 8.2`, depending on Composer resolution.
 - Provides partner booking actions through `BookingApi`.
 - Provides typed SDK resources for common tour, booking, quote, calendar, and
   pagination responses.
+- Generates OpenAPI-backed request and response DTOs under `src/Generated`.
 - Supports idempotent booking creation via idempotency headers.
 - Supports webhook verification for Travelo partner lifecycle events.
 - Ships Laravel auto-discovery, config publishing, service-container bindings,
@@ -165,12 +166,14 @@ Use this flow when adding the SDK to a new backend:
    `TRAVELO_PARTNER_SECRET`, default currency, timeout, and integration identity.
 3. Inject `BookingApi` / `TourApi` from the Laravel container, or build
    `PartnerClient` manually in non-Laravel apps.
-4. Use SDK request objects for outbound payloads whenever the SDK models the
-   contract. Keep array payloads only as an escape hatch for fields the API has
-   added before this SDK has been released with a matching request object.
-5. Use SDK resource methods for inbound responses whenever the SDK models the
-   response. Persist `toArray()` as the raw audit snapshot when mirroring upstream
-   bookings locally.
+4. Use SDK request objects for outbound payloads. Prefer stable convenience
+   wrappers in `src/Request`; use generated contract DTOs in
+   `src/Generated/Request` when you need the exact OpenAPI surface.
+5. Use SDK resource methods for inbound responses. These return generated
+   contract resources from `src/Generated/Resource`; the classes in `src/Resource`
+   are deprecated subclasses of them, kept so existing type hints resolve, plus
+   the response envelopes the contract does not name. Persist `toArray()` as the
+   raw audit snapshot when mirroring upstream bookings locally.
 6. Generate and persist an idempotency key before calling `createResource()`.
    Retry unknown create outcomes with the same key.
 7. Collect payment locally. After money is settled, call `confirm()` or
@@ -344,6 +347,90 @@ Available request objects:
 
 Array payloads remain supported for backward compatibility and for newly added
 Partner API fields before the SDK models them.
+
+Generated request DTOs are available under
+`TheOneDigi\TourSdk\Generated\Request`. They are generated from OpenAPI
+operation ids and are useful when a consumer needs the full documented contract
+instead of the smaller hand-written convenience wrappers:
+
+```php
+use TheOneDigi\TourSdk\Generated\Request\PartnerCheckoutCreateBookingRequest;
+
+$payload = new PartnerCheckoutCreateBookingRequest(
+    tourCode: 'IBTCARSGN3181',
+    departureDate: '2026-08-01',
+    adultQuantity: 1,
+    name: 'Customer Name',
+    phone: '0900000000',
+    email: 'customer@example.com',
+    applicants: [
+        ['type' => 1, 'full_name' => 'Customer Name'],
+    ],
+);
+
+$booking = $client->bookings()->createResource($payload, $idempotencyKey);
+```
+
+## Editing Generated Resources
+
+Run `composer generate:contract` to regenerate, `composer check:contract` to fail
+on drift. Every file in `src/Generated/Resource` carries five marked regions:
+
+```php
+/* BEGIN MANUAL IMPORTS */   // preserved
+/* END MANUAL IMPORTS */
+
+    /* BEGIN AUTO FIELDS */      // rewritten from the contract every run
+    /* END AUTO FIELDS */
+
+    /* BEGIN MANUAL FIELDS */    // preserved
+    /* END MANUAL FIELDS */
+
+        /* BEGIN AUTO HYDRATION */   // rewritten every run
+        /* END AUTO HYDRATION */
+
+    /* BEGIN MANUAL HYDRATION */ // preserved — override hydrateManual() here
+    /* END MANUAL HYDRATION */
+```
+
+Edit the MANUAL regions; a regeneration keeps them. Anything you write in an AUTO
+region is lost on the next run.
+
+Declaring a property in MANUAL FIELDS **replaces** the auto field of the same
+name — the generator drops its own declaration, because PHP fatals on a
+redeclared readonly property. That is how you correct the contract without
+forking the generator.
+
+Keep these regions small. The contract currently carries **98%** of the fields;
+what is left in MANUAL is there for a stated reason, not by default:
+
+| Resource | Manual field | Why |
+| --- | --- | --- |
+| `PartnerBookingResource` | `detail`, `applicants`, `refund` | Friendlier aliases over the contract's `tour_booking_*` keys, plus `payableAmount()`/`payableCurrency()`. Which amount to charge is not something a schema can say. `tour_booking_detail` is also still a bare `array` upstream — `array_merge()` in `PartnerBookingResource::toArray()` is opaque to Scramble. |
+| `TourCalendarDetailResource` | `prices` | Upstream resolves them through `TourCalendarDetailPriceResource::collection(...)->resolve()`, which Scramble does not follow. |
+
+When travelo-api starts describing one of these, delete it from MANUAL and let
+AUTO take over — that is the direction of travel. `composer check:contract` tells
+you the moment generated output stops matching what is committed.
+
+### Why the contract goes wrong, and how it got fixed
+
+Scramble infers from a resource's `toArray()`. It handles `$data['x'] = ...`
+assignments fine; what defeats it is losing the *type* of what it is reading.
+Everything the SDK used to hand-write traced back to one of these, and each was
+fixed in travelo-api rather than papered over here:
+
+| Symptom in the contract | Cause | Fix |
+| --- | --- | --- |
+| `id`/`status` typed `string` | Scramble cannot tell which model `$this->id` proxies to | `@mixin` on the resource |
+| Whole schema is `array` with no properties | `parent::toArray()` | `@mixin` on the resource |
+| Money typed `string` | value comes from `app(Service::class)->method()`, which Scramble will not resolve — a `@var` on the variable does not help either | cast at the point of use: `(float) $primary['total']` |
+| A typed object collapses to `array` | `array_merge()` | unfixed; spreading instead emits an invalid schema (an unnamed `""` property), so `array_merge` stays and the SDK types the field by hand |
+
+Before touching a resource in travelo-api, run its contract snapshot test — these
+edits must change the documentation and nothing else:
+
+    php vendor/bin/phpunit tests/Feature/PartnerContractSnapshotTest.php
 
 ## Tour Catalog API
 
@@ -529,21 +616,52 @@ $date->tourPriceGroupId;
 The array methods remain available for consumers that prefer raw payloads or need
 fields not yet modeled by the SDK.
 
+Generated response resources are available under
+`TheOneDigi\TourSdk\Generated\Resource`. They mirror OpenAPI component schemas
+and keep the original payload through `toArray()` / `get()`:
+
+```php
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
+
+$resource = new PartnerBookingResource($booking->toArray());
+
+$resource->orderCode;
+$resource->status;
+$resource->get('future_field_from_api');
+```
+
 ## Contract And DTO Evolution
 
 The Partner API contract served by `travelo-api` is the source of truth. The SDK
 is a typed client for that contract, so API changes and SDK changes should move
 together deliberately.
 
+The SDK has two DTO layers:
+
+- `src/Generated/Request` and `src/Generated/Resource` are generated from the
+  OpenAPI fixture. Do not edit these files by hand.
+- `src/Request` and `src/Resource` are stable convenience wrappers with nicer
+  names, guardrails, and helper methods for common integration flows.
+
+Generate the contract DTOs after refreshing the OpenAPI fixture:
+
+```bash
+curl -s http://localhost:8000/docs/partner/api.json \
+  -o tests/fixtures/partner-api.openapi.json
+
+composer generate:contract
+composer check:contract
+```
+
 ### Compatibility Rules
 
-- Request DTOs describe the current documented request contract and fail early
-  for obvious invalid input.
-- Response resources expose common fields as typed properties but also keep the
-  full raw payload through `toArray()` and `get()`. Additive response fields do
-  not break old SDK consumers.
-- Array payloads remain accepted by API methods as a temporary escape hatch for
-  additive request fields before the SDK has a DTO release for them.
+- Generated request DTOs describe the current documented request contract.
+- Stable hand-written request DTOs may expose only the fields we want to support
+  as the recommended SDK API and can fail early for obvious invalid input.
+- Response resources expose fields as typed properties but also keep the full raw
+  payload through `toArray()` and `get()`. Additive response fields do not break
+  old SDK consumers.
+- Array payloads remain accepted by API methods as a temporary escape hatch.
 - Removing or renaming request fields is a breaking change unless `travelo-api`
   accepts the old and new field names during a transition window.
 - Adding a new required request field is also a breaking change unless
@@ -569,15 +687,18 @@ Safe rollout:
 
 1. Deploy `travelo-api` with `A2` optional.
 2. Refresh `tests/fixtures/partner-api.openapi.json`.
-3. Add `A2` to the matching SDK request DTO with a nullable/default value.
-4. Add resource properties if `A2` appears in responses.
-5. Update README examples if the field is important for integrators.
-6. Run the SDK test suite and release/tag the SDK.
-7. Upgrade consumer backends when they need to send/read `A2`.
+3. Run `composer generate:contract`.
+4. Inspect the generated diff under `src/Generated`.
+5. Add `A2` to a stable wrapper in `src/Request` or `src/Resource` only when it
+   should become part of the recommended SDK API.
+6. Update README examples if the field is important for integrators.
+7. Run `composer check:contract` and the SDK test suite, then release/tag the
+   SDK.
+8. Upgrade consumer backends when they need to send/read `A2`.
 
 Old consumers keep working because `A1` is still accepted and `A2` is optional.
-Consumers that need `A2` before the SDK release can temporarily pass an array
-payload, then move back to the DTO after the SDK is updated.
+Consumers that need `A2` can use the generated DTO after the SDK release. If a
+consumer cannot upgrade immediately, array payloads remain an escape hatch.
 
 At time `T3`, the API changes from `A2` to `A3`.
 
@@ -589,9 +710,11 @@ old SDK:    A1, A2
 This is not safe as a sudden change. Use a transition:
 
 1. Deploy `travelo-api` accepting both `A2` and `A3`, marking `A2` deprecated.
-2. Release the SDK with `A3` and keep `A2` only if the transition requires it.
-3. Upgrade consumer backends to send `A3`.
-4. After all supported consumers are upgraded, remove `A2` from the API and then
+2. Refresh the OpenAPI fixture and run `composer generate:contract`.
+3. Release the SDK with `A3` and keep `A2` in stable wrappers only if the
+   transition requires it.
+4. Upgrade consumer backends to send `A3`.
+5. After all supported consumers are upgraded, remove `A2` from the API and then
    from the SDK in a breaking release.
 
 If a breaking API change cannot support old clients, bump the SDK version
@@ -604,18 +727,25 @@ When `travelo-api` changes the Partner API contract:
 
 1. Refresh `tests/fixtures/partner-api.openapi.json` from
    `/docs/partner/api.json`.
-2. Update endpoint methods in `src/Api` if paths/actions changed.
-3. Update request DTOs in `src/Request` for request fields.
-4. Update response resources in `src/Resource` for response fields.
-5. Keep new request fields nullable/defaulted when the API field is optional.
-6. Add or update tests for payload serialization and resource mapping.
-7. Update README examples and the request/resource tables.
-8. Run the full PHPUnit suite.
-9. Tag/release the SDK and upgrade consumer backends.
+2. Run `composer generate:contract`.
+3. Run `composer check:contract` to ensure generated files are committed and in
+   sync with the fixture.
+4. Update endpoint methods in `src/Api` if paths/actions changed.
+5. Update stable convenience request DTOs in `src/Request` only when the field
+   should be part of the recommended SDK API.
+6. Update stable convenience resources in `src/Resource` only when helper
+   properties or methods are needed.
+7. Keep new request fields nullable/defaulted when the API field is optional.
+8. Add or update tests for payload serialization, generated DTO sync, and
+   resource mapping.
+9. Update README examples and the request/resource tables.
+10. Run the full PHPUnit suite.
+11. Tag/release the SDK and upgrade consumer backends.
 
 Contract drift should be caught by:
 
 - `ContractCoverageTest` for endpoint/path coverage.
+- `GeneratedDtoTest` for generated request/resource drift.
 - Request payload tests for serialized field names.
 - Resource mapping tests for typed response fields.
 - Consumer backend tests that mock SDK APIs with request/resource objects.
@@ -773,28 +903,39 @@ php vendor/bin/phpunit --filter=PartnerClientTest
 php vendor/bin/phpunit --filter=PartnerSignerTest
 php vendor/bin/phpunit --filter=WebhookVerifierTest
 php vendor/bin/phpunit --filter=ContractCoverageTest
+php vendor/bin/phpunit --filter=GeneratedDtoTest
 php vendor/bin/phpunit --filter=RequestPayloadTest
 php vendor/bin/phpunit --filter=ResourceMappingTest
+```
+
+Generate or verify contract DTOs:
+
+```bash
+composer generate:contract
+composer check:contract
 ```
 
 Fixtures:
 
 - `tests/fixtures/partner-hmac-fixtures.json` keeps HMAC signing aligned with
   the TypeScript SDK.
-- `tests/fixtures/partner-api.openapi.json` keeps SDK endpoint coverage aligned
-  with the Partner API contract.
+- `tests/fixtures/partner-api.openapi.json` keeps SDK endpoint coverage and
+  generated DTOs aligned with the Partner API contract.
 
 ## Development Checklist
 
 When adding or changing Partner API endpoints:
 
-1. Update the matching API class in `src/Api`.
-2. Update request DTOs and response resources when fields change.
-3. Update contract coverage, request payload, and resource mapping tests.
-4. Refresh `tests/fixtures/partner-api.openapi.json` from `travelo-api` when the
+1. Refresh `tests/fixtures/partner-api.openapi.json` from `travelo-api` when the
    public contract changes.
-5. Keep payment-local fields out of the SDK-facing booking schema.
-6. Run the PHPUnit suite.
+2. Run `composer generate:contract`.
+3. Update the matching API class in `src/Api` if the path/action changed.
+4. Update stable hand-written request DTOs/resources only when the field should
+   be part of the recommended SDK API.
+5. Update contract coverage, generated DTO, request payload, and resource
+   mapping tests.
+6. Keep payment-local fields out of the SDK-facing booking schema.
+7. Run `composer check:contract` and the PHPUnit suite.
 
 ## License
 

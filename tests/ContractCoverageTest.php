@@ -145,7 +145,8 @@ final class ContractCoverageTest extends TestCase
             JSON_THROW_ON_ERROR,
         );
 
-        $variant = $spec['components']['schemas']['PartnerBookingResource']['anyOf'][0] ?? [];
+        $bookingSchema = $spec['components']['schemas']['PartnerBookingResource'] ?? [];
+        $variant = $bookingSchema['anyOf'][0] ?? $bookingSchema;
         $properties = $variant['properties'] ?? [];
         $required = $variant['required'] ?? [];
 

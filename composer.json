@@ -26,6 +26,8 @@
         }
     },
     "scripts": {
+        "generate:contract": "php tools/generate-contract-dtos.php",
+        "check:contract": "php tools/generate-contract-dtos.php --check",
         "test": "phpunit"
     },
     "extra": {

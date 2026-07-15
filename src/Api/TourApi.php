@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace TheOneDigi\TourSdk\Api;
 
 use TheOneDigi\TourSdk\PartnerClient;
-use TheOneDigi\TourSdk\Request\RequestPayload;
-use TheOneDigi\TourSdk\Resource\TourCalendarDateResource;
-use TheOneDigi\TourSdk\Resource\TourCalendarResource;
-use TheOneDigi\TourSdk\Resource\TourListResource;
-use TheOneDigi\TourSdk\Resource\TourResource;
+use TheOneDigi\TourSdk\Common\RequestPayload;
+use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDateResource;
+use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDetailResource;
+use TheOneDigi\TourSdk\Generated\Resource\TourListResource;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerTourResource;
 
 /**
  * Tour catalog endpoints. All read-only and all requiring the `tour:read` scope.
@@ -100,9 +100,9 @@ class TourApi
         return $this->client->data($this->client->get(self::BASE . '/' . rawurlencode($code)));
     }
 
-    public function showResource(string $code): TourResource
+    public function showResource(string $code): PartnerTourResource
     {
-        return TourResource::fromArray($this->show($code));
+        return PartnerTourResource::fromArray($this->show($code));
     }
 
     /**
@@ -119,7 +119,7 @@ class TourApi
 
     /**
      * @param array<string, mixed> $params
-     * @return list<TourCalendarResource>
+     * @return list<TourCalendarDetailResource>
      */
     public function calendarsResources(string $code, array|RequestPayload $params = []): array
     {
@@ -134,7 +134,7 @@ class TourApi
 
         foreach ($items as $item) {
             if (is_array($item)) {
-                $resources[] = TourCalendarResource::fromArray($item);
+                $resources[] = TourCalendarDetailResource::fromArray($item);
             }
         }
 
@@ -145,7 +145,7 @@ class TourApi
      * Alias for calendarsResources().
      *
      * @param array<string, mixed> $params
-     * @return list<TourCalendarResource>
+     * @return list<TourCalendarDetailResource>
      */
     public function calendarResources(string $code, array|RequestPayload $params = []): array
     {

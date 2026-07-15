@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace TheOneDigi\TourSdk\Api;
 
 use TheOneDigi\TourSdk\PartnerClient;
-use TheOneDigi\TourSdk\Request\RequestPayload;
-use TheOneDigi\TourSdk\Resource\BookingApplicantResource;
-use TheOneDigi\TourSdk\Resource\BookingListResource;
-use TheOneDigi\TourSdk\Resource\BookingQuoteResource;
-use TheOneDigi\TourSdk\Resource\BookingResource;
+use TheOneDigi\TourSdk\Common\RequestPayload;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingApplicantResource;
+use TheOneDigi\TourSdk\Generated\Resource\BookingListResource;
+use TheOneDigi\TourSdk\Generated\Resource\BookingQuoteResource;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 
 /**
  * Partner booking endpoints.
@@ -68,9 +68,9 @@ class BookingApi
     /**
      * Same endpoint as create(), returned as a typed SDK resource.
      */
-    public function createResource(array|RequestPayload $payload, string $idempotencyKey): BookingResource
+    public function createResource(array|RequestPayload $payload, string $idempotencyKey): PartnerBookingResource
     {
-        return BookingResource::fromArray($this->create($payload, $idempotencyKey));
+        return PartnerBookingResource::fromArray($this->create($payload, $idempotencyKey));
     }
 
     /**
@@ -84,9 +84,9 @@ class BookingApi
         return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . '/confirm'));
     }
 
-    public function confirmResource(string $code): BookingResource
+    public function confirmResource(string $code): PartnerBookingResource
     {
-        return BookingResource::fromArray($this->confirm($code));
+        return PartnerBookingResource::fromArray($this->confirm($code));
     }
 
     /**
@@ -99,9 +99,9 @@ class BookingApi
         return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . '/cancel'));
     }
 
-    public function cancelResource(string $code): BookingResource
+    public function cancelResource(string $code): PartnerBookingResource
     {
-        return BookingResource::fromArray($this->cancel($code));
+        return PartnerBookingResource::fromArray($this->cancel($code));
     }
 
     /**
@@ -112,9 +112,9 @@ class BookingApi
         return $this->client->data($this->client->get(self::BASE . '/' . rawurlencode($code)));
     }
 
-    public function showResource(string $code): BookingResource
+    public function showResource(string $code): PartnerBookingResource
     {
-        return BookingResource::fromArray($this->show($code));
+        return PartnerBookingResource::fromArray($this->show($code));
     }
 
     /**
@@ -152,12 +152,12 @@ class BookingApi
         ));
     }
 
-    public function updateApplicantResource(string $code, int $applicantId, array|RequestPayload $payload): BookingApplicantResource
+    public function updateApplicantResource(string $code, int $applicantId, array|RequestPayload $payload): PartnerBookingApplicantResource
     {
         $data = $this->updateApplicant($code, $applicantId, $payload);
         $applicant = $data['applicant'] ?? $data;
 
-        return BookingApplicantResource::fromArray(is_array($applicant) ? $applicant : []);
+        return PartnerBookingApplicantResource::fromArray(is_array($applicant) ? $applicant : []);
     }
 
     /**

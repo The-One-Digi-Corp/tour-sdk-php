@@ -13,17 +13,17 @@ use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use TheOneDigi\TourSdk\PartnerClient;
-use TheOneDigi\TourSdk\Request\BookingApplicantRequest;
-use TheOneDigi\TourSdk\Request\BookingCreateRequest;
-use TheOneDigi\TourSdk\Request\BookingListRequest;
-use TheOneDigi\TourSdk\Request\BookingQuoteRequest;
-use TheOneDigi\TourSdk\Request\BookingUpdateApplicantRequest;
-use TheOneDigi\TourSdk\Request\CheckPromotionRequest;
-use TheOneDigi\TourSdk\Request\SimilarToursRequest;
-use TheOneDigi\TourSdk\Request\TourCalendarDateRequest;
-use TheOneDigi\TourSdk\Request\TourListRequest;
-use TheOneDigi\TourSdk\Request\TourTakeRequest;
-use TheOneDigi\TourSdk\Resource\BookingApplicantResource;
+use TheOneDigi\TourSdk\Generated\Request\PartnerCheckoutCreateBookingApplicantRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerCheckoutCreateBookingRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerAccountListBookingsRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerCheckoutQuoteRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerAccountUpdateApplicantRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerCheckoutCheckPromotionRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerToursGetSimilarRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerToursGetAvailabilityRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerToursSearchRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerToursGetFeaturedRequest;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingApplicantResource;
 
 final class RequestPayloadTest extends TestCase
 {
@@ -76,14 +76,14 @@ final class RequestPayloadTest extends TestCase
         $client = $this->clientWith([['order_code' => 'TB123ABC']]);
 
         $client->bookings()->create(
-            new BookingCreateRequest(
+            new PartnerCheckoutCreateBookingRequest(
                 tourCode: 'IBTCARSGN3181',
                 departureDate: '2026-08-01',
                 name: 'Customer Name',
                 phone: '0900000000',
                 email: 'customer@example.com',
                 applicants: [
-                    new BookingApplicantRequest(type: 1, fullName: 'Customer Name', nationality: 'VN'),
+                    new PartnerCheckoutCreateBookingApplicantRequest(type: 1, fullName: 'Customer Name', nationality: 'VN'),
                 ],
                 adultQuantity: 1,
                 dialCode: '84',
@@ -110,13 +110,13 @@ final class RequestPayloadTest extends TestCase
             ['promotion' => ['code' => 'PROMO10']],
         ]);
 
-        $client->bookings()->quote(new BookingQuoteRequest(
+        $client->bookings()->quote(new PartnerCheckoutQuoteRequest(
             tourCode: 'IBTCARSGN3181',
             departureDate: '2026-08-01',
             adultQuantity: 2,
             promotionCode: 'PROMO10',
         ));
-        $client->bookings()->checkPromotion(new CheckPromotionRequest('PROMO10'));
+        $client->bookings()->checkPromotion(new PartnerCheckoutCheckPromotionRequest('PROMO10'));
 
         self::assertSame('PROMO10', $this->sentJson(0)['promotion_code']);
         self::assertSame('PROMO10', $this->sentJson(1)['code']);
@@ -130,23 +130,23 @@ final class RequestPayloadTest extends TestCase
             ['applicant' => ['id' => 7, 'date_of_birth' => null]],
         ]);
 
-        $client->bookings()->list(new BookingListRequest(status: 1, query: 'TB', page: 2, perPage: 10));
+        $client->bookings()->list(new PartnerAccountListBookingsRequest(status: 1, q: 'TB', page: 2, perPage: 10));
         $applicant = $client->bookings()->updateApplicantResource(
             'TB123ABC',
             7,
-            new BookingUpdateApplicantRequest(fullName: 'Updated Name', gender: 1),
+            new PartnerAccountUpdateApplicantRequest(fullName: 'Updated Name', gender: 1),
         );
         $client->bookings()->updateApplicant(
             'TB123ABC',
             7,
-            BookingUpdateApplicantRequest::fromArray(['date_of_birth' => null]),
+            PartnerAccountUpdateApplicantRequest::fromArray(['date_of_birth' => null]),
         );
 
         parse_str($this->request(0)->getUri()->getQuery(), $query);
 
         self::assertSame('1', $query['status']);
         self::assertSame('TB', $query['q']);
-        self::assertInstanceOf(BookingApplicantResource::class, $applicant);
+        self::assertInstanceOf(PartnerBookingApplicantResource::class, $applicant);
         self::assertSame('Updated Name', $applicant->fullName);
         self::assertSame(1, $this->sentJson(1)['gender']);
         self::assertArrayHasKey('date_of_birth', $this->sentJson(2));
@@ -157,15 +157,15 @@ final class RequestPayloadTest extends TestCase
     {
         $client = $this->clientWith([
             ['current_page' => 1, 'total' => 0, 'per_page' => 12, 'last_page' => 1, 'tours' => []],
-            ['tours' => []],
-            ['tours' => []],
+            ['current_page' => 2, 'total' => 9, 'per_page' => 6, 'last_page' => 2, 'tours' => []],
+            ['current_page' => 1, 'total' => 4, 'per_page' => 4, 'last_page' => 1, 'tours' => []],
             ['is_available' => true, 'remaining_slots' => 5],
         ]);
 
-        $client->tours()->list(new TourListRequest(search: 'hcm', page: 1, perPage: 12));
-        $client->tours()->featured(new TourTakeRequest(6));
-        $client->tours()->similar(new SimilarToursRequest(tourCode: 'IBTCARSGN3181', take: 4));
-        $client->tours()->calendarByDate('IBTCARSGN3181', new TourCalendarDateRequest('2026-08-01', pax: 2));
+        $client->tours()->list(new PartnerToursSearchRequest(search: 'hcm', page: 1, perPage: 12));
+        $client->tours()->featured(new PartnerToursGetFeaturedRequest(6, page: 2, perPage: 6));
+        $client->tours()->similar(new PartnerToursGetSimilarRequest(tourCode: 'IBTCARSGN3181', take: 4, page: 1, perPage: 4));
+        $client->tours()->calendarByDate('IBTCARSGN3181', new PartnerToursGetAvailabilityRequest('2026-08-01', pax: 2));
 
         parse_str($this->request(0)->getUri()->getQuery(), $listQuery);
         parse_str($this->request(1)->getUri()->getQuery(), $featuredQuery);
@@ -175,8 +175,12 @@ final class RequestPayloadTest extends TestCase
         self::assertSame('hcm', $listQuery['search']);
         self::assertSame('12', $listQuery['per_page']);
         self::assertSame('6', $featuredQuery['take']);
+        self::assertSame('2', $featuredQuery['page']);
+        self::assertSame('6', $featuredQuery['per_page']);
         self::assertSame('IBTCARSGN3181', $similarQuery['tour_code']);
         self::assertSame('4', $similarQuery['take']);
+        self::assertSame('1', $similarQuery['page']);
+        self::assertSame('4', $similarQuery['per_page']);
         self::assertSame('2026-08-01', $dateQuery['date']);
         self::assertSame('2', $dateQuery['pax']);
     }
@@ -185,7 +189,7 @@ final class RequestPayloadTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new BookingQuoteRequest(
+        new PartnerCheckoutQuoteRequest(
             tourCode: 'IBTCARSGN3181',
             departureDate: '2026-08-01',
             adultQuantity: 1,

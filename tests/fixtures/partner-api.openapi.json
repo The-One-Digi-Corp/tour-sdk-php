@@ -89,7 +89,8 @@
                 "integer",
                 "null"
               ],
-              "minimum": 1
+              "minimum": 1,
+              "maximum": 100
             }
           },
           {
@@ -110,7 +111,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -224,19 +225,13 @@
                       "type": "object",
                       "properties": {
                         "current_page": {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
+                          "type": "integer"
                         },
                         "total": {
-                          "type": "string"
+                          "type": "integer"
                         },
                         "per_page": {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
+                          "type": "integer"
                         },
                         "last_page": {
                           "type": "integer"
@@ -365,7 +360,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -540,53 +535,7 @@
                   "applicants": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "integer"
-                        },
-                        "full_name": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "maxLength": 255
-                        },
-                        "gender": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "enum": [
-                            "1",
-                            "2"
-                          ]
-                        },
-                        "nationality": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "maxLength": 50
-                        },
-                        "date_of_birth": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "format": "date-time"
-                        },
-                        "passport_photo": {
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "maxLength": 255
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ]
+                      "$ref": "#/components/schemas/PartnerCheckoutCreateBookingApplicantRequest"
                     },
                     "minItems": 1
                   }
@@ -915,7 +864,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -1304,7 +1253,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -1602,7 +1551,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -1834,7 +1783,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -2100,7 +2049,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -2382,7 +2331,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -2545,7 +2494,7 @@
                       "type": "object",
                       "properties": {
                         "applicant": {
-                          "type": "string"
+                          "$ref": "#/components/schemas/PartnerBookingApplicantResource"
                         }
                       },
                       "required": [
@@ -2920,7 +2869,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -3171,7 +3120,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -3355,7 +3304,30 @@
                 "null"
               ],
               "minimum": 1,
-              "maximum": 20
+              "maximum": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
             }
           },
           {
@@ -3376,7 +3348,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -3489,6 +3461,18 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
                         "tours": {
                           "type": "array",
                           "items": {
@@ -3497,6 +3481,10 @@
                         }
                       },
                       "required": [
+                        "current_page",
+                        "total",
+                        "per_page",
+                        "last_page",
                         "tours"
                       ]
                     }
@@ -3511,37 +3499,7 @@
             }
           },
           "422": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "integer",
-                      "const": 422
-                    },
-                    "message": {
-                      "type": "string",
-                      "const": "Validation error"
-                    },
-                    "errors": {
-                      "type": "array",
-                      "items": {}
-                    },
-                    "data": {
-                      "type": "null"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message",
-                    "errors",
-                    "data"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/ValidationException"
           },
           "500": {
             "description": "",
@@ -3603,7 +3561,30 @@
                 "null"
               ],
               "minimum": 1,
-              "maximum": 20
+              "maximum": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
             }
           },
           {
@@ -3624,7 +3605,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -3737,6 +3718,18 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
                         "tours": {
                           "type": "array",
                           "items": {
@@ -3745,6 +3738,10 @@
                         }
                       },
                       "required": [
+                        "current_page",
+                        "total",
+                        "per_page",
+                        "last_page",
                         "tours"
                       ]
                     }
@@ -3759,37 +3756,7 @@
             }
           },
           "422": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "integer",
-                      "const": 422
-                    },
-                    "message": {
-                      "type": "string",
-                      "const": "Validation error"
-                    },
-                    "errors": {
-                      "type": "array",
-                      "items": {}
-                    },
-                    "data": {
-                      "type": "null"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message",
-                    "errors",
-                    "data"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/ValidationException"
           },
           "500": {
             "description": "",
@@ -3873,7 +3840,30 @@
                 "null"
               ],
               "minimum": 1,
-              "maximum": 20
+              "maximum": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 100
             }
           },
           {
@@ -3894,7 +3884,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -4007,6 +3997,18 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
                         "tours": {
                           "type": "array",
                           "items": {
@@ -4015,6 +4017,10 @@
                         }
                       },
                       "required": [
+                        "current_page",
+                        "total",
+                        "per_page",
+                        "last_page",
                         "tours"
                       ]
                     }
@@ -4138,7 +4144,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -4369,7 +4375,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -4631,7 +4637,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -4742,7 +4748,7 @@
                       "const": "Success"
                     },
                     "data": {
-                      "type": "string"
+                      "$ref": "#/components/schemas/TourCalendarAvailabilityResource"
                     }
                   },
                   "required": [
@@ -4983,7 +4989,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -5094,8 +5100,62 @@
                       "const": "Success"
                     },
                     "data": {
-                      "type": "array",
-                      "items": {}
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "reviews": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TourReviewResource"
+                          }
+                        },
+                        "ratings_count": {
+                          "type": "object",
+                          "properties": {
+                            "1_star": {
+                              "type": "integer"
+                            },
+                            "2_star": {
+                              "type": "integer"
+                            },
+                            "3_star": {
+                              "type": "integer"
+                            },
+                            "4_star": {
+                              "type": "integer"
+                            },
+                            "5_star": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "1_star",
+                            "2_star",
+                            "3_star",
+                            "4_star",
+                            "5_star"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "total",
+                        "per_page",
+                        "last_page",
+                        "reviews",
+                        "ratings_count"
+                      ]
                     }
                   },
                   "required": [
@@ -5187,7 +5247,7 @@
       "get": {
         "operationId": "partnerToursGetReviewImages",
         "description": "The {id} path segment is the tour id; only tours whitelisted for the partner\nare accessible (mirrors the public tour `get-all-image-reviews`).",
-        "summary": "List all review images of a whitelisted tour (paginated)",
+        "summary": "List all review images of a whitelisted tour",
         "tags": [
           "PartnerTour"
         ],
@@ -5248,7 +5308,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "1784004248"
+            "example": "1784108025"
           },
           {
             "name": "X-Partner-Signature",
@@ -5359,8 +5419,18 @@
                       "const": "Success"
                     },
                     "data": {
-                      "type": "array",
-                      "items": {}
+                      "type": "object",
+                      "properties": {
+                        "images": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TourReviewImageResource"
+                          }
+                        }
+                      },
+                      "required": [
+                        "images"
+                      ]
                     }
                   },
                   "required": [
@@ -5524,350 +5594,555 @@
         ],
         "title": "ImageResource"
       },
+      "PartnerBookingApplicantResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_booking_id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "integer"
+          },
+          "full_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gender": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "date_of_birth": {
+            "type": "string"
+          },
+          "nationality": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "passport_photo": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tour_booking_id",
+          "type",
+          "full_name",
+          "gender",
+          "date_of_birth",
+          "nationality",
+          "passport_photo",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PartnerBookingApplicantResource"
+      },
+      "PartnerBookingDetailResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_id": {
+            "type": "integer"
+          },
+          "tour_price_group_id": {
+            "type": "integer"
+          },
+          "departure_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "adult_quantity": {
+            "type": "integer"
+          },
+          "child_quantity": {
+            "type": "integer"
+          },
+          "infant_quantity": {
+            "type": "integer"
+          },
+          "adult_price": {
+            "type": "number"
+          },
+          "child_price": {
+            "type": "number"
+          },
+          "infant_price": {
+            "type": "number"
+          },
+          "group_price": {
+            "type": "number"
+          },
+          "discount_price": {
+            "type": "number"
+          },
+          "discount_type": {
+            "type": "integer"
+          },
+          "discount_count": {
+            "type": "integer"
+          },
+          "special_request": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tour": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PartnerBookingDetailTourResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "base_currency": {
+            "type": "string"
+          },
+          "input_adult_price": {
+            "type": "number"
+          },
+          "input_child_price": {
+            "type": "number"
+          },
+          "input_infant_price": {
+            "type": "number"
+          },
+          "input_group_price": {
+            "type": "number"
+          },
+          "input_discount_price": {
+            "type": "number"
+          },
+          "input_currency": {
+            "type": "string"
+          },
+          "input_currency_version": {
+            "type": "integer"
+          },
+          "input_currency_exchange_rate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "tour_id",
+          "tour_price_group_id",
+          "departure_date",
+          "adult_quantity",
+          "child_quantity",
+          "infant_quantity",
+          "adult_price",
+          "child_price",
+          "infant_price",
+          "group_price",
+          "discount_price",
+          "discount_type",
+          "discount_count",
+          "special_request",
+          "tour",
+          "base_currency",
+          "input_adult_price",
+          "input_child_price",
+          "input_infant_price",
+          "input_group_price",
+          "input_discount_price",
+          "input_currency",
+          "input_currency_version",
+          "input_currency_exchange_rate"
+        ],
+        "title": "PartnerBookingDetailResource"
+      },
+      "PartnerBookingDetailTourResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "thumbnail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destination": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "thumbnail",
+          "name",
+          "destination"
+        ],
+        "title": "PartnerBookingDetailTourResource"
+      },
+      "PartnerBookingRefundResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "refund_total": {
+            "type": "number"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "status_text": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "refund_total",
+          "status",
+          "status_text",
+          "currency"
+        ],
+        "title": "PartnerBookingRefundResource"
+      },
       "PartnerBookingResource": {
-        "anyOf": [
-          {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "order_code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "sub_total": {
+            "type": "number"
+          },
+          "discount": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "base_currency": {
+            "type": "string"
+          },
+          "input_currency": {
+            "type": "string"
+          },
+          "sub_total_amounts": {
+            "type": "array",
+            "description": "Additive fields (§11.6/§14.5) — sub-price UI reads these instead of\nrecomputing from a live exchange rate (fixes the frozen-order\nsub-price drift bug, currency-cast-analysis.md §11.3).",
+            "prefixItems": [
+              {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "amount"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "amount"
+                ]
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2,
+            "additionalItems": false
+          },
+          "total_amounts": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "amount"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currency",
+                  "amount"
+                ]
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2,
+            "additionalItems": false
+          },
+          "promotion_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email2": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dial_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paid_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "tour_booking_detail": {
+            "$ref": "#/components/schemas/PartnerBookingDetailResource"
+          },
+          "tour_booking_applicants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerBookingApplicantResource"
+            }
+          },
+          "tour_booking_refund": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PartnerBookingRefundResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "commission_rate": {
+            "type": "number"
+          },
+          "commission_amount": {
+            "type": "number"
+          },
+          "commission": {
             "type": "object",
             "properties": {
-              "id": {
-                "type": "string"
-              },
-              "order_code": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string"
-              },
-              "sub_total": {
-                "type": "string"
-              },
-              "discount": {
-                "type": "string"
-              },
-              "total": {
-                "type": "string"
-              },
-              "cost": {
-                "type": "string"
-              },
-              "currency": {
-                "type": "string"
-              },
-              "base_currency": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "string",
-                    "enum": [
-                      "USD"
-                    ]
-                  }
-                ]
-              },
-              "input_currency": {
-                "type": "string"
-              },
-              "sub_total_amounts": {
-                "type": "array",
-                "description": "Additive fields (§11.6/§14.5) — sub-price UI reads these instead of\nrecomputing from a live exchange rate (fixes the frozen-order\nsub-price drift bug, currency-cast-analysis.md §11.3).",
-                "prefixItems": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "currency": {
-                        "type": "string"
-                      },
-                      "amount": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "currency",
-                      "amount"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "currency": {
-                        "type": "string"
-                      },
-                      "amount": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "currency",
-                      "amount"
-                    ]
-                  }
-                ],
-                "minItems": 2,
-                "maxItems": 2,
-                "additionalItems": false
-              },
-              "total_amounts": {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "currency": {
-                        "type": "string"
-                      },
-                      "amount": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "currency",
-                      "amount"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "currency": {
-                        "type": "string"
-                      },
-                      "amount": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "currency",
-                      "amount"
-                    ]
-                  }
-                ],
-                "minItems": 2,
-                "maxItems": 2,
-                "additionalItems": false
-              },
-              "promotion_code": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "email2": {
-                "type": "string"
-              },
-              "dial_code": {
-                "type": "string"
-              },
-              "phone": {
-                "type": "string"
-              },
-              "paid_at": {
-                "type": "string"
-              },
-              "created_at": {
-                "type": "string"
-              },
-              "tour_booking_detail": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "tour_id": {
-                        "type": "string"
-                      },
-                      "departure_date": {
-                        "type": "string"
-                      },
-                      "adult_quantity": {
-                        "type": "string"
-                      },
-                      "child_quantity": {
-                        "type": "string"
-                      },
-                      "infant_quantity": {
-                        "type": "string"
-                      },
-                      "adult_price": {
-                        "type": "string"
-                      },
-                      "child_price": {
-                        "type": "string"
-                      },
-                      "infant_price": {
-                        "type": "string"
-                      },
-                      "group_price": {
-                        "type": "string",
-                        "description": "group_price is currently always 0 at booking time\n(OrderService::createOrder) and isn't summed into sub_total\nanywhere — safe to convert independently."
-                      },
-                      "discount_price": {
-                        "type": "string",
-                        "description": "Always equal to the order-level discount (OrderService::createOrder\nwrites the same value to both) — reuse the already-derived figure\ninstead of converting it a second time."
-                      },
-                      "special_request": {
-                        "type": "string"
-                      },
-                      "tour": {
-                        "type": [
-                          "object",
-                          "null"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "thumbnail": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "destination": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "thumbnail",
-                          "name",
-                          "destination"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "tour_id",
-                      "departure_date",
-                      "adult_quantity",
-                      "child_quantity",
-                      "infant_quantity",
-                      "adult_price",
-                      "child_price",
-                      "infant_price",
-                      "group_price",
-                      "discount_price",
-                      "special_request",
-                      "tour"
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              },
-              "tour_booking_applicants": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              },
-              "tour_booking_refund": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "refund_total": {
-                        "type": "string",
-                        "description": "Refund amounts are admin-entered in USD canonical — convert by version."
-                      },
-                      "status": {
-                        "type": "string"
-                      },
-                      "status_text": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "string",
-                            "enum": [
-                              "Unknown"
-                            ]
-                          }
-                        ]
-                      },
-                      "currency": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "refund_total",
-                      "status",
-                      "status_text",
-                      "currency"
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              },
-              "commission_rate": {
+              "rate": {
                 "type": "number"
               },
-              "commission_amount": {
-                "type": "string"
+              "amount": {
+                "type": "number"
               }
             },
             "required": [
-              "id",
-              "order_code",
-              "status",
-              "sub_total",
-              "discount",
-              "total",
-              "cost",
-              "currency",
-              "base_currency",
-              "input_currency",
-              "sub_total_amounts",
-              "total_amounts",
-              "promotion_code",
-              "name",
-              "email",
-              "email2",
-              "dial_code",
-              "phone",
-              "paid_at",
-              "created_at",
-              "tour_booking_detail",
-              "tour_booking_applicants",
-              "tour_booking_refund",
-              "commission_rate",
-              "commission_amount"
+              "rate",
+              "amount"
             ]
           },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 0,
-            "maxItems": 0,
-            "additionalItems": false
+          "input_sub_total": {
+            "type": "number"
+          },
+          "input_discount": {
+            "type": "number"
+          },
+          "input_total": {
+            "type": "number"
+          },
+          "input_cost": {
+            "type": "number"
+          },
+          "input_currency_version": {
+            "type": "integer"
+          },
+          "input_currency_exchange_rate": {
+            "type": "number"
           }
+        },
+        "required": [
+          "id",
+          "order_code",
+          "status",
+          "sub_total",
+          "discount",
+          "total",
+          "cost",
+          "currency",
+          "base_currency",
+          "input_currency",
+          "sub_total_amounts",
+          "total_amounts",
+          "promotion_code",
+          "name",
+          "email",
+          "email2",
+          "dial_code",
+          "phone",
+          "paid_at",
+          "created_at",
+          "tour_booking_detail",
+          "tour_booking_applicants",
+          "tour_booking_refund",
+          "commission_rate",
+          "commission_amount",
+          "commission",
+          "input_sub_total",
+          "input_discount",
+          "input_total",
+          "input_cost",
+          "input_currency_version",
+          "input_currency_exchange_rate"
         ],
         "title": "PartnerBookingResource"
+      },
+      "PartnerCheckoutCreateBookingApplicantRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "integer",
+            "description": "Applicant type: 1 = adult, 2 = child, 3 = infant.",
+            "example": 1
+          },
+          "full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Nguyen Van A",
+            "maxLength": 255
+          },
+          "gender": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "enum": [
+              1,
+              2
+            ],
+            "example": 1
+          },
+          "nationality": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "VN",
+            "maxLength": 50
+          },
+          "date_of_birth": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": "1990-01-15"
+          },
+          "passport_photo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "upload/passports/a.jpg",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "PartnerCheckoutCreateBookingApplicantRequest"
       },
       "PartnerTourResource": {
         "type": "object",
@@ -6090,16 +6365,330 @@
         ],
         "title": "TagResource"
       },
+      "TourCalendarAvailabilityResource": {
+        "type": "object",
+        "properties": {
+          "calendar_id": {
+            "type": "integer"
+          },
+          "tour_price_group_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_slots_per_day": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "remaining_slots": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "is_available": {
+            "type": "boolean"
+          },
+          "is_price_overridden": {
+            "type": "boolean"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TourCalendarPriceResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "all_prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TourCalendarPriceResource"
+            }
+          },
+          "matched_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TourPriceGroupRangeResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TourPriceGroupResource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "calendar_id",
+          "tour_price_group_id",
+          "start_date",
+          "end_date",
+          "max_slots_per_day",
+          "remaining_slots",
+          "is_available",
+          "is_price_overridden",
+          "price",
+          "all_prices",
+          "matched_range",
+          "price_group"
+        ],
+        "title": "TourCalendarAvailabilityResource"
+      },
+      "TourCalendarDetailPriceResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_calendar_id": {
+            "type": "integer"
+          },
+          "tour_price_group_range_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "adult_price": {
+            "type": "number"
+          },
+          "child_price": {
+            "type": "number"
+          },
+          "infant_price": {
+            "type": "number"
+          },
+          "cost_adult": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cost_child": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cost_infant": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "range_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "min_pax": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_pax": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tour_calendar_id",
+          "tour_price_group_range_id",
+          "adult_price",
+          "child_price",
+          "infant_price",
+          "cost_adult",
+          "cost_child",
+          "cost_infant",
+          "currency",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "range_id",
+          "min_pax",
+          "max_pax"
+        ],
+        "title": "TourCalendarDetailPriceResource"
+      },
       "TourCalendarDetailResource": {
-        "type": "array",
-        "items": {},
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_id": {
+            "type": "integer"
+          },
+          "tour_price_group_id": {
+            "type": "integer"
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_slots_per_day": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price_group": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "ranges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TourPriceGroupRangeResource"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "ranges"
+            ]
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TourCalendarDetailPriceResource"
+            }
+          },
+          "day_slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tour_calendar_id": {
+                  "type": "integer"
+                },
+                "departure_date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "booked_slots": {
+                  "type": "integer"
+                },
+                "remaining_slots": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "tour_calendar_id",
+                "departure_date",
+                "booked_slots",
+                "remaining_slots"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "tour_id",
+          "tour_price_group_id",
+          "start_date",
+          "end_date",
+          "max_slots_per_day",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "price_group",
+          "prices",
+          "day_slots"
+        ],
         "title": "TourCalendarDetailResource"
       },
       "TourCalendarPriceResource": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "integer"
           },
           "adult_price": {
             "type": "number"
@@ -6120,20 +6709,32 @@
             "type": "number"
           },
           "range_id": {
-            "type": "string"
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "min_pax": {
-            "type": "string"
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "max_pax": {
-            "type": "string"
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [
           "id",
           "adult_price",
           "child_price",
-          "infant_price"
+          "infant_price",
+          "range_id",
+          "min_pax",
+          "max_pax"
         ],
         "title": "TourCalendarPriceResource"
       },
@@ -6190,6 +6791,60 @@
           "day_number"
         ],
         "title": "TourItineraryResource"
+      },
+      "TourPriceGroupRangeResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_price_group_id": {
+            "type": "integer"
+          },
+          "min_pax": {
+            "type": "integer"
+          },
+          "max_pax": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "sort_order": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "tour_price_group_id",
+          "min_pax",
+          "max_pax",
+          "sort_order"
+        ],
+        "title": "TourPriceGroupRangeResource"
+      },
+      "TourPriceGroupResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TourPriceGroupRangeResource"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ranges"
+        ],
+        "title": "TourPriceGroupResource"
       },
       "TourPriceResource": {
         "type": "object",
@@ -6297,6 +6952,104 @@
           "updated_at"
         ],
         "title": "TourPromotion"
+      },
+      "TourReviewImageResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_id": {
+            "type": "integer"
+          },
+          "tour_review_id": {
+            "type": "integer"
+          },
+          "image_path": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tour_id",
+          "tour_review_id",
+          "image_path",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TourReviewImageResource"
+      },
+      "TourReviewResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tour_id": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "rating": {
+            "type": "number"
+          },
+          "review": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TourReviewImageResource"
+            }
+          },
+          "user": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatar": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "avatar"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tour_id",
+          "user_id",
+          "rating",
+          "review",
+          "created_at",
+          "updated_at",
+          "images",
+          "user"
+        ],
+        "title": "TourReviewResource"
       },
       "TourRouteResource": {
         "type": "object",
