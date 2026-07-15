@@ -17,6 +17,7 @@ class BookingUpdateApplicantRequest implements RequestPayload
         public readonly ?string $dateOfBirth = null,
         public readonly ?string $nationality = null,
         public readonly ?string $passportPhoto = null,
+        private readonly ?array $provided = null,
     ) {
         if ($this->gender !== null && ! in_array($this->gender, [1, 2], true)) {
             throw new InvalidArgumentException('Applicant gender must be 1, 2, or null.');
@@ -28,12 +29,21 @@ class BookingUpdateApplicantRequest implements RequestPayload
      */
     public static function fromArray(array $payload): self
     {
+        $has = static fn (string $key): bool => array_key_exists($key, $payload);
+
         return new self(
-            fullName: isset($payload['full_name']) ? (string) $payload['full_name'] : null,
-            gender: isset($payload['gender']) ? (int) $payload['gender'] : null,
-            dateOfBirth: isset($payload['date_of_birth']) ? (string) $payload['date_of_birth'] : null,
-            nationality: isset($payload['nationality']) ? (string) $payload['nationality'] : null,
-            passportPhoto: isset($payload['passport_photo']) ? (string) $payload['passport_photo'] : null,
+            fullName: $has('full_name') && $payload['full_name'] !== null ? (string) $payload['full_name'] : null,
+            gender: $has('gender') && $payload['gender'] !== null ? (int) $payload['gender'] : null,
+            dateOfBirth: $has('date_of_birth') && $payload['date_of_birth'] !== null ? (string) $payload['date_of_birth'] : null,
+            nationality: $has('nationality') && $payload['nationality'] !== null ? (string) $payload['nationality'] : null,
+            passportPhoto: $has('passport_photo') && $payload['passport_photo'] !== null ? (string) $payload['passport_photo'] : null,
+            provided: array_values(array_intersect([
+                'full_name',
+                'gender',
+                'date_of_birth',
+                'nationality',
+                'passport_photo',
+            ], array_keys($payload))),
         );
     }
 
@@ -42,12 +52,18 @@ class BookingUpdateApplicantRequest implements RequestPayload
      */
     public function toArray(): array
     {
-        return $this->withoutNulls([
+        $payload = [
             'full_name' => $this->fullName,
             'gender' => $this->gender,
             'date_of_birth' => $this->dateOfBirth,
             'nationality' => $this->nationality,
             'passport_photo' => $this->passportPhoto,
-        ]);
+        ];
+
+        if ($this->provided === null) {
+            return $this->withoutNulls($payload);
+        }
+
+        return array_intersect_key($payload, array_flip($this->provided));
     }
 }

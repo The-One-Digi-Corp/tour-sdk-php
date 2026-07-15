@@ -127,6 +127,7 @@ final class RequestPayloadTest extends TestCase
         $client = $this->clientWith([
             ['current_page' => 1, 'total' => 0, 'per_page' => 20, 'last_page' => 1, 'bookings' => []],
             ['applicant' => ['id' => 7, 'full_name' => 'Updated Name']],
+            ['applicant' => ['id' => 7, 'date_of_birth' => null]],
         ]);
 
         $client->bookings()->list(new BookingListRequest(status: 1, query: 'TB', page: 2, perPage: 10));
@@ -134,6 +135,11 @@ final class RequestPayloadTest extends TestCase
             'TB123ABC',
             7,
             new BookingUpdateApplicantRequest(fullName: 'Updated Name', gender: 1),
+        );
+        $client->bookings()->updateApplicant(
+            'TB123ABC',
+            7,
+            BookingUpdateApplicantRequest::fromArray(['date_of_birth' => null]),
         );
 
         parse_str($this->request(0)->getUri()->getQuery(), $query);
@@ -143,6 +149,8 @@ final class RequestPayloadTest extends TestCase
         self::assertInstanceOf(BookingApplicantResource::class, $applicant);
         self::assertSame('Updated Name', $applicant->fullName);
         self::assertSame(1, $this->sentJson(1)['gender']);
+        self::assertArrayHasKey('date_of_birth', $this->sentJson(2));
+        self::assertNull($this->sentJson(2)['date_of_birth']);
     }
 
     public function test_tour_query_requests_are_accepted(): void
