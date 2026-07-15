@@ -58,10 +58,20 @@ class BookingApi
      */
     public function create(array|RequestPayload $payload, string $idempotencyKey): array
     {
-        return $this->client->data($this->client->post(self::BASE, $this->payload($payload), [
+        // The key travels in the body, because that is the channel the contract
+        // documents. travelo-api also accepts it as X-Partner-Idempotency-Key and
+        // two older header spellings, and this SDK used to send only those — so the
+        // one thing standing between a timed-out retry and a double booking was a
+        // header no schema mentioned. Anyone tidying up an undocumented header
+        // would have taken idempotency with it, silently.
+        //
+        // The header goes too, as the documented alias, for gateways that strip or
+        // rewrite bodies on retry.
+        $body = $this->payload($payload);
+        $body['idempotency_key'] = $idempotencyKey;
+
+        return $this->client->data($this->client->post(self::BASE, $body, [
             'X-Partner-Idempotency-Key' => $idempotencyKey,
-            'X-Idempotency-Key' => $idempotencyKey,
-            'Idempotency-Key' => $idempotencyKey,
         ]));
     }
 

@@ -215,15 +215,21 @@ class PartnerClient
     }
 
     /**
+     * Headers sent on every request.
+     *
+     * Who we are goes in User-Agent, not in five X-Travelo-SDK-* /
+     * X-Travelo-Integration-* headers. Those were dropped along with
+     * X-Request-Id: travelo-api read none of them, and its contract no longer
+     * documents them. User-Agent carries the same facts in the one header every
+     * proxy and access log already records.
+     *
      * @return array<string, string>
      */
     private function baseHeaders(): array
     {
         $headers = [
             'Accept' => 'application/json',
-            'X-Travelo-SDK-Name' => self::SDK_NAME,
-            'X-Travelo-SDK-Version' => self::SDK_VERSION,
-            'X-Request-Id' => bin2hex(random_bytes(8)),
+            'User-Agent' => $this->userAgent(),
         ];
 
         if ($this->defaultCurrency !== null) {
@@ -234,14 +240,20 @@ class PartnerClient
             $headers['Accept-Language'] = $this->locale;
         }
 
-        if ($this->integrationName !== null) {
-            $headers['X-Travelo-Integration-Name'] = $this->integrationName;
-        }
-
-        if ($this->integrationVersion !== null) {
-            $headers['X-Travelo-Integration-Version'] = $this->integrationVersion;
-        }
-
         return $headers;
+    }
+
+    /** e.g. "tour-sdk-php/0.1.0 (be-travelo-partner/dev)" */
+    private function userAgent(): string
+    {
+        $agent = self::SDK_NAME . '/' . self::SDK_VERSION;
+
+        if ($this->integrationName !== null) {
+            $agent .= ' (' . $this->integrationName
+                . ($this->integrationVersion !== null ? '/' . $this->integrationVersion : '')
+                . ')';
+        }
+
+        return $agent;
     }
 }

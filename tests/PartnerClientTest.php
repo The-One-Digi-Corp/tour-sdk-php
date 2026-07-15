@@ -24,8 +24,11 @@ final class PartnerClientTest extends TestCase
     /**
      * @param list<Response|\Throwable> $responses
      */
-    private function clientWith(array $responses): PartnerClient
-    {
+    private function clientWith(
+        array $responses,
+        ?string $integrationName = null,
+        ?string $integrationVersion = null,
+    ): PartnerClient {
         $this->transactions = [];
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(Middleware::history($this->transactions));
@@ -35,6 +38,8 @@ final class PartnerClientTest extends TestCase
             clientId: 'travelo_test_client',
             secret: 'travelo_test_secret',
             defaultCurrency: 'USD',
+            integrationName: $integrationName,
+            integrationVersion: $integrationVersion,
             http: new Client(['handler' => $stack, 'http_errors' => false]),
         );
     }
@@ -110,9 +115,49 @@ final class PartnerClientTest extends TestCase
 
         $request = $this->lastRequest();
 
-        self::assertSame('tour-sdk-php', $request->getHeaderLine('X-Travelo-SDK-Name'));
+        // Identity rides in User-Agent. It used to be spread over X-Travelo-SDK-Name,
+        // -Version, -Contract-Version and two X-Travelo-Integration-* headers, none
+        // of which travelo-api ever read and none of which its contract documents
+        // any more.
+        self::assertStringStartsWith('tour-sdk-php/', $request->getHeaderLine('User-Agent'));
         self::assertSame('USD', $request->getHeaderLine('X-Currency'));
-        self::assertNotSame('', $request->getHeaderLine('X-Request-Id'));
+
+        foreach ([
+            'X-Travelo-SDK-Name',
+            'X-Travelo-SDK-Version',
+            'X-Travelo-Integration-Name',
+            'X-Travelo-Integration-Version',
+            'X-Request-Id',
+        ] as $dropped) {
+            self::assertSame('', $request->getHeaderLine($dropped), "{$dropped} is no longer part of the contract.");
+        }
+    }
+
+    public function test_user_agent_names_the_integration_when_configured(): void
+    {
+        $client = $this->clientWith([self::envelope([])], integrationName: 'be-travelo-partner', integrationVersion: 'dev');
+
+        $client->get('api/partner/tours');
+
+        self::assertSame(
+            'tour-sdk-php/' . PartnerClient::SDK_VERSION . ' (be-travelo-partner/dev)',
+            $this->lastRequest()->getHeaderLine('User-Agent'),
+        );
+    }
+
+    public function test_create_sends_the_idempotency_key_the_contract_documents(): void
+    {
+        $client = $this->clientWith([self::envelope(['order_code' => 'TB-1'])]);
+
+        $client->bookings()->create(['tour_code' => 'T-1'], 'idem-42');
+
+        $request = $this->lastRequest();
+
+        // The body field is the documented channel. This SDK used to send the key
+        // only as headers travelo-api accepts but never documented, so a timed-out
+        // retry's safety rested on something no schema mentioned.
+        self::assertSame('idem-42', json_decode((string) $request->getBody(), true)['idempotency_key'] ?? null);
+        self::assertSame('idem-42', $request->getHeaderLine('X-Partner-Idempotency-Key'));
     }
 
     public function test_get_sends_no_body_and_signs_the_empty_hash(): void
