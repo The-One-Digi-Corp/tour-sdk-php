@@ -2,10 +2,27 @@
 
 return [
     /*
+     | Add these values to the consumer application's .env:
+     |
+     | TRAVELO_API_URL=http://localhost:8000
+     | TRAVELO_PARTNER_CLIENT_ID=partner_client_id
+     | TRAVELO_PARTNER_SECRET=partner_secret
+     | TRAVELO_DEFAULT_CURRENCY=USD
+     | TRAVELO_API_TIMEOUT=10
+     | TRAVELO_WEBHOOK_MAX_SKEW_SECONDS=300
+     | TRAVELO_INTEGRATION_NAME=be-travelo-partner
+     | TRAVELO_INTEGRATION_VERSION=dev
+     | TRAVELO_HOLD_TTL_MINUTES=30
+     |
+     | TRAVELO_API_URL, TRAVELO_PARTNER_CLIENT_ID, and TRAVELO_PARTNER_SECRET
+     | are required. Keep TRAVELO_PARTNER_SECRET out of source control.
+     */
+
+    /*
      | Origin only — a trailing /api is stripped. Paths are appended as travelo-api
      | sees them, so the signed path matches the server's own.
      */
-    'base_url' => env('TRAVELO_API_URL', 'http://localhost:8000'),
+    'base_url' => env('TRAVELO_API_URL'),
 
     /*
      | The secret signs outbound API calls AND verifies inbound webhooks. Rotating

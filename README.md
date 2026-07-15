@@ -206,17 +206,17 @@ TRAVELO_HOLD_TTL_MINUTES=30
 
 Environment variables:
 
-| Variable | Purpose |
-| --- | --- |
-| `TRAVELO_API_URL` | Origin of `travelo-api`. A trailing `/api` is stripped. |
-| `TRAVELO_PARTNER_CLIENT_ID` | Partner credential client id. |
-| `TRAVELO_PARTNER_SECRET` | Shared secret for API request signing and webhook verification. |
-| `TRAVELO_DEFAULT_CURRENCY` | Sent as `X-Currency` on SDK requests. |
-| `TRAVELO_API_TIMEOUT` | HTTP timeout in seconds. |
-| `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | Accepted webhook timestamp skew. |
-| `TRAVELO_INTEGRATION_NAME` | Sent as `X-Travelo-Integration-Name`. |
-| `TRAVELO_INTEGRATION_VERSION` | Sent as `X-Travelo-Integration-Version`. |
-| `TRAVELO_HOLD_TTL_MINUTES` | Consumer-side mirror of upstream booking hold TTL. |
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `TRAVELO_API_URL` | Yes | Origin of `travelo-api`. A trailing `/api` is stripped. |
+| `TRAVELO_PARTNER_CLIENT_ID` | Yes | Partner credential client id. |
+| `TRAVELO_PARTNER_SECRET` | Yes | Shared secret for API request signing and webhook verification. |
+| `TRAVELO_DEFAULT_CURRENCY` | No | Sent as `X-Currency` on SDK requests. Defaults to `USD`. |
+| `TRAVELO_API_TIMEOUT` | No | HTTP timeout in seconds. Defaults to `10`. |
+| `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | No | Accepted webhook timestamp skew. Defaults to `300`. |
+| `TRAVELO_INTEGRATION_NAME` | No | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`. |
+| `TRAVELO_INTEGRATION_VERSION` | No | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`. |
+| `TRAVELO_HOLD_TTL_MINUTES` | No | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
 
 ## Laravel Usage
 
