@@ -22,7 +22,8 @@ use TheOneDigi\TourSdk\Generated\Resource\PartnerTourResource;
  */
 class TourApi
 {
-    private const BASE = 'api/partner/tours';
+    /** Public so controller mode can build the same paths without restating them. */
+    public const BASE = 'api/partner/tours';
 
     public function __construct(private readonly PartnerClient $client)
     {

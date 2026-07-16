@@ -3,7 +3,7 @@
     "description": "PHP SDK for the Travelo Partner API (tour catalog, booking, payment confirmation).",
     "type": "library",
     "license": "proprietary",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "require": {
         "php": "^8.1",
         "guzzlehttp/guzzle": "^7.2",

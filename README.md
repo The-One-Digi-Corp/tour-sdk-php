@@ -1,16 +1,35 @@
 # Travelo Tour SDK for PHP
 
-PHP/Laravel SDK for the Travelo Partner API. It provides a signed HTTP client,
-typed API entry points for tour catalog and partner booking flows, Laravel
-service-provider wiring, optional catalog proxy routes, and webhook signature
-verification.
+A drop-in Laravel package for the Travelo Partner API. Include it, set three env
+values, and the tour catalog and partner booking endpoints exist on your app —
+no controllers to write. It also ships a signed HTTP client and typed API entry
+points for when you want to call the Partner API from your own code.
 
 This SDK is the PHP sibling of the TypeScript `tour-sdk`; both clients target the
 same Partner API contract served by `travelo-api`.
 
+## Recommended: controller mode (drop-in)
+
+The primary way to use this package. Set:
+
+```dotenv
+TRAVELO_API_URL=http://localhost:8000
+TRAVELO_PARTNER_CLIENT_ID=...
+TRAVELO_PARTNER_SECRET=...
+TRAVELO_CONTROLLER_MODE=true
+```
+
+`php artisan migrate`, and the endpoints are live under `api/travelo`. Your app's
+only code is at most an auth middleware and an owner resolver — see
+[Controller Mode](#controller-mode). The HTTP contract the frontend consumes is in
+`.claude/docs/tour-sdk-package-contract.md`.
+
+Injecting `TourApi` / `BookingApi` into your own controllers ("SDK mode") still
+works and is documented below; controller mode is the default path.
+
 ## Status
 
-Current package version: `0.1.0`
+Current package version: `0.2.0`
 
 Runtime support:
 
@@ -750,27 +769,101 @@ Contract drift should be caught by:
 - Resource mapping tests for typed response fields.
 - Consumer backend tests that mock SDK APIs with request/resource objects.
 
-## Laravel Catalog Proxy
+## Controller Mode
 
-The SDK can register opt-in, read-only catalog proxy routes:
+The SDK can register the endpoints itself, so a consumer writes no controllers.
+It is off by default — installing a package must never open HTTP routes on
+someone's app without them saying so.
+
+```dotenv
+TRAVELO_CONTROLLER_MODE=true
+TRAVELO_ROUTE_PREFIX=travelo
+```
+
+That is the whole integration. Migrations for the booking mirror ship with the
+package and run on `php artisan migrate`.
+
+Routes registered under the prefix:
+
+| Method | Path | Auth |
+| --- | --- | --- |
+| GET | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public |
+| GET | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date` | public |
+| GET | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews` | public |
+| POST | `bookings/quote`, `bookings/check-promotion` | public |
+| GET | `bookings`, `bookings/{code}` | `auth_middleware` |
+| POST | `bookings`, `bookings/{code}/cancel`, `bookings/{code}/applicant/{id}` | `auth_middleware` |
+
+### Ownership
+
+Booking reads come from the local mirror, not from upstream, and that is a
+security boundary rather than an optimisation. `GET api/partner/bookings`
+upstream returns **every booking belonging to the partner** — it is scoped by the
+client_id in the HMAC, not by any customer. Forwarding it would hand each visitor
+the names, emails and amounts of everyone else's bookings.
+
+Ownership defaults to `Auth::id()`. For another guard, register a resolver in a
+service provider:
+
+```php
+use TheOneDigi\TourSdk\Laravel\Support\BookingOwner;
+
+BookingOwner::resolveUsing(fn () => Auth::guard('web')->id());
+```
+
+It goes in a provider rather than config because `config:cache` cannot serialise
+a closure — it would fail at deploy time, on the one machine nobody tests on.
+
+Set `travelo.controller_mode.auth_middleware` too. The controllers refuse when no
+owner resolves, but the guard is what should be stopping the request first.
+
+### Merging host-local data (wishlist)
+
+The package reads tours from travelo-api and knows nothing about the host's users,
+so anything user-scoped — a wishlist flag, a "booked before" badge — comes from the
+host through a decorator, not a controller the host overrides:
+
+```php
+use TheOneDigi\TourSdk\Laravel\Support\TourCatalogDecorator;
+
+// in a service provider
+TourCatalogDecorator::extend(function (array $tours, Request $request): array {
+    return WishlistMerger::apply($tours, Auth::id());
+});
+```
+
+It runs on every catalog list (`index`, `get-seasonal`, `get-featured`, `get-similar`)
+and on `show`, after the upstream payload arrives and before it is returned. A
+decorator receives the tour arrays as upstream returned them and must return one
+entry per input entry, in order. With no decorator registered the payload is
+forwarded verbatim.
+
+### No confirm route
+
+`confirm` is not routable in either mode, by design. It turns a held seat into a
+sold one, and only the consuming app's payment flow knows whether money arrived.
+A route would let anyone confirm a booking nobody paid for. Call
+`Travelo::bookings()->confirm($code)` from your payment success path instead.
+
+### Current limitation — no payment yet
+
+Bookings created through controller mode are held and mirrored, but nothing
+confirms them, so they expire on travelo-api's clock after
+`hold_ttl_minutes`. Wiring payment is the next step; until then use SDK mode for
+checkout, or call `confirm()` yourself.
+
+## Laravel Catalog Proxy (superseded)
+
+Predates controller mode and stays for compatibility. Prefer
+`TRAVELO_CONTROLLER_MODE=true` — it covers the same catalog reads with explicit
+routes instead of a `{path}` catch-all.
 
 ```php
 use Illuminate\Support\Facades\Route;
 
-Route::traveloCatalog();
-```
-
-This creates a GET route under `catalog/{path}` and only allows `tours` paths.
-
-Custom prefix and middleware:
-
-```php
+Route::traveloCatalog();                       // GET /catalog/tours...
 Route::traveloCatalog('catalog', ['throttle:60,1']);
-Route::traveloCatalog('v2/content', ['auth:sanctum']);
 ```
-
-The SDK intentionally does not register booking write routes. Booking writes and
-payment policy belong in the consuming app.
 
 ## Webhooks
 

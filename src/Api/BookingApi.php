@@ -24,7 +24,8 @@ use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
  */
 class BookingApi
 {
-    private const BASE = 'api/partner/bookings';
+    /** Public so controller mode can build the same paths without restating them. */
+    public const BASE = 'api/partner/bookings';
 
     public function __construct(private readonly PartnerClient $client)
     {
@@ -70,9 +71,14 @@ class BookingApi
         $body = $this->payload($payload);
         $body['idempotency_key'] = $idempotencyKey;
 
-        return $this->client->data($this->client->post(self::BASE, $body, [
+        $data = $this->client->data($this->client->post(self::BASE, $body, [
             'X-Partner-Idempotency-Key' => $idempotencyKey,
         ]));
+
+        // Create returns the booking under `order` (matching the storefront shape),
+        // unlike the other booking reads which return the resource directly. Unwrap
+        // it so createResource() and callers get the resource, not the wrapper.
+        return isset($data['order']) && is_array($data['order']) ? $data['order'] : $data;
     }
 
     /**

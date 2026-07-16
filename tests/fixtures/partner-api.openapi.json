@@ -111,7 +111,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -306,7 +306,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -353,37 +353,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "tour_code": {
-                                        "type": "string"
-                                    },
-                                    "departure_date": {
-                                        "type": "string",
-                                        "format": "date-time"
-                                    },
-                                    "adult_quantity": {
-                                        "type": "integer",
-                                        "minimum": 1
-                                    },
-                                    "child_quantity": {
-                                        "type": [
-                                            "integer",
-                                            "null"
-                                        ],
-                                        "minimum": 0
-                                    },
-                                    "infant_quantity": {
-                                        "type": [
-                                            "integer",
-                                            "null"
-                                        ],
-                                        "minimum": 0
-                                    },
-                                    "promotion_code": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
-                                    },
                                     "name": {
                                         "type": "string",
                                         "minLength": 2,
@@ -414,6 +383,12 @@
                                         "format": "email",
                                         "maxLength": 80
                                     },
+                                    "promotion_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
                                     "idempotency_key": {
                                         "type": [
                                             "string",
@@ -421,8 +396,52 @@
                                         ],
                                         "maxLength": 80
                                     },
-                                    "special_request": {
-                                        "type": "string"
+                                    "order_details": {
+                                        "type": "object",
+                                        "properties": {
+                                            "tour_id": {
+                                                "type": "integer"
+                                            },
+                                            "tour_price_group_id": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
+                                            "departure_date": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "adult_quantity": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                            },
+                                            "child_quantity": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 0
+                                            },
+                                            "infant_quantity": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 0
+                                            },
+                                            "special_request": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "tour_id",
+                                            "departure_date",
+                                            "adult_quantity"
+                                        ]
                                     },
                                     "applicants": {
                                         "type": "array",
@@ -433,12 +452,10 @@
                                     }
                                 },
                                 "required": [
-                                    "tour_code",
-                                    "departure_date",
-                                    "adult_quantity",
                                     "name",
                                     "phone",
                                     "email",
+                                    "order_details",
                                     "applicants"
                                 ]
                             }
@@ -512,27 +529,56 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 404
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 404
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
                                         },
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 404
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Tour not found or not whitelisted for partner."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
                                     ]
                                 }
                             }
@@ -554,7 +600,15 @@
                                             "const": "Booking created successfully."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "type": "object",
+                                            "properties": {
+                                                "order": {
+                                                    "$ref": "#/components/schemas/PartnerBookingResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "order"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -582,7 +636,15 @@
                                             "const": "Booking retrieved (idempotent)"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "type": "object",
+                                            "properties": {
+                                                "order": {
+                                                    "$ref": "#/components/schemas/PartnerBookingResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "order"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -756,7 +818,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1069,7 +1131,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1313,7 +1375,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1491,7 +1553,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1703,7 +1765,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1931,7 +1993,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2415,7 +2477,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2612,7 +2674,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2786,7 +2848,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2989,7 +3051,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3214,7 +3276,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3420,7 +3482,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3597,7 +3659,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3805,7 +3867,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4103,7 +4165,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4368,7 +4430,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784195059"
                     },
                     {
                         "name": "X-Partner-Signature",

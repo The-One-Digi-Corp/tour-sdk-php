@@ -55,4 +55,29 @@ return [
      | PARTNER_HOLD_TTL_MINUTES, change this with it.
      */
     'hold_ttl_minutes' => (int) env('TRAVELO_HOLD_TTL_MINUTES', 30),
+
+    /*
+     | Controller mode — the SDK registers the endpoints itself, so a consumer writes
+     | no controllers. Off by default: installing a package must never open HTTP
+     | routes on someone's app without them asking.
+     |
+     |   TRAVELO_CONTROLLER_MODE=true
+     |   TRAVELO_ROUTE_PREFIX=travelo
+     |
+     | `auth_middleware` guards the per-customer booking routes. Leaving it empty
+     | makes `GET /bookings` list every booking the partner has — set it.
+     |
+     | Ownership is resolved with Auth::id() by default. To use another guard:
+     |
+     |   BookingOwner::resolveUsing(fn () => Auth::guard('web')->id());
+     |
+     | (in a service provider — not here, because config may be cached and
+     | `config:cache` cannot serialise a closure.)
+     */
+    'controller_mode' => [
+        'enabled' => (bool) env('TRAVELO_CONTROLLER_MODE', false),
+        'prefix' => env('TRAVELO_ROUTE_PREFIX', 'travelo'),
+        'middleware' => ['api'],
+        'auth_middleware' => ['auth:sanctum'],
+    ],
 ];
