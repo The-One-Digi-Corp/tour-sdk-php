@@ -92,6 +92,26 @@ class ControllerModeTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function minBookingPayload(): array
+    {
+        return [
+            'order_details' => [
+                'tour_id' => 1,
+                'departure_date' => '2026-08-15',
+                'adult_quantity' => 2,
+            ],
+            'name' => 'Nguyen Van A',
+            'phone' => '0900000000',
+            'email' => 'a@x.com',
+            'applicants' => [
+                ['type' => 1, 'full_name' => 'Nguyen Van A'],
+            ],
+        ];
+    }
+
     private function asOwner(int $id): void
     {
         BookingOwner::resolveUsing(fn () => $id);
@@ -251,7 +271,7 @@ class ControllerModeTest extends TestCase
         $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', ['tour_code' => 'T-1'])->assertOk();
+        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
 
         $booking = TourBooking::where('order_code', 'TB-001')->first();
 
@@ -274,7 +294,7 @@ class ControllerModeTest extends TestCase
             $seen = ['order_code' => $booking->order_code, 'payload_total' => $payload['total'] ?? null];
         });
 
-        $this->postJson('travelo/bookings', ['order_details' => ['tour_id' => 1]])->assertOk();
+        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
 
         $this->assertSame('TB-001', $seen['order_code']);
         $this->assertSame(120.5, $seen['payload_total']);
@@ -286,7 +306,7 @@ class ControllerModeTest extends TestCase
         // No asOwner(): a guest holds a seat before they have an account, like the
         // storefront. travelo-api creates the account from their email.
 
-        $this->postJson('travelo/bookings', ['order_details' => ['tour_id' => 1]])->assertOk();
+        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
 
         $booking = TourBooking::where('order_code', 'TB-001')->first();
 
@@ -299,8 +319,7 @@ class ControllerModeTest extends TestCase
         $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', [
-            'tour_code' => 'T-1',
+        $this->postJson('travelo/bookings', $this->minBookingPayload() + [
             'idempotency_key' => 'attacker-supplied',
         ])->assertOk();
 
@@ -327,7 +346,7 @@ class ControllerModeTest extends TestCase
         ]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', ['tour_code' => 'T-1'])
+        $this->postJson('travelo/bookings', $this->minBookingPayload())
             ->assertStatus(422)
             ->assertJson(['message' => 'Tour is sold out.']);
 
@@ -342,11 +361,11 @@ class ControllerModeTest extends TestCase
         ]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', ['tour_code' => 'T-1'])->assertOk();
+        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
         $first = TourBooking::where('order_code', 'TB-001')->firstOrFail();
         $heldUntil = $first->held_until;
 
-        $this->postJson('travelo/bookings', ['tour_code' => 'T-1'])->assertOk();
+        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
 
         // The seat expires on travelo-api's clock, not on ours — a second write must
         // not push the window forward, and must not create a twin row.

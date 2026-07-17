@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TheOneDigi\TourSdk\Api;
 
+use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Common\RequestPayload;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingApplicantResource;
@@ -25,7 +26,7 @@ use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 class BookingApi
 {
     /** Public so controller mode can build the same paths without restating them. */
-    public const BASE = 'api/partner/bookings';
+    public const BASE = ApiPaths::BOOKINGS;
 
     public function __construct(private readonly PartnerClient $client)
     {
@@ -39,7 +40,7 @@ class BookingApi
      */
     public function quote(array|RequestPayload $payload): array
     {
-        return $this->client->data($this->client->post(self::BASE . '/quote', $this->payload($payload)));
+        return $this->client->data($this->client->post(self::BASE . ApiPaths::QUOTE, $this->payload($payload)));
     }
 
     /**
@@ -97,7 +98,7 @@ class BookingApi
      */
     public function confirm(string $code): array
     {
-        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . '/confirm'));
+        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::CONFIRM));
     }
 
     public function confirmResource(string $code): PartnerBookingResource
@@ -112,7 +113,7 @@ class BookingApi
      */
     public function cancel(string $code): array
     {
-        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . '/cancel'));
+        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::CANCEL));
     }
 
     public function cancelResource(string $code): PartnerBookingResource
@@ -154,7 +155,7 @@ class BookingApi
      */
     public function checkPromotion(array|RequestPayload $payload): array
     {
-        return $this->client->data($this->client->post(self::BASE . '/check-promotion', $this->payload($payload)));
+        return $this->client->data($this->client->post(self::BASE . ApiPaths::CHECK_PROMOTION, $this->payload($payload)));
     }
 
     /**
@@ -163,7 +164,7 @@ class BookingApi
     public function updateApplicant(string $code, int $applicantId, array|RequestPayload $payload): array
     {
         return $this->client->data($this->client->post(
-            self::BASE . '/' . rawurlencode($code) . '/applicant/' . $applicantId,
+            self::BASE . '/' . rawurlencode($code) . ApiPaths::APPLICANT . '/' . $applicantId,
             $this->payload($payload),
         ));
     }

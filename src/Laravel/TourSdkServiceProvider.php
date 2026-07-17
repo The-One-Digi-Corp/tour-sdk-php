@@ -7,6 +7,7 @@ namespace TheOneDigi\TourSdk\Laravel;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\BookingController;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\CatalogProxyController;
@@ -112,21 +113,21 @@ class TourSdkServiceProvider extends ServiceProvider
                 // Literal segments first: '/{code}' would otherwise swallow
                 // 'references' and every get-* below it.
                 Route::get('/', [TourCatalogController::class, 'index'])->name('index');
-                Route::get('/references', [TourCatalogController::class, 'references'])->name('references');
-                Route::get('/get-seasonal', [TourCatalogController::class, 'seasonal'])->name('seasonal');
-                Route::get('/get-featured', [TourCatalogController::class, 'featured'])->name('featured');
-                Route::get('/get-similar', [TourCatalogController::class, 'similar'])->name('similar');
-                Route::get('/tour-itinerary/{id}', [TourCatalogController::class, 'itinerary'])->name('itinerary');
+                Route::get(ApiPaths::REFERENCES, [TourCatalogController::class, 'references'])->name('references');
+                Route::get(ApiPaths::SEASONAL, [TourCatalogController::class, 'seasonal'])->name('seasonal');
+                Route::get(ApiPaths::FEATURED, [TourCatalogController::class, 'featured'])->name('featured');
+                Route::get(ApiPaths::SIMILAR, [TourCatalogController::class, 'similar'])->name('similar');
+                Route::get(ApiPaths::ITINERARY . '/{id}', [TourCatalogController::class, 'itinerary'])->name('itinerary');
                 Route::get('/{code}', [TourCatalogController::class, 'show'])->name('show');
-                Route::get('/{code}/calendars', [TourCatalogController::class, 'calendars'])->name('calendars');
-                Route::get('/{code}/calendar-by-date', [TourCatalogController::class, 'calendarByDate'])
+                Route::get('/{code}' . ApiPaths::CALENDARS, [TourCatalogController::class, 'calendars'])->name('calendars');
+                Route::get('/{code}' . ApiPaths::CALENDAR_BY_DATE, [TourCatalogController::class, 'calendarByDate'])
                     ->name('calendar-by-date');
-                Route::get('/{id}/get-list-reviews', [TourCatalogController::class, 'reviews'])->name('reviews');
-                Route::get('/{id}/get-all-image-reviews', [TourCatalogController::class, 'reviewImages'])
+                Route::get('/{id}' . ApiPaths::REVIEWS, [TourCatalogController::class, 'reviews'])->name('reviews');
+                Route::get('/{id}' . ApiPaths::REVIEW_IMAGES, [TourCatalogController::class, 'reviewImages'])
                     ->name('review-images');
-                Route::get('/{id}/get-schedule-tour', [TourCatalogController::class, 'schedule'])
+                Route::get('/{id}' . ApiPaths::SCHEDULE, [TourCatalogController::class, 'schedule'])
                     ->name('schedule');
-                Route::get('/{id}/get-tour-booking/{code}', [TourCatalogController::class, 'tourForBooking'])
+                Route::get('/{id}' . ApiPaths::TOUR_FOR_BOOKING . '/{code}', [TourCatalogController::class, 'tourForBooking'])
                     ->name('for-booking');
             });
 
@@ -134,8 +135,8 @@ class TourSdkServiceProvider extends ServiceProvider
                 // Public, like the storefront: a customer holds a seat before they
                 // have an account (travelo-api creates one from their email). Quote
                 // and promotion checks reserve nothing either.
-                Route::post('/quote', [BookingController::class, 'quote'])->name('quote');
-                Route::post('/check-promotion', [BookingController::class, 'checkPromotion'])->name('check-promotion');
+                Route::post(ApiPaths::QUOTE, [BookingController::class, 'quote'])->name('quote');
+                Route::post(ApiPaths::CHECK_PROMOTION, [BookingController::class, 'checkPromotion'])->name('check-promotion');
                 Route::post('/', [BookingController::class, 'store'])->name('store');
 
                 // Reads and mutations of an existing booking are per-customer.
@@ -144,8 +145,8 @@ class TourSdkServiceProvider extends ServiceProvider
                 Route::middleware($auth)->group(function (): void {
                     Route::get('/', [BookingController::class, 'index'])->name('index');
                     Route::get('/{code}', [BookingController::class, 'show'])->name('show');
-                    Route::post('/{code}/cancel', [BookingController::class, 'cancel'])->name('cancel');
-                    Route::post('/{code}/applicant/{id}', [BookingController::class, 'updateApplicant'])
+                    Route::post('/{code}' . ApiPaths::CANCEL, [BookingController::class, 'cancel'])->name('cancel');
+                    Route::post('/{code}' . ApiPaths::APPLICANT . '/{id}', [BookingController::class, 'updateApplicant'])
                         ->name('update-applicant');
                 });
             });

@@ -19,8 +19,10 @@ TRAVELO_PARTNER_SECRET=...
 TRAVELO_CONTROLLER_MODE=true
 ```
 
-`php artisan migrate`, and the endpoints are live under `api/travelo`. Your app's
-only code is at most an auth middleware and an owner resolver — see
+`php artisan migrate`, and the endpoints are live under `/travelo`. Set
+`TRAVELO_ROUTE_PREFIX` to move them — `be-travelo-partner` uses `api/travelo`, since
+the `api` middleware group adds no URL prefix of its own to package routes. Your
+app's only code is at most an auth middleware and an owner resolver — see
 [Controller Mode](#controller-mode). The HTTP contract the frontend consumes is in
 `.claude/docs/tour-sdk-package-contract.md`.
 
@@ -62,7 +64,10 @@ PHP `>= 8.2`, depending on Composer resolution.
 
 - It does not manage partner-local payment tables.
 - It does not expose or create `payment_histories`.
-- It does not auto-register booking write routes in a Laravel consumer app.
+- It does not register any route unless you opt in with
+  `TRAVELO_CONTROLLER_MODE=true`; in SDK mode it opens no HTTP surface at all.
+- It does not route `confirm()` in either mode — that turns a held seat into a
+  sold one, so it stays callable only from your payment success path.
 - It does not call first-party checkout routes such as
   `/api/tours/bookings/checkout/{code}`.
 - It does not decide whether money is settled. The consuming partner app owns
@@ -790,9 +795,14 @@ Routes registered under the prefix:
 | GET | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public |
 | GET | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date` | public |
 | GET | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews` | public |
-| POST | `bookings/quote`, `bookings/check-promotion` | public |
+| POST | `bookings/quote`, `bookings/check-promotion`, `bookings` | public |
 | GET | `bookings`, `bookings/{code}` | `auth_middleware` |
-| POST | `bookings`, `bookings/{code}/cancel`, `bookings/{code}/applicant/{id}` | `auth_middleware` |
+| POST | `bookings/{code}/cancel`, `bookings/{code}/applicant/{id}` | `auth_middleware` |
+
+Creating a booking is public on purpose: a customer holds a seat before they have
+an account, and travelo-api creates one from their email. Quote and promotion
+checks reserve nothing. Everything that reads or mutates an *existing* booking is
+per-customer and sits behind `auth_middleware`.
 
 ### Ownership
 

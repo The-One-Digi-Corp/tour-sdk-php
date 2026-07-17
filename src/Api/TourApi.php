@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TheOneDigi\TourSdk\Api;
 
+use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Common\RequestPayload;
 use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDateResource;
@@ -23,7 +24,7 @@ use TheOneDigi\TourSdk\Generated\Resource\PartnerTourResource;
 class TourApi
 {
     /** Public so controller mode can build the same paths without restating them. */
-    public const BASE = 'api/partner/tours';
+    public const BASE = ApiPaths::TOURS;
 
     public function __construct(private readonly PartnerClient $client)
     {
@@ -51,7 +52,7 @@ class TourApi
      */
     public function references(): array
     {
-        return $this->client->data($this->client->get(self::BASE . '/references'));
+        return $this->client->data($this->client->get(self::BASE . ApiPaths::REFERENCES));
     }
 
     /**
@@ -59,7 +60,7 @@ class TourApi
      */
     public function seasonal(array|RequestPayload $params = []): array
     {
-        return $this->client->data($this->client->get(self::BASE . '/get-seasonal', $this->payload($params)));
+        return $this->client->data($this->client->get(self::BASE . ApiPaths::SEASONAL, $this->payload($params)));
     }
 
     public function seasonalResources(array|RequestPayload $params = []): TourListResource
@@ -72,7 +73,7 @@ class TourApi
      */
     public function featured(array|RequestPayload $params = []): array
     {
-        return $this->client->data($this->client->get(self::BASE . '/get-featured', $this->payload($params)));
+        return $this->client->data($this->client->get(self::BASE . ApiPaths::FEATURED, $this->payload($params)));
     }
 
     public function featuredResources(array|RequestPayload $params = []): TourListResource
@@ -85,7 +86,7 @@ class TourApi
      */
     public function similar(array|RequestPayload $params): array
     {
-        return $this->client->data($this->client->get(self::BASE . '/get-similar', $this->payload($params)));
+        return $this->client->data($this->client->get(self::BASE . ApiPaths::SIMILAR, $this->payload($params)));
     }
 
     public function similarResources(array|RequestPayload $params): TourListResource
@@ -114,7 +115,7 @@ class TourApi
     public function calendars(string $code, array|RequestPayload $params = []): array
     {
         return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode($code) . '/calendars', $this->payload($params)),
+            $this->client->get(self::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDARS, $this->payload($params)),
         );
     }
 
@@ -164,7 +165,7 @@ class TourApi
     public function calendarByDate(string $code, array|RequestPayload $params): array
     {
         return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode($code) . '/calendar-by-date', $this->payload($params)),
+            $this->client->get(self::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDAR_BY_DATE, $this->payload($params)),
         );
     }
 
@@ -183,7 +184,7 @@ class TourApi
     public function reviews(int|string $tourId, array $params = []): array
     {
         return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . '/get-list-reviews', $params),
+            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::REVIEWS, $params),
         );
     }
 
@@ -194,7 +195,46 @@ class TourApi
     public function reviewImages(int|string $tourId, array $params = []): array
     {
         return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . '/get-all-image-reviews', $params),
+            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::REVIEW_IMAGES, $params),
+        );
+    }
+
+    /**
+     * Day-by-day itinerary. Addressed by tour **id**, like the review endpoints.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function itinerary(int|string $tourId): array
+    {
+        return $this->client->data(
+            $this->client->get(self::BASE . ApiPaths::ITINERARY . '/' . rawurlencode((string) $tourId)),
+        );
+    }
+
+    /**
+     * Bookable departures from $params['date'] onward, one entry per date.
+     *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    public function schedule(int|string $tourId, array $params = []): array
+    {
+        return $this->client->data(
+            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::SCHEDULE, $params),
+        );
+    }
+
+    /**
+     * The tour as the booking screen needs it, for the departure $code.
+     *
+     * @return array<string, mixed>
+     */
+    public function tourForBooking(int|string $tourId, string $code): array
+    {
+        return $this->client->data(
+            $this->client->get(
+                self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::TOUR_FOR_BOOKING . '/' . rawurlencode($code),
+            ),
         );
     }
 

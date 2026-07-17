@@ -3,11 +3,11 @@
     "info": {
         "title": "Travelo Partner API",
         "version": "2026-07-01",
-        "description": "Partner-facing Tour API contract. Used by @theonedigi/tour-sdk for TypeScript/Zod generation."
+        "description": "Partner-facing Tour API contract. Used by @theonedigi\/tour-sdk for TypeScript\/Zod generation."
     },
     "servers": [
         {
-            "url": "http://localhost/api/partner"
+            "url": "http:\/\/localhost:8000\/api\/partner"
         }
     ],
     "security": [
@@ -18,10 +18,10 @@
         }
     ],
     "paths": {
-        "/bookings": {
+        "\/bookings": {
             "get": {
                 "operationId": "partnerAccountListBookings",
-                "description": "Filters: status, date_from, date_to (on created_at), q (order_code / customer\nname / email). Paginated via page & per_page; meta is returned alongside data.",
+                "description": "Filters: status, date_from, date_to (on created_at), q (order_code \/ customer\nname \/ email). Paginated via page & per_page; meta is returned alongside data.",
                 "summary": "List the authenticated partner's own bookings, newest first",
                 "tags": [
                     "PartnerBooking"
@@ -107,17 +107,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -126,7 +126,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -135,7 +135,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -144,7 +144,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -155,7 +155,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -187,7 +187,7 @@
                     "200": {
                         "description": "Pagination envelope matches the app convention (AccountService@getTours).",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -217,7 +217,7 @@
                                                 "bookings": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/PartnerBookingResource"
+                                                        "$ref": "#\/components\/schemas\/PartnerBookingResource"
                                                     }
                                                 }
                                             },
@@ -242,7 +242,7 @@
                     "422": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -283,6 +283,7 @@
             },
             "post": {
                 "operationId": "partnerCheckoutCreateBooking",
+                "description": "Accepts both the flat SDK format (tour_code + departure_date) and the\nlegacy nested format (order_details.*). Client-sent prices are validated\nas optional but ignored \u2014 all pricing is server-authoritative from the\ninternal quote.",
                 "summary": "Create a booking order for a whitelisted tour",
                 "tags": [
                     "PartnerBooking"
@@ -302,17 +303,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -321,7 +322,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -330,7 +331,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -339,7 +340,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -349,7 +350,7 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "application\/json": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
@@ -446,7 +447,7 @@
                                     "applicants": {
                                         "type": "array",
                                         "items": {
-                                            "$ref": "#/components/schemas/PartnerCheckoutCreateBookingApplicantRequest"
+                                            "$ref": "#\/components\/schemas\/PartnerCheckoutCreateBookingApplicantRequest"
                                         },
                                         "minItems": 1
                                     }
@@ -466,7 +467,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -527,7 +528,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -587,7 +588,7 @@
                     "201": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -603,7 +604,7 @@
                                             "type": "object",
                                             "properties": {
                                                 "order": {
-                                                    "$ref": "#/components/schemas/PartnerBookingResource"
+                                                    "$ref": "#\/components\/schemas\/PartnerBookingResource"
                                                 }
                                             },
                                             "required": [
@@ -623,7 +624,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -639,7 +640,7 @@
                                             "type": "object",
                                             "properties": {
                                                 "order": {
-                                                    "$ref": "#/components/schemas/PartnerBookingResource"
+                                                    "$ref": "#\/components\/schemas\/PartnerBookingResource"
                                                 }
                                             },
                                             "required": [
@@ -659,7 +660,7 @@
                     "409": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -691,7 +692,7 @@
                     "401": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -723,7 +724,7 @@
                     "422": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -792,7 +793,7 @@
                 ]
             }
         },
-        "/bookings/quote": {
+        "\/bookings\/quote": {
             "post": {
                 "operationId": "partnerCheckoutQuote",
                 "summary": "Get a quote with pricing breakdown and slot availability",
@@ -814,17 +815,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -833,7 +834,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -842,7 +843,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -851,7 +852,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -861,7 +862,7 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "application\/json": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
@@ -910,7 +911,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -942,7 +943,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -973,7 +974,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -986,7 +987,7 @@
                                             "const": "Success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/BookingQuoteResource"
+                                            "$ref": "#\/components\/schemas\/BookingQuoteResource"
                                         }
                                     },
                                     "required": [
@@ -1001,7 +1002,7 @@
                     "422": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -1105,7 +1106,7 @@
                 ]
             }
         },
-        "/bookings/check-promotion": {
+        "\/bookings\/check-promotion": {
             "post": {
                 "operationId": "partnerCheckoutCheckPromotion",
                 "summary": "Validate a promotion code before quoting (mirrors the public tour\n`check-promotion`). Body: `code`",
@@ -1127,17 +1128,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -1146,7 +1147,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -1155,7 +1156,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -1164,7 +1165,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -1174,7 +1175,7 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "application\/json": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
@@ -1194,7 +1195,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1226,7 +1227,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1244,7 +1245,7 @@
                                                 "promotion": {
                                                     "anyOf": [
                                                         {
-                                                            "$ref": "#/components/schemas/TourPromotion"
+                                                            "$ref": "#\/components\/schemas\/TourPromotion"
                                                         },
                                                         {
                                                             "type": "null"
@@ -1269,7 +1270,7 @@
                     "400": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1301,7 +1302,7 @@
                     "422": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1341,7 +1342,7 @@
                 ]
             }
         },
-        "/bookings/{code}": {
+        "\/bookings\/{code}": {
             "get": {
                 "operationId": "partnerAccountGetBooking",
                 "summary": "Retrieve partner booking details",
@@ -1371,17 +1372,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -1390,7 +1391,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -1399,7 +1400,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -1408,7 +1409,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -1419,7 +1420,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1451,7 +1452,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1464,7 +1465,7 @@
                                             "const": "Booking retrieved successfully."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
                                         }
                                     },
                                     "required": [
@@ -1479,7 +1480,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1518,7 +1519,7 @@
                 ]
             }
         },
-        "/bookings/{code}/confirm": {
+        "\/bookings\/{code}\/confirm": {
             "post": {
                 "operationId": "partnerCheckoutConfirmBooking",
                 "description": "Two-step model: `store` reserves the slot (PENDING_PAYMENT). This flips the\nheld booking to IN_PROGRESS (\"paid\") so it counts toward revenue and stops the\nhold-expiry job from releasing its slot. Idempotent and slot-neutral \u2014 the\nseats were already deducted at booking time.",
@@ -1549,17 +1550,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -1568,7 +1569,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -1577,7 +1578,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -1586,7 +1587,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -1597,7 +1598,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1629,7 +1630,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1645,7 +1646,7 @@
                                             ]
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
                                         }
                                     },
                                     "required": [
@@ -1660,7 +1661,7 @@
                     "409": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1692,7 +1693,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1731,7 +1732,7 @@
                 ]
             }
         },
-        "/bookings/{code}/cancel": {
+        "\/bookings\/{code}\/cancel": {
             "post": {
                 "operationId": "partnerCheckoutCancelBooking",
                 "summary": "Cancel a partner booking",
@@ -1761,17 +1762,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -1780,7 +1781,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -1789,7 +1790,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -1798,7 +1799,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -1809,7 +1810,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1841,7 +1842,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1857,7 +1858,7 @@
                                             ]
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
                                         }
                                     },
                                     "required": [
@@ -1872,7 +1873,7 @@
                     "409": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1904,7 +1905,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -1943,7 +1944,7 @@
                 ]
             }
         },
-        "/bookings/{code}/applicant/{id}": {
+        "\/bookings\/{code}\/applicant\/{id}": {
             "post": {
                 "operationId": "partnerAccountUpdateApplicant",
                 "description": "Partial update \u2014 only the fields present in the body are changed; omitted\nfields keep their stored value. The {id} path segment is the applicant id\nand must belong to the booking identified by {code}.",
@@ -1989,17 +1990,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -2008,7 +2009,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -2017,7 +2018,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -2026,7 +2027,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -2035,7 +2036,7 @@
                 ],
                 "requestBody": {
                     "content": {
-                        "application/json": {
+                        "application\/json": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
@@ -2086,7 +2087,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2118,7 +2119,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2134,7 +2135,7 @@
                                             "type": "object",
                                             "properties": {
                                                 "applicant": {
-                                                    "$ref": "#/components/schemas/PartnerBookingApplicantResource"
+                                                    "$ref": "#\/components\/schemas\/PartnerBookingApplicantResource"
                                                 }
                                             },
                                             "required": [
@@ -2154,7 +2155,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -2238,7 +2239,7 @@
                         }
                     },
                     "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                        "$ref": "#\/components\/responses\/ValidationException"
                     }
                 },
                 "security": [
@@ -2250,11 +2251,11 @@
                 ]
             }
         },
-        "/tours": {
+        "\/tours": {
             "get": {
                 "operationId": "partnerToursSearch",
-                "description": "Advanced filters mirror the public tour search while preserving partner\nwhitelist scoping. Query params: search/q (tour code, tour name, route\nlocation name/code, tour type keyword), going_to (city code), travel_style\n(single id), list_travel_styles (underscore-separated ids), category\n(underscore-separated ids), sub_type/list_sub_types (underscore-separated\nids), minPrice/maxPrice (interpreted in X-Currency), budget, sortBy\n(shortest_duration, lowest, highest, newest), page, per_page.",
-                "summary": "List/search all active tours whitelisted for the authenticated partner",
+                "description": "Advanced filters mirror the public tour search while preserving partner\nwhitelist scoping. Query params: search\/q (tour code, tour name, route\nlocation name\/code, tour type keyword), going_to (city code), travel_style\n(single id), list_travel_styles (underscore-separated ids), category\n(underscore-separated ids), sub_type\/list_sub_types (underscore-separated\nids), minPrice\/maxPrice (interpreted in X-Currency), budget, sortBy\n(shortest_duration, lowest, highest, newest), page, per_page.",
+                "summary": "List\/search all active tours whitelisted for the authenticated partner",
                 "tags": [
                     "PartnerTour"
                 ],
@@ -2473,17 +2474,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -2492,7 +2493,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -2501,7 +2502,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -2510,7 +2511,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -2521,7 +2522,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2551,9 +2552,9 @@
                         }
                     },
                     "200": {
-                        "description": "Pagination envelope matches the app convention (AccountService@getTours):\ncurrent_page/total/per_page/last_page + a named items key, inside `data`.",
+                        "description": "Pagination envelope matches the app convention (AccountService@getTours):\ncurrent_page\/total\/per_page\/last_page + a named items key, inside `data`.",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2583,7 +2584,7 @@
                                                 "tours": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/PartnerTourResource"
+                                                        "$ref": "#\/components\/schemas\/PartnerTourResource"
                                                     }
                                                 }
                                             },
@@ -2608,7 +2609,7 @@
                     "422": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2648,10 +2649,10 @@
                 ]
             }
         },
-        "/tours/references": {
+        "\/tours\/references": {
             "get": {
                 "operationId": "partnerToursGetReferences",
-                "summary": "Filter/reference taxonomy (categories, types, tags, destinations\u2026) for the\npartner site to build its tour catalog filters",
+                "summary": "Filter\/reference taxonomy (categories, types, tags, destinations\u2026) for the\npartner site to build its tour catalog filters",
                 "tags": [
                     "PartnerTour"
                 ],
@@ -2670,17 +2671,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -2689,7 +2690,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -2698,7 +2699,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -2707,7 +2708,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -2718,7 +2719,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2748,9 +2749,9 @@
                         }
                     },
                     "200": {
-                        "description": "",
+                        "description": "Resources, not raw models: a partner reads this in one language and\nshould not have to pick name_en\/name_vi or dig through a translations\narray \u2014 every other partner endpoint already answers localised.",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2763,8 +2764,43 @@
                                             "const": "Success"
                                         },
                                         "data": {
-                                            "type": "array",
-                                            "items": {}
+                                            "type": "object",
+                                            "properties": {
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#\/components\/schemas\/CategoryResource"
+                                                    }
+                                                },
+                                                "types": {},
+                                                "sub_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#\/components\/schemas\/TourSubTypeResource"
+                                                    }
+                                                },
+                                                "travel_styles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#\/components\/schemas\/TagResource"
+                                                    }
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#\/components\/schemas\/TagResource"
+                                                    }
+                                                },
+                                                "destinations": {}
+                                            },
+                                            "required": [
+                                                "categories",
+                                                "types",
+                                                "sub_types",
+                                                "travel_styles",
+                                                "tags",
+                                                "destinations"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -2786,7 +2822,7 @@
                 ]
             }
         },
-        "/tours/get-seasonal": {
+        "\/tours\/get-seasonal": {
             "get": {
                 "operationId": "partnerToursGetSeasonal",
                 "description": "Returns tours flagged as seasonal (mirrors the public tour `get-seasonal`),\nscoped to the partner whitelist.",
@@ -2844,17 +2880,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -2863,7 +2899,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -2872,7 +2908,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -2881,7 +2917,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -2892,7 +2928,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2924,7 +2960,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -2954,7 +2990,7 @@
                                                 "tours": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/PartnerTourResource"
+                                                        "$ref": "#\/components\/schemas\/PartnerTourResource"
                                                     }
                                                 }
                                             },
@@ -2977,7 +3013,7 @@
                         }
                     },
                     "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                        "$ref": "#\/components\/responses\/ValidationException"
                     }
                 },
                 "security": [
@@ -2989,7 +3025,7 @@
                 ]
             }
         },
-        "/tours/get-featured": {
+        "\/tours\/get-featured": {
             "get": {
                 "operationId": "partnerToursGetFeatured",
                 "description": "Returns tours flagged as featured (mirrors the public tour `get-featured`),\nscoped to the partner whitelist.",
@@ -3047,17 +3083,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -3066,7 +3102,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -3075,7 +3111,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -3084,7 +3120,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -3095,7 +3131,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3127,7 +3163,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3157,7 +3193,7 @@
                                                 "tours": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/PartnerTourResource"
+                                                        "$ref": "#\/components\/schemas\/PartnerTourResource"
                                                     }
                                                 }
                                             },
@@ -3180,7 +3216,7 @@
                         }
                     },
                     "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                        "$ref": "#\/components\/responses\/ValidationException"
                     }
                 },
                 "security": [
@@ -3192,7 +3228,7 @@
                 ]
             }
         },
-        "/tours/get-similar": {
+        "\/tours\/get-similar": {
             "get": {
                 "operationId": "partnerToursGetSimilar",
                 "description": "Provide the reference tour by `tour_code` or `tour_id` (exactly one is\nrequired). Returns whitelisted tours related to it, excluding the reference\ntour itself (mirrors the public tour `get-similar`).",
@@ -3272,17 +3308,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -3291,7 +3327,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -3300,7 +3336,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -3309,7 +3345,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -3320,7 +3356,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3352,7 +3388,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3383,7 +3419,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3413,7 +3449,7 @@
                                                 "tours": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/PartnerTourResource"
+                                                        "$ref": "#\/components\/schemas\/PartnerTourResource"
                                                     }
                                                 }
                                             },
@@ -3436,7 +3472,7 @@
                         }
                     },
                     "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                        "$ref": "#\/components\/responses\/ValidationException"
                     }
                 },
                 "security": [
@@ -3448,7 +3484,191 @@
                 ]
             }
         },
-        "/tours/{code}": {
+        "\/tours\/tour-itinerary\/{id}": {
+            "get": {
+                "operationId": "partnerToursGetItinerary",
+                "description": "The {id} path segment is the tour id; only tours whitelisted for the partner\nare accessible (mirrors the public tour `tour-itinerary`).",
+                "summary": "Get the day-by-day itinerary of a whitelisted tour",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1784256024"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tour itinerary."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/tours\/{code}": {
             "get": {
                 "operationId": "partnerToursGetByCode",
                 "summary": "Get detailed information of a whitelisted tour",
@@ -3478,17 +3698,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -3497,7 +3717,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -3506,7 +3726,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -3515,7 +3735,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -3526,7 +3746,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3558,7 +3778,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3589,7 +3809,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3602,7 +3822,7 @@
                                             "const": "Success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerTourResource"
+                                            "$ref": "#\/components\/schemas\/PartnerTourResource"
                                         }
                                     },
                                     "required": [
@@ -3624,10 +3844,10 @@
                 ]
             }
         },
-        "/tours/{code}/calendars": {
+        "\/tours\/{code}\/calendars": {
             "get": {
                 "operationId": "partnerToursGetCalendars",
-                "description": "Step 1 of the booking flow: returns the tour's active calendar windows so the\npartner site can build a date picker. The buyer picks a day, then validates\nit with `calendar-by-date`. Each item describes one bookable date range, its\ncapacity and its prices:\n- `start_date` / `end_date` \u2014 the range the tour departs in.\n- `max_slots_per_day` \u2014 daily seat capacity (null = unlimited).\n- `day_slots[]` \u2014 per departure date, the `booked_slots` and `remaining_slots`\n  (use this to grey out full days in the picker).\n- `prices[]` \u2014 per pax range, the adult / child / infant prices.\n\nAll prices are in the `X-Currency` header currency (default USD). This\nendpoint takes no query parameters.",
+                "description": "Step 1 of the booking flow: returns the tour's active calendar windows so the\npartner site can build a date picker. The buyer picks a day, then validates\nit with `calendar-by-date`. Each item describes one bookable date range, its\ncapacity and its prices:\n- `start_date` \/ `end_date` \u2014 the range the tour departs in.\n- `max_slots_per_day` \u2014 daily seat capacity (null = unlimited).\n- `day_slots[]` \u2014 per departure date, the `booked_slots` and `remaining_slots`\n  (use this to grey out full days in the picker).\n- `prices[]` \u2014 per pax range, the adult \/ child \/ infant prices.\n\nAll prices are in the `X-Currency` header currency (default USD). This\nendpoint takes no query parameters.",
                 "summary": "List active departure calendars for a whitelisted tour",
                 "tags": [
                     "PartnerTour"
@@ -3655,17 +3875,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -3674,7 +3894,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -3683,7 +3903,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -3692,7 +3912,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -3703,7 +3923,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3735,7 +3955,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3766,7 +3986,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3784,7 +4004,7 @@
                                                 "calendars": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/TourCalendarDetailResource"
+                                                        "$ref": "#\/components\/schemas\/TourCalendarDetailResource"
                                                     }
                                                 }
                                             },
@@ -3812,10 +4032,10 @@
                 ]
             }
         },
-        "/tours/{code}/calendar-by-date": {
+        "\/tours\/{code}\/calendar-by-date": {
             "get": {
                 "operationId": "partnerToursGetAvailability",
-                "description": "Step 2 of the booking flow: after the buyer picks a day from `calendars`,\ncall this to confirm the date is bookable for the requested `pax` and to get\nthe exact price. The `pax` count selects the matching price range, and the\nadult / child / infant prices returned belong to that range.\n\nThree possible outcomes:\n- Bookable \u2014 `is_available = true`, plus `tour_price_group_id`, `price`\n  (adult/child/infant for the matched range), `all_prices` (every pax range),\n  `matched_range`, and `remaining_slots`. Pass `tour_price_group_id` and the\n  date on to `quote` / booking.\n- Sold out \u2014 `is_available = false` with `remaining_slots` (fewer seats left\n  than `pax`); no price is returned.\n- No active calendar for the date, or the day is blocked \u2014 HTTP 404.\n\nAll prices are in the `X-Currency` header currency (default USD).",
+                "description": "Step 2 of the booking flow: after the buyer picks a day from `calendars`,\ncall this to confirm the date is bookable for the requested `pax` and to get\nthe exact price. The `pax` count selects the matching price range, and the\nadult \/ child \/ infant prices returned belong to that range.\n\nThree possible outcomes:\n- Bookable \u2014 `is_available = true`, plus `tour_price_group_id`, `price`\n  (adult\/child\/infant for the matched range), `all_prices` (every pax range),\n  `matched_range`, and `remaining_slots`. Pass `tour_price_group_id` and the\n  date on to `quote` \/ booking.\n- Sold out \u2014 `is_available = false` with `remaining_slots` (fewer seats left\n  than `pax`); no price is returned.\n- No active calendar for the date, or the day is blocked \u2014 HTTP 404.\n\nAll prices are in the `X-Currency` header currency (default USD).",
                 "summary": "Check availability and price for one departure date",
                 "tags": [
                     "PartnerTour"
@@ -3863,17 +4083,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -3882,7 +4102,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -3891,7 +4111,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -3900,7 +4120,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -3911,7 +4131,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -3943,7 +4163,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -4003,7 +4223,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4016,7 +4236,7 @@
                                             "const": "Success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/TourCalendarAvailabilityResource"
+                                            "$ref": "#\/components\/schemas\/TourCalendarAvailabilityResource"
                                         }
                                     },
                                     "required": [
@@ -4031,7 +4251,7 @@
                     "422": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "anyOf": [
                                         {
@@ -4100,7 +4320,7 @@
                 ]
             }
         },
-        "/tours/{id}/get-list-reviews": {
+        "\/tours\/{id}\/get-list-reviews": {
             "get": {
                 "operationId": "partnerToursGetReviews",
                 "description": "The {id} path segment is the tour id; only tours whitelisted for the partner\nare accessible (mirrors the public tour `get-list-reviews`).",
@@ -4161,17 +4381,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -4180,7 +4400,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -4189,7 +4409,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -4198,7 +4418,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -4209,7 +4429,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4241,7 +4461,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4272,7 +4492,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4302,7 +4522,7 @@
                                                 "reviews": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/TourReviewResource"
+                                                        "$ref": "#\/components\/schemas\/TourReviewResource"
                                                     }
                                                 },
                                                 "ratings_count": {
@@ -4353,7 +4573,7 @@
                         }
                     },
                     "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                        "$ref": "#\/components\/responses\/ValidationException"
                     }
                 },
                 "security": [
@@ -4365,7 +4585,7 @@
                 ]
             }
         },
-        "/tours/{id}/get-all-image-reviews": {
+        "\/tours\/{id}\/get-all-image-reviews": {
             "get": {
                 "operationId": "partnerToursGetReviewImages",
                 "description": "The {id} path segment is the tour id; only tours whitelisted for the partner\nare accessible (mirrors the public tour `get-all-image-reviews`).",
@@ -4426,17 +4646,17 @@
                         "name": "X-Partner-Timestamp",
                         "in": "header",
                         "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784195059"
+                        "example": "1784256024"
                     },
                     {
                         "name": "X-Partner-Signature",
                         "in": "header",
                         "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
                         "schema": {
                             "type": "string"
                         },
@@ -4445,7 +4665,7 @@
                     {
                         "name": "X-Currency",
                         "in": "header",
-                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
                         "schema": {
                             "type": "string"
                         },
@@ -4454,7 +4674,7 @@
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
                         "schema": {
                             "type": "string"
                         },
@@ -4463,7 +4683,7 @@
                     {
                         "name": "X-Partner-Idempotency-Key",
                         "in": "header",
-                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
                         "schema": {
                             "type": "string"
                         },
@@ -4474,7 +4694,7 @@
                     "500": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4506,7 +4726,7 @@
                     "404": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4537,7 +4757,7 @@
                     "200": {
                         "description": "",
                         "content": {
-                            "application/json": {
+                            "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -4555,7 +4775,7 @@
                                                 "images": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/TourReviewImageResource"
+                                                        "$ref": "#\/components\/schemas\/TourReviewImageResource"
                                                     }
                                                 }
                                             },
@@ -4574,7 +4794,412 @@
                         }
                     },
                     "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/tours\/{id}\/get-schedule-tour": {
+            "get": {
+                "operationId": "partnerToursGetSchedule",
+                "description": "One entry per departure date with its remaining slots and price, so the\npartner site can render a schedule picker (mirrors the public tour\n`get-schedule-tour`). Prices are in the `X-Currency` currency.",
+                "summary": "List the bookable departures of a whitelisted tour from a date onward",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1784256024"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tour schedule."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "scheduleTour": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "required": [
+                                                "scheduleTour"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/tours\/{id}\/get-tour-booking\/{code}": {
+            "get": {
+                "operationId": "partnerToursGetTourForBooking",
+                "description": "The {id} path segment is the tour id and {code} the departure the buyer\npicked; only tours whitelisted for the partner are accessible (mirrors the\npublic tour `get-tour-booking`).",
+                "summary": "Get a whitelisted tour as the booking screen needs it",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1784256024"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tour booking details."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#\/components\/schemas\/TourBookingResource"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4648,7 +5273,7 @@
                         "type": "string"
                     },
                     "prices": {
-                        "$ref": "#/components/schemas/BookingQuotePriceResource"
+                        "$ref": "#\/components\/schemas\/BookingQuotePriceResource"
                     },
                     "is_available": {
                         "type": "boolean"
@@ -4839,7 +5464,7 @@
                     "tour": {
                         "anyOf": [
                             {
-                                "$ref": "#/components/schemas/PartnerBookingDetailTourResource"
+                                "$ref": "#\/components\/schemas\/PartnerBookingDetailTourResource"
                             },
                             {
                                 "type": "null"
@@ -4999,7 +5624,7 @@
                     },
                     "sub_total_amounts": {
                         "type": "array",
-                        "description": "Additive fields (\u00a711.6/\u00a714.5) \u2014 sub-price UI reads these instead of\nrecomputing from a live exchange rate (fixes the frozen-order\nsub-price drift bug, currency-cast-analysis.md \u00a711.3).",
+                        "description": "Additive fields (\u00a711.6\/\u00a714.5) \u2014 sub-price UI reads these instead of\nrecomputing from a live exchange rate (fixes the frozen-order\nsub-price drift bug, currency-cast-analysis.md \u00a711.3).",
                         "prefixItems": [
                             {
                                 "type": "object",
@@ -5124,18 +5749,18 @@
                         "format": "date-time"
                     },
                     "tour_booking_detail": {
-                        "$ref": "#/components/schemas/PartnerBookingDetailResource"
+                        "$ref": "#\/components\/schemas\/PartnerBookingDetailResource"
                     },
                     "tour_booking_applicants": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/PartnerBookingApplicantResource"
+                            "$ref": "#\/components\/schemas\/PartnerBookingApplicantResource"
                         }
                     },
                     "tour_booking_refund": {
                         "anyOf": [
                             {
-                                "$ref": "#/components/schemas/PartnerBookingRefundResource"
+                                "$ref": "#\/components\/schemas\/PartnerBookingRefundResource"
                             },
                             {
                                 "type": "null"
@@ -5266,7 +5891,7 @@
                             "string",
                             "null"
                         ],
-                        "example": "upload/passports/a.jpg",
+                        "example": "upload\/passports\/a.jpg",
                         "maxLength": 255
                     }
                 },
@@ -5398,68 +6023,68 @@
                     "prices": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourPriceResource"
+                            "$ref": "#\/components\/schemas\/TourPriceResource"
                         }
                     },
                     "images": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/ImageResource"
+                            "$ref": "#\/components\/schemas\/ImageResource"
                         }
                     },
                     "endLocation": {
-                        "$ref": "#/components/schemas/TourRouteResource"
+                        "$ref": "#\/components\/schemas\/TourRouteResource"
                     },
                     "end_location": {
-                        "$ref": "#/components/schemas/TourRouteResource"
+                        "$ref": "#\/components\/schemas\/TourRouteResource"
                     },
                     "startLocation": {
-                        "$ref": "#/components/schemas/TourRouteResource"
+                        "$ref": "#\/components\/schemas\/TourRouteResource"
                     },
                     "start_location": {
-                        "$ref": "#/components/schemas/TourRouteResource"
+                        "$ref": "#\/components\/schemas\/TourRouteResource"
                     },
                     "itineraries": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourItineraryResource"
+                            "$ref": "#\/components\/schemas\/TourItineraryResource"
                         }
                     },
                     "calendars": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourCalendarResource"
+                            "$ref": "#\/components\/schemas\/TourCalendarResource"
                         }
                     },
                     "tags": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TagResource"
+                            "$ref": "#\/components\/schemas\/TagResource"
                         }
                     },
                     "travelStyles": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TagResource"
+                            "$ref": "#\/components\/schemas\/TagResource"
                         }
                     },
                     "travel_styles": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TagResource"
+                            "$ref": "#\/components\/schemas\/TagResource"
                         }
                     },
                     "category": {
-                        "$ref": "#/components/schemas/CategoryResource"
+                        "$ref": "#\/components\/schemas\/CategoryResource"
                     },
                     "type": {
-                        "$ref": "#/components/schemas/TourTypeResource"
+                        "$ref": "#\/components\/schemas\/TourTypeResource"
                     },
                     "subType": {
-                        "$ref": "#/components/schemas/TourSubTypeResource"
+                        "$ref": "#\/components\/schemas\/TourSubTypeResource"
                     },
                     "sub_type": {
-                        "$ref": "#/components/schemas/TourSubTypeResource"
+                        "$ref": "#\/components\/schemas\/TourSubTypeResource"
                     }
                 },
                 "required": [
@@ -5495,6 +6120,11 @@
                     "icon"
                 ],
                 "title": "TagResource"
+            },
+            "TourBookingResource": {
+                "type": "array",
+                "items": {},
+                "title": "TourBookingResource"
             },
             "TourCalendarAvailabilityResource": {
                 "type": "object",
@@ -5541,7 +6171,7 @@
                     "price": {
                         "anyOf": [
                             {
-                                "$ref": "#/components/schemas/TourCalendarPriceResource"
+                                "$ref": "#\/components\/schemas\/TourCalendarPriceResource"
                             },
                             {
                                 "type": "null"
@@ -5551,13 +6181,13 @@
                     "all_prices": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourCalendarPriceResource"
+                            "$ref": "#\/components\/schemas\/TourCalendarPriceResource"
                         }
                     },
                     "matched_range": {
                         "anyOf": [
                             {
-                                "$ref": "#/components/schemas/TourPriceGroupRangeResource"
+                                "$ref": "#\/components\/schemas\/TourPriceGroupRangeResource"
                             },
                             {
                                 "type": "null"
@@ -5567,7 +6197,7 @@
                     "price_group": {
                         "anyOf": [
                             {
-                                "$ref": "#/components/schemas/TourPriceGroupResource"
+                                "$ref": "#\/components\/schemas\/TourPriceGroupResource"
                             },
                             {
                                 "type": "null"
@@ -5750,7 +6380,7 @@
                             "ranges": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/components/schemas/TourPriceGroupRangeResource"
+                                    "$ref": "#\/components\/schemas\/TourPriceGroupRangeResource"
                                 }
                             }
                         },
@@ -5763,7 +6393,7 @@
                     "prices": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourCalendarDetailPriceResource"
+                            "$ref": "#\/components\/schemas\/TourCalendarDetailPriceResource"
                         }
                     },
                     "day_slots": {
@@ -5887,7 +6517,7 @@
                     "prices": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourCalendarPriceResource"
+                            "$ref": "#\/components\/schemas\/TourCalendarPriceResource"
                         }
                     }
                 },
@@ -5966,7 +6596,7 @@
                     "ranges": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourPriceGroupRangeResource"
+                            "$ref": "#\/components\/schemas\/TourPriceGroupRangeResource"
                         }
                     }
                 },
@@ -6143,7 +6773,7 @@
                     "images": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/TourReviewImageResource"
+                            "$ref": "#\/components\/schemas\/TourReviewImageResource"
                         }
                     },
                     "user": {
@@ -6241,7 +6871,7 @@
             "ValidationException": {
                 "description": "Validation error",
                 "content": {
-                    "application/json": {
+                    "application\/json": {
                         "schema": {
                             "type": "object",
                             "properties": {

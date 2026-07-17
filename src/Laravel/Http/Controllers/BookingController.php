@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use TheOneDigi\TourSdk\Api\BookingApi;
+use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsApiErrors;
 use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
@@ -41,25 +42,45 @@ class BookingController
     ) {
     }
 
-    /** Authoritative price for a selection. Reserves nothing, so it stays public. */
+    /**
+     * Authoritative price for a selection.
+     *
+     * Use to fail fast before holding a slot. Reserves nothing, so it stays public.
+     */
     public function quote(Request $request): JsonResponse
     {
+        $request->validate([
+            'tour_code' => 'required|string|max:80',
+            'departure_date' => 'required|date',
+            'adult_quantity' => 'required|integer|min:1',
+            'child_quantity' => 'nullable|integer|min:0',
+            'infant_quantity' => 'nullable|integer|min:0',
+            'promotion_code' => 'nullable|string|max:50',
+        ]);
+
         return $this->forward(
-            fn () => $this->client->post(BookingApi::BASE . '/quote', $request->all()),
+            fn () => $this->client->post(BookingApi::BASE . ApiPaths::QUOTE, $request->all()),
             'bookings.quote',
         );
     }
 
+    /**
+     * Validate a promotion code.
+     */
     public function checkPromotion(Request $request): JsonResponse
     {
+        $request->validate([
+            'code' => 'required|string|max:50',
+        ]);
+
         return $this->forward(
-            fn () => $this->client->post(BookingApi::BASE . '/check-promotion', $request->all()),
+            fn () => $this->client->post(BookingApi::BASE . ApiPaths::CHECK_PROMOTION, $request->all()),
             'bookings.check-promotion',
         );
     }
 
     /**
-     * Holds a seat upstream, then mirrors it.
+     * Create a booking: holds a seat upstream, then mirrors it locally.
      *
      * Public: a customer holds a seat before they have an account (travelo-api
      * creates one from their email), exactly as the storefront does. The mirror's
@@ -69,18 +90,34 @@ class BookingController
      */
     public function store(Request $request): JsonResponse
     {
+        $request->validate([
+            'order_details' => 'required|array',
+            'order_details.tour_id' => 'required|integer|min:1',
+            'order_details.departure_date' => 'required|date',
+            'order_details.adult_quantity' => 'required|integer|min:1',
+            'order_details.child_quantity' => 'nullable|integer|min:0',
+            'order_details.infant_quantity' => 'nullable|integer|min:0',
+            'order_details.special_request' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'dial_code' => 'nullable|string|max:10',
+            'email2' => 'nullable|email|max:255',
+            'promotion_code' => 'nullable|string|max:50',
+            'applicants' => 'required|array|min:1',
+            'applicants.*.type' => 'required|integer|in:1,2,3',
+            'applicants.*.full_name' => 'nullable|string|max:255',
+            'applicants.*.gender' => 'nullable|integer|in:1,2',
+            'applicants.*.nationality' => 'nullable|string|max:5',
+            'applicants.*.date_of_birth' => 'nullable|date',
+            'applicants.*.passport_photo' => 'nullable|string',
+        ]);
+
         $ownerId = BookingOwner::id();
 
         return $this->forward(function () use ($request, $ownerId) {
-            // Generated here, never accepted from the caller. A key the client picks
-            // is a key the client can regenerate on retry, and a fresh key on a
-            // timed-out retry books a second seat.
             $idempotencyKey = (string) Str::orderedUuid();
 
-            // Passthrough: travelo-api now speaks the storefront shape the frontend
-            // sends, so the body is forwarded verbatim and the response returned
-            // verbatim (booking under `data.order`). The only local work is the
-            // mirror, written from that booking.
             $body = $request->all();
             $body['idempotency_key'] = $idempotencyKey;
 
@@ -98,8 +135,20 @@ class BookingController
         }, 'bookings.store');
     }
 
+    /**
+     * List the authenticated user's bookings from the local mirror.
+     *
+     * Reads from the local mirror, NOT from upstream — upstream returns every
+     * booking belonging to the partner (scoped by HMAC client_id, not by customer).
+     */
     public function index(Request $request): JsonResponse
     {
+        $request->validate([
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'time' => 'nullable|string|in:all,upcoming,past',
+        ]);
+
         $ownerId = BookingOwner::id();
 
         if ($ownerId === null) {
@@ -125,6 +174,9 @@ class BookingController
         ]));
     }
 
+    /**
+     * Get one booking of the authenticated user.
+     */
     public function show(string $code): JsonResponse
     {
         $booking = $this->ownedBooking($code);
@@ -136,6 +188,9 @@ class BookingController
         return response()->json($this->envelope(200, 'Success', [], $booking->upstream_payload ?? []));
     }
 
+    /**
+     * Cancel one booking and release its slots.
+     */
     public function cancel(string $code): JsonResponse
     {
         $booking = $this->ownedBooking($code);
@@ -153,8 +208,21 @@ class BookingController
         }, 'bookings.cancel');
     }
 
+    /**
+     * Update one applicant on a booking.
+     *
+     * Partial update — only the fields present in the body are changed.
+     */
     public function updateApplicant(Request $request, string $code, string $applicantId): JsonResponse
     {
+        $request->validate([
+            'full_name' => 'nullable|string|max:255',
+            'gender' => 'nullable|integer|in:1,2',
+            'date_of_birth' => 'nullable|date',
+            'nationality' => 'nullable|string|max:5',
+            'passport_photo' => 'nullable|string',
+        ]);
+
         $booking = $this->ownedBooking($code);
 
         if ($booking === null) {
