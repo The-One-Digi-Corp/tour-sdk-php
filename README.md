@@ -804,6 +804,28 @@ an account, and travelo-api creates one from their email. Quote and promotion
 checks reserve nothing. Everything that reads or mutates an *existing* booking is
 per-customer and sits behind `auth_middleware`.
 
+### Routing conventions
+
+The consuming app (`be-travelo-partner`) exposes two booking route prefixes with
+different owners:
+
+| Prefix | Controller | Scope |
+| --- | --- | --- |
+| `/api/travelo/bookings/*` | SDK package (`BookingController`) | HMAC-forwarded CRUD to travelo-api |
+| `/api/_booking/*` | `BookingBridgeController` (local) | Payment flow + local mirror reads/writes |
+
+**`/api/travelo/bookings/*`** — Registered by the SDK when `TRAVELO_CONTROLLER_MODE=true`.
+Routes (create, update-applicant, cancel, list, show) are proxied to travelo-api
+via HMAC. The consuming app's `routes/api.php` does not declare these.
+
+**`/api/_booking/*`** — Declared in the consuming app's `routes/api.php`. Serves
+payment-adjacent endpoints: order lookup (reads the local mirror), checkout,
+return-url, and IPN. These live outside the SDK because they depend on the host's
+payment providers and local database schema.
+
+The split keeps payment logic out of the SDK package, while still letting the
+package handle upstream CRUD uniformly for any consumer.
+
 ### Ownership
 
 Booking reads come from the local mirror, not from upstream, and that is a

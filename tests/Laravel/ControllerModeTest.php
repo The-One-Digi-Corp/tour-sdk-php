@@ -14,6 +14,7 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
+use TheOneDigi\TourSdk\Laravel\Models\TourBookingDetail;
 use TheOneDigi\TourSdk\Laravel\Support\BookingMirrorExtension;
 use TheOneDigi\TourSdk\Laravel\Support\BookingOwner;
 use TheOneDigi\TourSdk\Laravel\Support\TourCatalogDecorator;
@@ -141,6 +142,18 @@ class ControllerModeTest extends TestCase
             'currency' => 'USD',
             'input_total' => 3000000.0,
             'input_currency' => 'VND',
+            'tour_booking_detail' => [
+                'tour_id' => 42,
+                'tour_price_group_id' => 7,
+                'departure_date' => '2026-08-15',
+                'adult_quantity' => 2,
+                'adult_price' => 60.25,
+                'base_currency' => 'USD',
+                'input_adult_price' => 1500000.0,
+                'input_currency' => 'VND',
+                'input_currency_version' => 2,
+                'input_currency_exchange_rate' => 24900.0,
+            ],
         ];
     }
 
@@ -333,6 +346,14 @@ class ControllerModeTest extends TestCase
         $this->assertSame('USD', $booking->currency);
         $this->assertSame('VND', $booking->input_currency);
         $this->assertNotNull($booking->held_until);
+
+        $detail = TourBookingDetail::where('tour_booking_id', $booking->id)->first();
+        $this->assertNotNull($detail);
+        $this->assertSame(42, (int) $detail->tour_id);
+        $this->assertSame(2, (int) $detail->adult_quantity);
+        $this->assertSame(60.25, (float) $detail->adult_price);
+        $this->assertSame('USD', $detail->base_currency);
+        $this->assertSame('2026-08-15', $detail->departure_date->format('Y-m-d'));
     }
 
     public function test_mirror_extension_receives_the_booking_and_upstream_payload(): void

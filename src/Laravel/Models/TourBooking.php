@@ -6,6 +6,7 @@ namespace TheOneDigi\TourSdk\Laravel\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Partner-side mirror of a booking held on travelo-api.
@@ -52,5 +53,13 @@ class TourBooking extends Model
     public function applicants(): HasMany
     {
         return $this->hasMany(TourBookingApplicant::class);
+    }
+
+    /**
+     * @return HasOne<TourBookingDetail>
+     */
+    public function detail(): HasOne
+    {
+        return $this->hasOne(TourBookingDetail::class, 'tour_booking_id');
     }
 }

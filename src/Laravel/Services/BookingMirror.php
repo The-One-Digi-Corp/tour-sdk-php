@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace TheOneDigi\TourSdk\Laravel\Services;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingDetailResource;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
 use TheOneDigi\TourSdk\Laravel\Support\BookingMirrorExtension;
@@ -57,6 +59,7 @@ class BookingMirror
             $booking->save();
 
             $this->syncApplicants($booking, $upstream);
+            $this->syncDetail($booking, $upstream);
 
             // A host with richer local tables fills them from the payload here,
             // inside this transaction, so a booking and its detail rows commit
@@ -91,5 +94,43 @@ class BookingMirror
                 'payload' => $payload,
             ]);
         }
+    }
+
+    private function syncDetail(TourBooking $booking, PartnerBookingResource $upstream): void
+    {
+        $detail = $upstream->tourBookingDetail;
+
+        if (! $detail instanceof PartnerBookingDetailResource) {
+            return;
+        }
+
+        $booking->detail()->updateOrCreate(
+            ['tour_booking_id' => $booking->id],
+            [
+                'tour_id' => $detail->tourId,
+                'tour_price_group_id' => $detail->tourPriceGroupId,
+                'departure_date' => $detail->departureDate,
+                'adult_quantity' => $detail->adultQuantity,
+                'child_quantity' => $detail->childQuantity,
+                'infant_quantity' => $detail->infantQuantity,
+                'adult_price' => $detail->adultPrice,
+                'child_price' => $detail->childPrice,
+                'infant_price' => $detail->infantPrice,
+                'group_price' => $detail->groupPrice,
+                'discount_price' => $detail->discountPrice,
+                'discount_type' => $detail->discountType,
+                'discount_count' => $detail->discountCount,
+                'special_request' => $detail->specialRequest,
+                'base_currency' => $detail->baseCurrency,
+                'input_adult_price' => $detail->inputAdultPrice,
+                'input_child_price' => $detail->inputChildPrice,
+                'input_infant_price' => $detail->inputInfantPrice,
+                'input_group_price' => $detail->inputGroupPrice,
+                'input_discount_price' => $detail->inputDiscountPrice,
+                'input_currency' => $detail->inputCurrency,
+                'input_currency_version' => $detail->inputCurrencyVersion,
+                'input_currency_exchange_rate' => $detail->inputCurrencyExchangeRate,
+            ],
+        );
     }
 }
