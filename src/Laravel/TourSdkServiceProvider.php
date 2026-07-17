@@ -40,7 +40,7 @@ class TourSdkServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/travelo.php', 'travelo');
 
-        $this->app->singleton(PartnerClient::class, static fn (Application $app) => PartnerClient::fromConfig([
+        $this->app->singleton(PartnerClient::class, static fn(Application $app) => PartnerClient::fromConfig([
             'base_url' => $app['config']->get('travelo.base_url'),
             'client_id' => $app['config']->get('travelo.client_id'),
             'secret' => $app['config']->get('travelo.secret'),
@@ -52,15 +52,15 @@ class TourSdkServiceProvider extends ServiceProvider
 
         // Bound so consumers can inject exactly the API surface they use, and double it
         // in tests, instead of hand-rolling a wrapper each time.
-        $this->app->bind(BookingApi::class, static fn (Application $app) => $app->make(PartnerClient::class)->bookings());
-        $this->app->bind(TourApi::class, static fn (Application $app) => $app->make(PartnerClient::class)->tours());
+        $this->app->bind(BookingApi::class, static fn(Application $app) => $app->make(PartnerClient::class)->bookings());
+        $this->app->bind(TourApi::class, static fn(Application $app) => $app->make(PartnerClient::class)->tours());
 
-        $this->app->singleton(WebhookVerifier::class, static fn (Application $app) => new WebhookVerifier(
+        $this->app->singleton(WebhookVerifier::class, static fn(Application $app) => new WebhookVerifier(
             (string) $app['config']->get('travelo.secret'),
             (int) $app['config']->get('travelo.webhook_max_skew_seconds', 300),
         ));
 
-        $this->app->bind(BookingMirror::class, static fn (Application $app) => new BookingMirror(
+        $this->app->bind(BookingMirror::class, static fn(Application $app) => new BookingMirror(
             (int) $app['config']->get('travelo.hold_ttl_minutes', 30),
         ));
     }
@@ -84,6 +84,7 @@ class TourSdkServiceProvider extends ServiceProvider
 
         $this->registerCatalogMacro();
         $this->registerControllerModeRoutes();
+        $this->configureScrambleTags();
     }
 
     /**
@@ -115,6 +116,7 @@ class TourSdkServiceProvider extends ServiceProvider
                 Route::get('/get-seasonal', [TourCatalogController::class, 'seasonal'])->name('seasonal');
                 Route::get('/get-featured', [TourCatalogController::class, 'featured'])->name('featured');
                 Route::get('/get-similar', [TourCatalogController::class, 'similar'])->name('similar');
+                Route::get('/tour-itinerary/{id}', [TourCatalogController::class, 'itinerary'])->name('itinerary');
                 Route::get('/{code}', [TourCatalogController::class, 'show'])->name('show');
                 Route::get('/{code}/calendars', [TourCatalogController::class, 'calendars'])->name('calendars');
                 Route::get('/{code}/calendar-by-date', [TourCatalogController::class, 'calendarByDate'])
@@ -122,6 +124,10 @@ class TourSdkServiceProvider extends ServiceProvider
                 Route::get('/{id}/get-list-reviews', [TourCatalogController::class, 'reviews'])->name('reviews');
                 Route::get('/{id}/get-all-image-reviews', [TourCatalogController::class, 'reviewImages'])
                     ->name('review-images');
+                Route::get('/{id}/get-schedule-tour', [TourCatalogController::class, 'schedule'])
+                    ->name('schedule');
+                Route::get('/{id}/get-tour-booking/{code}', [TourCatalogController::class, 'tourForBooking'])
+                    ->name('for-booking');
             });
 
             Route::prefix('bookings')->name('travelo.bookings.')->group(function () use ($auth): void {
@@ -144,6 +150,68 @@ class TourSdkServiceProvider extends ServiceProvider
                 });
             });
         });
+    }
+
+    /**
+     * Auto-prefix all SDK controller tags with "SDK " and group them at the top
+     * of the API docs when Scramble is installed.
+     *
+     * Discovers controllers by scanning the filesystem — no manual mapping needed
+     * when a new controller is added.
+     *
+     * No hard dependency on Scramble — this only runs when the host app has it.
+     */
+    private function configureScrambleTags(): void
+    {
+        if (! class_exists(\Dedoc\Scramble\Scramble::class)) {
+            return;
+        }
+
+        /** @var list<string> Controller class basenames minus "Controller" suffix */
+        $sdkTags = array_values(array_filter(array_map(
+            fn(string $filename): string => basename($filename, 'Controller.php'),
+            glob(__DIR__ . '/Http/Controllers/*Controller.php') ?: [],
+        )));
+
+        if ($sdkTags === []) {
+            return;
+        }
+
+        \Dedoc\Scramble\Scramble::afterOpenApiGenerated(
+            function (\Dedoc\Scramble\Support\Generator\OpenApi $openApi) use ($sdkTags): void {
+                foreach ($openApi->paths as $path) {
+                    foreach ($path->operations as $operation) {
+                        $operation->tags = array_map(
+                            fn(string $tag): string => in_array($tag, $sdkTags, true)
+                                ? "SDK TOUR - {$tag}"
+                                : $tag,
+                            $operation->tags,
+                        );
+                    }
+                }
+
+                // Collect all unique tags from all operations after renaming.
+                $seen = [];
+                foreach ($openApi->paths as $path) {
+                    foreach ($path->operations as $operation) {
+                        foreach ($operation->tags as $tag) {
+                            $seen[$tag] = true;
+                        }
+                    }
+                }
+
+                $tagNames = array_keys($seen);
+
+                $sdkOnes = array_values(array_filter($tagNames, fn(string $t): bool => str_starts_with($t, 'SDK ')));
+                $others = array_values(array_filter($tagNames, fn(string $t): bool => ! str_starts_with($t, 'SDK ')));
+                sort($others);
+
+                $openApi->tags = array_map(
+                    fn(string $name) => new \Dedoc\Scramble\Support\Generator\Tag($name),
+                    [...$sdkOnes, ...$others],
+                );
+            },
+        );
     }
 
     /**
