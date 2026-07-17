@@ -77,6 +77,58 @@ class ControllerModeTest extends TestCase
     }
 
     /**
+     * The shopper's currency and language have to reach travelo-api, which prices
+     * and localises off exactly these two headers.
+     *
+     * PartnerClient builds them from its own config — right for a queue job with no
+     * request, wrong for controller mode. Before this forwarding existed, a visitor
+     * switching to VND kept seeing USD, and every price still rendered, so nothing
+     * looked broken.
+     */
+    public function test_the_callers_currency_and_language_reach_upstream(): void
+    {
+        $this->fakeUpstream([$this->envelope(['scheduleTour' => []])]);
+
+        $this->withHeaders(['X-Currency' => 'vnd', 'Accept-Language' => 'vi'])
+            ->getJson('/travelo/tours/7/get-schedule-tour?date=2026-08-01')
+            ->assertStatus(200);
+
+        $sent = $this->transactions[0]['request'];
+
+        self::assertSame('VND', $sent->getHeaderLine('X-Currency'), 'currency was not forwarded upstream');
+        self::assertSame('vi', $sent->getHeaderLine('Accept-Language'), 'language was not forwarded upstream');
+    }
+
+    /**
+     * A caller that sends no X-Currency leaves PartnerClient's configured default
+     * standing, so forwarding adds a currency rather than removing one.
+     *
+     * Only currency is asserted: an HTTP client practically always sends some
+     * Accept-Language, so its absence is not a case this can reach. travelo-api
+     * normalises whatever arrives ("en-US,en;q=0.9" -> "en"), so forwarding a
+     * browser's full header verbatim is safe.
+     */
+    public function test_upstream_keeps_the_configured_currency_when_the_caller_sends_none(): void
+    {
+        $this->transactions = [];
+        $stack = HandlerStack::create(new MockHandler([$this->envelope(['scheduleTour' => []])]));
+        $stack->push(Middleware::history($this->transactions));
+
+        $this->app->instance(PartnerClient::class, new PartnerClient(
+            baseUrl: 'http://travelo.test',
+            clientId: 'test_client',
+            secret: 'test_secret',
+            defaultCurrency: 'USD',
+            locale: 'en',
+            http: new Client(['handler' => $stack, 'http_errors' => false]),
+        ));
+
+        $this->getJson('/travelo/tours/7/get-schedule-tour?date=2026-08-01')->assertStatus(200);
+
+        self::assertSame('USD', $this->transactions[0]['request']->getHeaderLine('X-Currency'));
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function upstreamBooking(string $orderCode = 'TB-001'): array

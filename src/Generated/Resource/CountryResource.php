@@ -9,18 +9,18 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI schema TourBookingResource.
+ * Generated from OpenAPI schema CountryResource.
  *
  * AUTO FIELDS and AUTO HYDRATION are rewritten by composer generate:contract.
  * MANUAL FIELDS and MANUAL HYDRATION survive regeneration — put hand-written
  * fields there. A manual property replaces the auto field of the same name.
- *
- * The contract describes this schema with no properties, so AUTO FIELDS is
- * empty. Declare what it really returns in the MANUAL regions below.
  */
-class TourBookingResource extends ArrayBackedResource
+class CountryResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
+    public readonly int $id;
+    public readonly string $name;
+    public readonly string $code;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -34,6 +34,9 @@ class TourBookingResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
+        $this->id = $this->int('id');
+        $this->name = $this->string('name');
+        $this->code = $this->string('code');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

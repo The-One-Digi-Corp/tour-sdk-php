@@ -72,9 +72,6 @@ final class ContractCoverageTest extends TestCase
             'GET /tours/{id}/get-all-image-reviews' => fn () => $client->tours()->reviewImages(7),
             'GET /tours/tour-itinerary/{id}' => fn () => $client->tours()->itinerary(7),
             'GET /tours/{id}/get-schedule-tour' => fn () => $client->tours()->schedule(7, ['date' => '2026-08-01']),
-            // {code} here is the departure code, not a tour code — but the URL-shape
-            // assertion below substitutes 'T-1' for every {code} under /tours.
-            'GET /tours/{id}/get-tour-booking/{code}' => fn () => $client->tours()->tourForBooking(7, 'T-1'),
 
             'GET /bookings' => fn () => $client->bookings()->list(),
             'POST /bookings' => fn () => $client->bookings()->create(['tour_code' => 'T-1'], 'idem-1'),

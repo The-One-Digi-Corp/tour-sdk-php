@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use TheOneDigi\TourSdk\Api\TourApi;
 use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsApiErrors;
+use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsRequestContext;
 use TheOneDigi\TourSdk\Laravel\Support\TourCatalogDecorator;
 use TheOneDigi\TourSdk\PartnerClient;
 
@@ -27,6 +28,7 @@ use TheOneDigi\TourSdk\PartnerClient;
 class TourCatalogController
 {
     use ForwardsApiErrors;
+    use ForwardsRequestContext;
 
     public function __construct(private readonly PartnerClient $client)
     {
@@ -59,7 +61,7 @@ class TourCatalogController
         ]);
 
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE, $request->query()),
+            fn () => $this->client->get(TourApi::BASE, $request->query(), $this->contextHeaders($request)),
             'tours.index',
             fn (array $p) => $this->decorateList($request, $p),
         );
@@ -68,9 +70,12 @@ class TourCatalogController
     /**
      * Filter/reference taxonomy for building tour catalog filters.
      */
-    public function references(): JsonResponse
+    public function references(Request $request): JsonResponse
     {
-        return $this->forward(fn () => $this->client->get(TourApi::BASE . ApiPaths::REFERENCES), 'tours.references');
+        return $this->forward(
+            fn () => $this->client->get(TourApi::BASE . ApiPaths::REFERENCES, [], $this->contextHeaders($request)),
+            'tours.references',
+        );
     }
 
     /**
@@ -85,7 +90,7 @@ class TourCatalogController
         ]);
 
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . ApiPaths::SEASONAL, $request->query()),
+            fn () => $this->client->get(TourApi::BASE . ApiPaths::SEASONAL, $request->query(), $this->contextHeaders($request)),
             'tours.seasonal',
             fn (array $p) => $this->decorateList($request, $p),
         );
@@ -103,7 +108,7 @@ class TourCatalogController
         ]);
 
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . ApiPaths::FEATURED, $request->query()),
+            fn () => $this->client->get(TourApi::BASE . ApiPaths::FEATURED, $request->query(), $this->contextHeaders($request)),
             'tours.featured',
             fn (array $p) => $this->decorateList($request, $p),
         );
@@ -123,7 +128,7 @@ class TourCatalogController
         ]);
 
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . ApiPaths::SIMILAR, $request->query()),
+            fn () => $this->client->get(TourApi::BASE . ApiPaths::SIMILAR, $request->query(), $this->contextHeaders($request)),
             'tours.similar',
             fn (array $p) => $this->decorateList($request, $p),
         );
@@ -135,7 +140,7 @@ class TourCatalogController
     public function show(Request $request, string $code): JsonResponse
     {
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($code)),
+            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($code), [], $this->contextHeaders($request)),
             'tours.show',
             fn (array $p) => $this->decorateOne($request, $p),
         );
@@ -147,7 +152,7 @@ class TourCatalogController
     public function calendars(Request $request, string $code): JsonResponse
     {
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDARS, $request->query()),
+            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDARS, $request->query(), $this->contextHeaders($request)),
             'tours.calendars',
         );
     }
@@ -166,6 +171,7 @@ class TourCatalogController
             fn () => $this->client->get(
                 TourApi::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDAR_BY_DATE,
                 $request->query(),
+                $this->contextHeaders($request),
             ),
             'tours.calendar-by-date',
         );
@@ -187,6 +193,7 @@ class TourCatalogController
             fn () => $this->client->get(
                 TourApi::BASE . '/' . rawurlencode($id) . ApiPaths::REVIEWS,
                 $request->query(),
+                $this->contextHeaders($request),
             ),
             'tours.reviews',
         );
@@ -206,6 +213,7 @@ class TourCatalogController
             fn () => $this->client->get(
                 TourApi::BASE . '/' . rawurlencode($id) . ApiPaths::REVIEW_IMAGES,
                 $request->query(),
+                $this->contextHeaders($request),
             ),
             'tours.review-images',
         );
@@ -226,6 +234,7 @@ class TourCatalogController
             fn () => $this->client->get(
                 TourApi::BASE . '/' . rawurlencode($id) . ApiPaths::SCHEDULE,
                 $request->query(),
+                $this->contextHeaders($request),
             ),
             'tours.schedule',
         );
@@ -234,26 +243,18 @@ class TourCatalogController
     /**
      * Get the day-by-day itinerary of a whitelisted tour.
      */
-    public function itinerary(string $id): JsonResponse
+    public function itinerary(Request $request, string $id): JsonResponse
     {
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . ApiPaths::ITINERARY . '/' . rawurlencode($id)),
+            fn () => $this->client->get(
+                TourApi::BASE . ApiPaths::ITINERARY . '/' . rawurlencode($id),
+                [],
+                $this->contextHeaders($request),
+            ),
             'tours.itinerary',
         );
     }
 
-    /**
-     * Get a whitelisted tour as the booking screen needs it.
-     */
-    public function tourForBooking(string $id, string $code): JsonResponse
-    {
-        return $this->forward(
-            fn () => $this->client->get(
-                TourApi::BASE . '/' . rawurlencode($id) . ApiPaths::TOUR_FOR_BOOKING . '/' . rawurlencode($code),
-            ),
-            'tours.for-booking',
-        );
-    }
 
     /**
      * List endpoints (index / seasonal / featured / similar) carry the tours at

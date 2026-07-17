@@ -74,6 +74,4 @@ class ApiPaths
     /** GET /{id}/get-schedule-tour */
     public const SCHEDULE = '/get-schedule-tour';
 
-    /** GET /{id}/get-tour-booking/{code} */
-    public const TOUR_FOR_BOOKING = '/get-tour-booking';
 }

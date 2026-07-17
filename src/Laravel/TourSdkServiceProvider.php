@@ -127,8 +127,6 @@ class TourSdkServiceProvider extends ServiceProvider
                     ->name('review-images');
                 Route::get('/{id}' . ApiPaths::SCHEDULE, [TourCatalogController::class, 'schedule'])
                     ->name('schedule');
-                Route::get('/{id}' . ApiPaths::TOUR_FOR_BOOKING . '/{code}', [TourCatalogController::class, 'tourForBooking'])
-                    ->name('for-booking');
             });
 
             Route::prefix('bookings')->name('travelo.bookings.')->group(function () use ($auth): void {
@@ -146,9 +144,13 @@ class TourSdkServiceProvider extends ServiceProvider
                     Route::get('/', [BookingController::class, 'index'])->name('index');
                     Route::get('/{code}', [BookingController::class, 'show'])->name('show');
                     Route::post('/{code}' . ApiPaths::CANCEL, [BookingController::class, 'cancel'])->name('cancel');
-                    Route::post('/{code}' . ApiPaths::APPLICANT . '/{id}', [BookingController::class, 'updateApplicant'])
-                        ->name('update-applicant');
                 });
+
+                // update-applicant is public (like store): a guest who just created
+                // a booking fills passenger details afterwards. Ownership is checked
+                // inside the controller by matching the booking code in the mirror.
+                Route::post('/{code}' . ApiPaths::APPLICANT . '/{id}', [BookingController::class, 'updateApplicant'])
+                    ->name('update-applicant');
             });
         });
     }

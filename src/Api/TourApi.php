@@ -224,19 +224,6 @@ class TourApi
         );
     }
 
-    /**
-     * The tour as the booking screen needs it, for the departure $code.
-     *
-     * @return array<string, mixed>
-     */
-    public function tourForBooking(int|string $tourId, string $code): array
-    {
-        return $this->client->data(
-            $this->client->get(
-                self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::TOUR_FOR_BOOKING . '/' . rawurlencode($code),
-            ),
-        );
-    }
 
     /**
      * @return array<string, mixed>

@@ -11,6 +11,7 @@ use TheOneDigi\TourSdk\Api\BookingApi;
 use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsApiErrors;
+use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsRequestContext;
 use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
 use TheOneDigi\TourSdk\Laravel\Services\BookingMirror;
 use TheOneDigi\TourSdk\Laravel\Support\BookingOwner;
@@ -34,6 +35,7 @@ use TheOneDigi\TourSdk\PartnerClient;
 class BookingController
 {
     use ForwardsApiErrors;
+    use ForwardsRequestContext;
 
     public function __construct(
         private readonly BookingApi $bookings,
@@ -59,7 +61,7 @@ class BookingController
         ]);
 
         return $this->forward(
-            fn () => $this->client->post(BookingApi::BASE . ApiPaths::QUOTE, $request->all()),
+            fn () => $this->client->post(BookingApi::BASE . ApiPaths::QUOTE, $request->all(), $this->contextHeaders($request)),
             'bookings.quote',
         );
     }
@@ -74,7 +76,7 @@ class BookingController
         ]);
 
         return $this->forward(
-            fn () => $this->client->post(BookingApi::BASE . ApiPaths::CHECK_PROMOTION, $request->all()),
+            fn () => $this->client->post(BookingApi::BASE . ApiPaths::CHECK_PROMOTION, $request->all(), $this->contextHeaders($request)),
             'bookings.check-promotion',
         );
     }
@@ -108,7 +110,7 @@ class BookingController
             'applicants.*.type' => 'required|integer|in:1,2,3',
             'applicants.*.full_name' => 'nullable|string|max:255',
             'applicants.*.gender' => 'nullable|integer|in:1,2',
-            'applicants.*.nationality' => 'nullable|string|max:5',
+            'applicants.*.nationality' => 'nullable|string|max:50',
             'applicants.*.date_of_birth' => 'nullable|date',
             'applicants.*.passport_photo' => 'nullable|string',
         ]);
@@ -123,7 +125,7 @@ class BookingController
 
             $envelope = $this->client->post(BookingApi::BASE, $body, [
                 'X-Partner-Idempotency-Key' => $idempotencyKey,
-            ]);
+            ] + $this->contextHeaders($request));
 
             $order = $envelope['data']['order'] ?? null;
 
@@ -219,15 +221,9 @@ class BookingController
             'full_name' => 'nullable|string|max:255',
             'gender' => 'nullable|integer|in:1,2',
             'date_of_birth' => 'nullable|date',
-            'nationality' => 'nullable|string|max:5',
+            'nationality' => 'nullable|string|max:50',
             'passport_photo' => 'nullable|string',
         ]);
-
-        $booking = $this->ownedBooking($code);
-
-        if ($booking === null) {
-            return $this->notFound();
-        }
 
         return $this->forward(function () use ($request, $code, $applicantId) {
             $data = $this->bookings->updateApplicant($code, (int) $applicantId, $request->all());
