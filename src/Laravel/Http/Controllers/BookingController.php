@@ -214,6 +214,10 @@ class BookingController
      * Update one applicant on a booking.
      *
      * Partial update — only the fields present in the body are changed.
+     *
+     * The URL receives the local mirror's applicant id (returned by /_booking/{code}).
+     * The method resolves it to the upstream (travelo-api) applicant id before
+     * forwarding the update, so callers never need to know travelo-api's primary key.
      */
     public function updateApplicant(Request $request, string $code, string $applicantId): JsonResponse
     {
@@ -225,8 +229,22 @@ class BookingController
             'passport_photo' => 'nullable|string',
         ]);
 
-        return $this->forward(function () use ($request, $code, $applicantId) {
-            $data = $this->bookings->updateApplicant($code, (int) $applicantId, $request->all());
+        $booking = TourBooking::where('order_code', $code)->first();
+
+        if (! $booking) {
+            return response()->json($this->envelope(404, 'Booking not found.'), 404);
+        }
+
+        $localApplicant = $booking->applicants()->whereKey($applicantId)->first();
+
+        if (! $localApplicant) {
+            return response()->json($this->envelope(404, 'Passenger not found.'), 404);
+        }
+
+        $upstreamApplicantId = $localApplicant->upstream_applicant_id ?? $applicantId;
+
+        return $this->forward(function () use ($request, $code, $upstreamApplicantId) {
+            $data = $this->bookings->updateApplicant($code, (int) $upstreamApplicantId, $request->all());
 
             return $this->envelope(200, 'Success', [], $data);
         }, 'bookings.update-applicant');
