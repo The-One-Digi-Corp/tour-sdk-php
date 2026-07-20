@@ -9,11 +9,11 @@ use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
 /**
  * The seam a host uses to fill in booking data the package does not model.
  *
- * The mirror stores only what the package itself reads — order_code, amounts,
- * status — plus the whole upstream response as `upstream_payload`. A host that
- * carries richer local tables (order detail rows, commission snapshots, payment
- * columns) unpacks them from that payload here, inside the same transaction as
- * the core write, so a booking and its detail never exist half-written.
+ * The mirror stores the booking, its line and its applicants as normalised
+ * columns. A host that carries richer local tables of its own (commission
+ * snapshots, extra payment columns) unpacks them from the upstream payload passed
+ * here, inside the same transaction as the core write, so a booking and its
+ * host-side rows never exist half-written.
  *
  *   BookingMirrorExtension::extend(function (TourBooking $booking, array $payload) {
  *       TourBookingDetailWriter::fromUpstream($booking, $payload);

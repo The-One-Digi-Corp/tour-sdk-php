@@ -12,13 +12,17 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request as PsrRequest;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use TheOneDigi\TourSdk\Laravel\Mail\BookingCreated;
+use TheOneDigi\TourSdk\Laravel\Mail\CustomerAccountCreated;
 use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
 use TheOneDigi\TourSdk\Laravel\Models\TourBookingDetail;
 use TheOneDigi\TourSdk\Laravel\Support\BookingMirrorExtension;
 use TheOneDigi\TourSdk\Laravel\Support\BookingOwner;
 use TheOneDigi\TourSdk\Laravel\Support\TourCatalogDecorator;
 use TheOneDigi\TourSdk\PartnerClient;
+use TheOneDigi\TourSdk\Tests\Laravel\Fixtures\CustomerUser;
 
 class ControllerModeTest extends TestCase
 {
@@ -36,6 +40,10 @@ class ControllerModeTest extends TestCase
         // auth:sanctum is not installed in the package test app; ownership is proved
         // through BookingOwner instead, which is what the controllers actually read.
         $app['config']->set('travelo.controller_mode.auth_middleware', []);
+        // The account CustomerProvisioner creates a customer in belongs to the host
+        // app; here the fixture model backed by the SDK's own users migration stands
+        // in for it.
+        $app['config']->set('auth.providers.users.model', CustomerUser::class);
     }
 
     protected function tearDown(): void
@@ -138,21 +146,48 @@ class ControllerModeTest extends TestCase
             'id' => 1,
             'order_code' => $orderCode,
             'status' => TourBooking::PENDING_PAYMENT,
+            'sub_total' => 130.5,
+            'discount' => 10.0,
             'total' => 120.5,
+            'cost' => 90.0,
             'currency' => 'USD',
+            'input_sub_total' => 3250000.0,
+            'input_discount' => 250000.0,
             'input_total' => 3000000.0,
+            'input_cost' => 2200000.0,
             'input_currency' => 'VND',
+            'input_currency_version' => 2,
+            'input_currency_exchange_rate' => 24900.0,
+            'promotion_code' => 'SUMMER',
+            'name' => 'Nguyen Van A',
+            'email' => 'a@x.com',
+            'phone' => '0900000000',
+            'dial_code' => 84,
             'tour_booking_detail' => [
                 'tour_id' => 42,
                 'tour_price_group_id' => 7,
                 'departure_date' => '2026-08-15',
                 'adult_quantity' => 2,
                 'adult_price' => 60.25,
-                'base_currency' => 'USD',
+                'currency' => 'USD',
                 'input_adult_price' => 1500000.0,
                 'input_currency' => 'VND',
                 'input_currency_version' => 2,
                 'input_currency_exchange_rate' => 24900.0,
+            ],
+            'tour_booking_applicants' => [
+                [
+                    'id' => 501,
+                    'type' => 1,
+                    'full_name' => 'Nguyen Van A',
+                    'gender' => 1,
+                    'nationality' => 'Vietnam',
+                ],
+            ],
+            'tour_booking_refund' => [
+                'id' => 900,
+                'refund_total' => 30.0,
+                'status' => 2,
             ],
         ];
     }
@@ -284,18 +319,16 @@ class ControllerModeTest extends TestCase
             'order_code' => 'MINE',
             'user_id' => 7,
             'currency' => 'USD',
-            'upstream_payload' => ['order_code' => 'MINE'],
         ]);
         TourBooking::create([
             'order_code' => 'THEIRS',
             'user_id' => 99,
             'currency' => 'USD',
-            'upstream_payload' => ['order_code' => 'THEIRS'],
         ]);
 
         $this->asOwner(7);
 
-        $response = $this->getJson('travelo/bookings');
+        $response = $this->getJson('travelo/tours/bookings');
 
         $response->assertOk();
         $this->assertSame(1, $response->json('data.total'));
@@ -308,13 +341,12 @@ class ControllerModeTest extends TestCase
             'order_code' => 'THEIRS',
             'user_id' => 99,
             'currency' => 'USD',
-            'upstream_payload' => ['order_code' => 'THEIRS'],
         ]);
 
         $this->asOwner(7);
 
         // 404 and not 403: a 403 would confirm the code exists.
-        $this->getJson('travelo/bookings/THEIRS')->assertNotFound();
+        $this->getJson('travelo/tours/bookings/THEIRS')->assertNotFound();
     }
 
     public function test_booking_reads_refuse_when_no_owner_can_be_resolved(): void
@@ -323,12 +355,11 @@ class ControllerModeTest extends TestCase
             'order_code' => 'MINE',
             'user_id' => 7,
             'currency' => 'USD',
-            'upstream_payload' => ['order_code' => 'MINE'],
         ]);
 
         // Defence in depth: auth_middleware is empty here, so if the controller
         // trusted the route guard alone this would list the partner's whole book.
-        $this->getJson('travelo/bookings')->assertUnauthorized();
+        $this->getJson('travelo/tours/bookings')->assertUnauthorized();
     }
 
     public function test_store_holds_upstream_then_mirrors(): void
@@ -336,7 +367,7 @@ class ControllerModeTest extends TestCase
         $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
 
         $booking = TourBooking::where('order_code', 'TB-001')->first();
 
@@ -345,15 +376,97 @@ class ControllerModeTest extends TestCase
         $this->assertSame(120.5, $booking->total);
         $this->assertSame('USD', $booking->currency);
         $this->assertSame('VND', $booking->input_currency);
-        $this->assertNotNull($booking->held_until);
+
+        // Every amount the contract carries is mirrored, not just the total: a read
+        // rebuilds the booking from these columns now that no blob backs it up.
+        $this->assertSame(130.5, $booking->sub_total);
+        $this->assertSame(10.0, $booking->discount);
+        $this->assertSame(90.0, $booking->cost);
+        $this->assertSame(3250000.0, $booking->input_sub_total);
+        $this->assertSame(3000000.0, $booking->input_total);
+        $this->assertSame(2, (int) $booking->input_currency_version);
+        $this->assertSame('SUMMER', $booking->promotion_code);
+        $this->assertSame('Nguyen Van A', $booking->name);
+        $this->assertSame('a@x.com', $booking->email);
+        $this->assertSame('0900000000', $booking->phone);
 
         $detail = TourBookingDetail::where('tour_booking_id', $booking->id)->first();
         $this->assertNotNull($detail);
         $this->assertSame(42, (int) $detail->tour_id);
         $this->assertSame(2, (int) $detail->adult_quantity);
         $this->assertSame(60.25, (float) $detail->adult_price);
-        $this->assertSame('USD', $detail->base_currency);
+        $this->assertSame('USD', $detail->currency);
         $this->assertSame('2026-08-15', $detail->departure_date->format('Y-m-d'));
+
+        // Applicants carry their real columns, and the upstream id is kept so an
+        // update can address travelo-api's row.
+        $applicant = $booking->applicants()->first();
+        $this->assertNotNull($applicant);
+        $this->assertSame(1, (int) $applicant->type);
+        $this->assertSame('Nguyen Van A', $applicant->full_name);
+        $this->assertSame('501', $applicant->upstream_applicant_id);
+
+        // Refund sync is currently disabled (BookingMirror::syncRefund commented
+        // out), so a new booking carries no mirrored refund row.
+        $this->assertNull($booking->refund()->first());
+    }
+
+    public function test_store_accepts_travelo_apis_flat_data_shape_and_exposes_order(): void
+    {
+        // travelo-api's partner endpoint returns the booking directly under `data`,
+        // with no `order` wrapper. Before the fix, store() read `data.order`, got
+        // null, skipped the mirror, and handed the frontend a response whose
+        // `data.order.order_code` was undefined — the /payment/undefined bug.
+        $this->fakeUpstream([$this->envelope($this->upstreamBooking())]);
+        $this->asOwner(7);
+
+        $response = $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        // The mirror runs off the flat shape...
+        $this->assertNotNull(TourBooking::where('order_code', 'TB-001')->first());
+
+        // ...and the response is normalised so the consumer's data.order holds.
+        $this->assertSame('TB-001', $response->json('data.order.order_code'));
+    }
+
+    public function test_store_keeps_exposing_order_for_the_nested_upstream_shape(): void
+    {
+        // The storefront shape already nests the booking under `data.order`; the
+        // contract must stay `data.order` for it too.
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        $this->asOwner(7);
+
+        $response = $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        $this->assertSame('TB-001', $response->json('data.order.order_code'));
+    }
+
+    public function test_show_rebuilds_the_booking_from_columns_not_a_blob(): void
+    {
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        $this->asOwner(7);
+
+        // Hold + mirror, then read it back through the normalised columns.
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        $response = $this->getJson('travelo/tours/bookings/TB-001')->assertOk();
+
+        $this->assertSame('TB-001', $response->json('data.order_code'));
+        $this->assertSame(130.5, $response->json('data.sub_total'));
+        $this->assertSame(120.5, $response->json('data.total'));
+        $this->assertSame('SUMMER', $response->json('data.promotion_code'));
+
+        $this->assertSame(42, $response->json('data.tour_booking_detail.tour_id'));
+        $this->assertSame('2026-08-15', $response->json('data.tour_booking_detail.departure_date'));
+
+        $this->assertSame('Nguyen Van A', $response->json('data.tour_booking_applicants.0.full_name'));
+        // The read exposes the mirror's own applicant id, the handle the update
+        // route takes — never travelo-api's.
+        $applicantId = $response->json('data.tour_booking_applicants.0.id');
+        $this->assertNotSame(501, $applicantId);
+
+        // Refund sync is disabled, so the serialised booking exposes no refund.
+        $this->assertNull($response->json('data.tour_booking_refund'));
     }
 
     public function test_mirror_extension_receives_the_booking_and_upstream_payload(): void
@@ -367,24 +480,124 @@ class ControllerModeTest extends TestCase
             $seen = ['order_code' => $booking->order_code, 'payload_total' => $payload['total'] ?? null];
         });
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
 
         $this->assertSame('TB-001', $seen['order_code']);
         $this->assertSame(120.5, $seen['payload_total']);
     }
 
-    public function test_store_allows_a_guest_and_mirrors_with_no_owner(): void
+    public function test_store_leaves_a_guest_owner_less_when_account_creation_is_off(): void
     {
-        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
-        // No asOwner(): a guest holds a seat before they have an account, like the
-        // storefront. travelo-api creates the account from their email.
+        config()->set('travelo.account.create_customer', false);
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        // No asOwner() and provisioning disabled: the guest holds a seat and the
+        // mirror stays owner-less, the pre-account-move behaviour.
+
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
 
         $booking = TourBooking::where('order_code', 'TB-001')->first();
 
         $this->assertNotNull($booking);
         $this->assertNull($booking->user_id);
+        $this->assertSame(0, CustomerUser::query()->count());
+    }
+
+    public function test_store_creates_a_customer_account_for_a_guest_and_emails_the_password(): void
+    {
+        Mail::fake();
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        // No asOwner(): the customer-facing account is now the SDK's to create.
+
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        $user = CustomerUser::where('email', 'a@x.com')->first();
+        $this->assertNotNull($user, 'a guest checkout should leave an account behind');
+        $this->assertSame('Nguyen Van A', $user->name);
+
+        $booking = TourBooking::where('order_code', 'TB-001')->first();
+        $this->assertSame((int) $user->getKey(), (int) $booking->user_id);
+
+        // A generated-password account is emailed exactly once, to that address.
+        Mail::assertSent(CustomerAccountCreated::class, fn (CustomerAccountCreated $mail) => $mail->hasTo('a@x.com'));
+    }
+
+    public function test_store_emails_a_booking_confirmation(): void
+    {
+        Mail::fake();
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        $this->asOwner(7);
+
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        // Every successful booking gets a confirmation to the booking's email.
+        Mail::assertSent(BookingCreated::class, fn (BookingCreated $mail) => $mail->hasTo('a@x.com'));
+    }
+
+    public function test_store_does_not_email_a_booking_confirmation_when_disabled(): void
+    {
+        config()->set('travelo.booking.send_confirmation_email', false);
+        Mail::fake();
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        $this->asOwner(7);
+
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        Mail::assertNotSent(BookingCreated::class);
+    }
+
+    public function test_store_uses_the_logged_in_owner_and_creates_no_account(): void
+    {
+        Mail::fake();
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        $this->asOwner(7);
+
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        // A logged-in customer already owns the booking — no lookup, no new row.
+        $this->assertSame(0, CustomerUser::query()->count());
+        $this->assertSame(7, (int) TourBooking::where('order_code', 'TB-001')->value('user_id'));
+        Mail::assertNotSent(CustomerAccountCreated::class);
+    }
+
+    public function test_store_reuses_an_existing_customer_without_a_second_welcome(): void
+    {
+        Mail::fake();
+        $existing = CustomerUser::create([
+            'name' => 'Returning Customer',
+            'email' => 'a@x.com',
+            'password' => bcrypt('secret'),
+        ]);
+
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+
+        // Matched by email: no duplicate account, and a returning customer is not
+        // emailed a password they never asked to reset.
+        $this->assertSame(1, CustomerUser::where('email', 'a@x.com')->count());
+        $this->assertSame((int) $existing->getKey(), (int) TourBooking::where('order_code', 'TB-001')->value('user_id'));
+        Mail::assertNotSent(CustomerAccountCreated::class);
+    }
+
+    public function test_store_forwards_the_shoppers_currency_and_stores_the_canonical(): void
+    {
+        config()->set('travelo.currency', 'USD');
+        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
+        $this->asOwner(7);
+
+        // The shopper's currency reaches travelo-api so it freezes as the order's
+        // input_currency (what the payment screen shows). The headline amounts come
+        // back canonical from the unified contract, so the mirror still stores USD.
+        $this->withHeaders(['X-Currency' => 'vnd'])
+            ->postJson('travelo/tours/bookings', $this->minBookingPayload())
+            ->assertOk();
+
+        $this->assertSame('VND', $this->transactions[0]['request']->getHeaderLine('X-Currency'));
+
+        $booking = TourBooking::where('order_code', 'TB-001')->firstOrFail();
+        $this->assertSame('USD', $booking->currency);
+        $this->assertSame('VND', $booking->input_currency);
     }
 
     public function test_store_generates_its_own_idempotency_key_and_ignores_the_callers(): void
@@ -392,7 +605,7 @@ class ControllerModeTest extends TestCase
         $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload() + [
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload() + [
             'idempotency_key' => 'attacker-supplied',
         ])->assertOk();
 
@@ -419,14 +632,14 @@ class ControllerModeTest extends TestCase
         ]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload())
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())
             ->assertStatus(422)
             ->assertJson(['message' => 'Tour is sold out.']);
 
         $this->assertSame(0, TourBooking::count());
     }
 
-    public function test_a_replayed_booking_keeps_its_original_hold_window(): void
+    public function test_a_replayed_booking_updates_the_same_row_not_a_twin(): void
     {
         $this->fakeUpstream([
             $this->envelope(['order' => $this->upstreamBooking()]),
@@ -434,19 +647,15 @@ class ControllerModeTest extends TestCase
         ]);
         $this->asOwner(7);
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
-        $first = TourBooking::where('order_code', 'TB-001')->firstOrFail();
-        $heldUntil = $first->held_until;
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
+        $firstKey = TourBooking::where('order_code', 'TB-001')->firstOrFail()->idempotency_key;
 
-        $this->postJson('travelo/bookings', $this->minBookingPayload())->assertOk();
+        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
 
-        // The seat expires on travelo-api's clock, not on ours — a second write must
-        // not push the window forward, and must not create a twin row.
+        // Keyed on order_code: a replay updates the same row instead of creating a
+        // twin, and the original idempotency key is preserved.
         $this->assertSame(1, TourBooking::count());
-        $this->assertEquals(
-            $heldUntil->toDateTimeString(),
-            TourBooking::where('order_code', 'TB-001')->firstOrFail()->held_until->toDateTimeString(),
-        );
+        $this->assertSame($firstKey, TourBooking::where('order_code', 'TB-001')->firstOrFail()->idempotency_key);
     }
 
     public function test_an_unreachable_travelo_is_503_not_500(): void

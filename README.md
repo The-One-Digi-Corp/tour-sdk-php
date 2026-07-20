@@ -102,18 +102,18 @@ In the consumer backend's `composer.json`:
 
 ```json
 {
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../tour-sdk-php",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
-    "require": {
-        "theonedigi/tour-sdk-php": "^0.1"
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../tour-sdk-php",
+      "options": {
+        "symlink": true
+      }
     }
+  ],
+  "require": {
+    "theonedigi/tour-sdk-php": "^0.1"
+  }
 }
 ```
 
@@ -154,15 +154,15 @@ be pushed to GitHub and tagged with a matching semver tag such as `v0.1.0`.
 
 ```json
 {
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:The-One-Digi-Corp/tour-sdk-php.git"
-        }
-    ],
-    "require": {
-        "theonedigi/tour-sdk-php": "^0.1"
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:The-One-Digi-Corp/tour-sdk-php.git"
     }
+  ],
+  "require": {
+    "theonedigi/tour-sdk-php": "^0.1"
+  }
 }
 ```
 
@@ -233,17 +233,17 @@ TRAVELO_HOLD_TTL_MINUTES=30
 
 Environment variables:
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `TRAVELO_API_URL` | Yes | Origin of `travelo-api`. A trailing `/api` is stripped. |
-| `TRAVELO_PARTNER_CLIENT_ID` | Yes | Partner credential client id. |
-| `TRAVELO_PARTNER_SECRET` | Yes | Shared secret for API request signing and webhook verification. |
-| `TRAVELO_DEFAULT_CURRENCY` | No | Sent as `X-Currency` on SDK requests. Defaults to `USD`. |
-| `TRAVELO_API_TIMEOUT` | No | HTTP timeout in seconds. Defaults to `10`. |
-| `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | No | Accepted webhook timestamp skew. Defaults to `300`. |
-| `TRAVELO_INTEGRATION_NAME` | No | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`. |
-| `TRAVELO_INTEGRATION_VERSION` | No | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`. |
-| `TRAVELO_HOLD_TTL_MINUTES` | No | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
+| Variable                           | Required | Purpose                                                              |
+| ---------------------------------- | -------- | -------------------------------------------------------------------- |
+| `TRAVELO_API_URL`                  | Yes      | Origin of `travelo-api`. A trailing `/api` is stripped.              |
+| `TRAVELO_PARTNER_CLIENT_ID`        | Yes      | Partner credential client id.                                        |
+| `TRAVELO_PARTNER_SECRET`           | Yes      | Shared secret for API request signing and webhook verification.      |
+| `TRAVELO_DEFAULT_CURRENCY`         | No       | Sent as `X-Currency` on SDK requests. Defaults to `USD`.             |
+| `TRAVELO_API_TIMEOUT`              | No       | HTTP timeout in seconds. Defaults to `10`.                           |
+| `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | No       | Accepted webhook timestamp skew. Defaults to `300`.                  |
+| `TRAVELO_INTEGRATION_NAME`         | No       | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`.        |
+| `TRAVELO_INTEGRATION_VERSION`      | No       | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`.          |
+| `TRAVELO_HOLD_TTL_MINUTES`         | No       | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
 
 ## Laravel Usage
 
@@ -356,18 +356,18 @@ $availability = $client->tours()->calendarByDateResource(
 
 Available request objects:
 
-| Class | Use |
-| --- | --- |
-| `BookingQuoteRequest` | Price pre-check before holding inventory. |
-| `BookingCreateRequest` | Create an upstream booking hold. |
-| `BookingApplicantRequest` | Passenger/applicant item inside `BookingCreateRequest`. |
-| `BookingUpdateApplicantRequest` | Update one applicant on an existing booking. |
-| `BookingListRequest` | Filter/paginate partner booking history. |
-| `CheckPromotionRequest` | Validate a promotion code. |
-| `TourListRequest` | Search/filter catalog tours. |
-| `TourTakeRequest` | Simple `take` query for featured/seasonal lists. |
-| `SimilarToursRequest` | Query tours similar to a code or id. |
-| `TourCalendarDateRequest` | Check availability for one departure date. |
+| Class                           | Use                                                     |
+| ------------------------------- | ------------------------------------------------------- |
+| `BookingQuoteRequest`           | Price pre-check before holding inventory.               |
+| `BookingCreateRequest`          | Create an upstream booking hold.                        |
+| `BookingApplicantRequest`       | Passenger/applicant item inside `BookingCreateRequest`. |
+| `BookingUpdateApplicantRequest` | Update one applicant on an existing booking.            |
+| `BookingListRequest`            | Filter/paginate partner booking history.                |
+| `CheckPromotionRequest`         | Validate a promotion code.                              |
+| `TourListRequest`               | Search/filter catalog tours.                            |
+| `TourTakeRequest`               | Simple `take` query for featured/seasonal lists.        |
+| `SimilarToursRequest`           | Query tours similar to a code or id.                    |
+| `TourCalendarDateRequest`       | Check availability for one departure date.              |
 
 Array payloads remain supported for backward compatibility and for newly added
 Partner API fields before the SDK models them.
@@ -428,10 +428,10 @@ forking the generator.
 Keep these regions small. The contract currently carries **98%** of the fields;
 what is left in MANUAL is there for a stated reason, not by default:
 
-| Resource | Manual field | Why |
-| --- | --- | --- |
-| `PartnerBookingResource` | `detail`, `applicants`, `refund` | Friendlier aliases over the contract's `tour_booking_*` keys, plus `payableAmount()`/`payableCurrency()`. Which amount to charge is not something a schema can say. `tour_booking_detail` is also still a bare `array` upstream — `array_merge()` in `PartnerBookingResource::toArray()` is opaque to Scramble. |
-| `TourCalendarDetailResource` | `prices` | Upstream resolves them through `TourCalendarDetailPriceResource::collection(...)->resolve()`, which Scramble does not follow. |
+| Resource                     | Manual field                     | Why                                                                                                                                                                                                                                                                                                             |
+| ---------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PartnerBookingResource`     | `detail`, `applicants`, `refund` | Friendlier aliases over the contract's `tour_booking_*` keys, plus `payableAmount()`/`payableCurrency()`. Which amount to charge is not something a schema can say. `tour_booking_detail` is also still a bare `array` upstream — `array_merge()` in `PartnerBookingResource::toArray()` is opaque to Scramble. |
+| `TourCalendarDetailResource` | `prices`                         | Upstream resolves them through `TourCalendarDetailPriceResource::collection(...)->resolve()`, which Scramble does not follow.                                                                                                                                                                                   |
 
 When travelo-api starts describing one of these, delete it from MANUAL and let
 AUTO take over — that is the direction of travel. `composer check:contract` tells
@@ -440,16 +440,16 @@ you the moment generated output stops matching what is committed.
 ### Why the contract goes wrong, and how it got fixed
 
 Scramble infers from a resource's `toArray()`. It handles `$data['x'] = ...`
-assignments fine; what defeats it is losing the *type* of what it is reading.
+assignments fine; what defeats it is losing the _type_ of what it is reading.
 Everything the SDK used to hand-write traced back to one of these, and each was
 fixed in travelo-api rather than papered over here:
 
-| Symptom in the contract | Cause | Fix |
-| --- | --- | --- |
-| `id`/`status` typed `string` | Scramble cannot tell which model `$this->id` proxies to | `@mixin` on the resource |
-| Whole schema is `array` with no properties | `parent::toArray()` | `@mixin` on the resource |
-| Money typed `string` | value comes from `app(Service::class)->method()`, which Scramble will not resolve — a `@var` on the variable does not help either | cast at the point of use: `(float) $primary['total']` |
-| A typed object collapses to `array` | `array_merge()` | unfixed; spreading instead emits an invalid schema (an unnamed `""` property), so `array_merge` stays and the SDK types the field by hand |
+| Symptom in the contract                    | Cause                                                                                                                             | Fix                                                                                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`/`status` typed `string`               | Scramble cannot tell which model `$this->id` proxies to                                                                           | `@mixin` on the resource                                                                                                                  |
+| Whole schema is `array` with no properties | `parent::toArray()`                                                                                                               | `@mixin` on the resource                                                                                                                  |
+| Money typed `string`                       | value comes from `app(Service::class)->method()`, which Scramble will not resolve — a `@var` on the variable does not help either | cast at the point of use: `(float) $primary['total']`                                                                                     |
+| A typed object collapses to `array`        | `array_merge()`                                                                                                                   | unfixed; spreading instead emits an invalid schema (an unnamed `""` property), so `array_merge` stays and the SDK types the field by hand |
 
 Before touching a resource in travelo-api, run its contract snapshot test — these
 edits must change the documentation and nothing else:
@@ -790,18 +790,18 @@ package and run on `php artisan migrate`.
 
 Routes registered under the prefix:
 
-| Method | Path | Auth |
-| --- | --- | --- |
-| GET | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public |
-| GET | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date` | public |
-| GET | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews` | public |
-| POST | `bookings/quote`, `bookings/check-promotion`, `bookings` | public |
-| GET | `bookings`, `bookings/{code}` | `auth_middleware` |
-| POST | `bookings/{code}/cancel`, `bookings/{code}/applicant/{id}` | `auth_middleware` |
+| Method | Path                                                                                         | Auth              |
+| ------ | -------------------------------------------------------------------------------------------- | ----------------- |
+| GET    | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public            |
+| GET    | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date`                    | public            |
+| GET    | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews`                            | public            |
+| POST   | `bookings/quote`, `bookings/check-promotion`, `bookings`                                     | public            |
+| GET    | `bookings`, `bookings/{code}`                                                                | `auth_middleware` |
+| POST   | `bookings/{code}/cancel`, `bookings/{code}/applicant/{id}`                                   | `auth_middleware` |
 
 Creating a booking is public on purpose: a customer holds a seat before they have
 an account, and travelo-api creates one from their email. Quote and promotion
-checks reserve nothing. Everything that reads or mutates an *existing* booking is
+checks reserve nothing. Everything that reads or mutates an _existing_ booking is
 per-customer and sits behind `auth_middleware`.
 
 ### Routing conventions
@@ -809,10 +809,10 @@ per-customer and sits behind `auth_middleware`.
 The consuming app (`be-travelo-partner`) exposes two booking route prefixes with
 different owners:
 
-| Prefix | Controller | Scope |
-| --- | --- | --- |
-| `/api/travelo/bookings/*` | SDK package (`BookingController`) | HMAC-forwarded CRUD to travelo-api |
-| `/api/_booking/*` | `BookingBridgeController` (local) | Payment flow + local mirror reads/writes |
+| Prefix                    | Controller                        | Scope                                    |
+| ------------------------- | --------------------------------- | ---------------------------------------- |
+| `/api/travelo/bookings/*` | SDK package (`BookingController`) | HMAC-forwarded CRUD to travelo-api       |
+| `/api/_booking/*`         | `BookingBridgeController` (local) | Payment flow + local mirror reads/writes |
 
 **`/api/travelo/bookings/*`** — Registered by the SDK when `TRAVELO_CONTROLLER_MODE=true`.
 Routes (create, update-applicant, cancel, list, show) are proxied to travelo-api
@@ -1046,6 +1046,28 @@ Fixtures:
   the TypeScript SDK.
 - `tests/fixtures/partner-api.openapi.json` keeps SDK endpoint coverage and
   generated DTOs aligned with the Partner API contract.
+
+## API list
+
+/travelo/tours → GET index
+/travelo/tours/references → GET references
+/travelo/tours/get-seasonal → GET seasonal
+/travelo/tours/get-featured → GET featured
+/travelo/tours/get-similar → GET similar
+/travelo/tours/itinerary/{id} → GET itinerary
+/travelo/tours/bookings → POST store
+/travelo/tours/bookings → GET index (auth)
+/travelo/tours/bookings/quote → POST quote
+/travelo/tours/bookings/check-promotion → POST check-promotion
+/travelo/tours/bookings/{code} → GET show (auth)
+/travelo/tours/bookings/{code}/cancel → POST cancel (auth)
+/travelo/tours/bookings/{code}/applicant/{id} → POST updateApplicant
+/travelo/tours/{code} → GET show
+/travelo/tours/{code}/calendars → GET calendars
+/travelo/tours/{code}/calendar-by-date → GET calendar-by-date
+/travelo/tours/{id}/reviews → GET reviews
+/travelo/tours/{id}/review-images → GET review-images
+/travelo/tours/{id}/schedule → GET schedule
 
 ## Development Checklist
 

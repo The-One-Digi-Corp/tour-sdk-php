@@ -13,6 +13,7 @@ use TheOneDigi\TourSdk\Laravel\Http\Controllers\BookingController;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\CatalogProxyController;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\TourCatalogController;
 use TheOneDigi\TourSdk\Laravel\Services\BookingMirror;
+use TheOneDigi\TourSdk\Laravel\Services\CustomerProvisioner;
 use TheOneDigi\TourSdk\Api\BookingApi;
 use TheOneDigi\TourSdk\Api\TourApi;
 use TheOneDigi\TourSdk\WebhookVerifier;
@@ -64,6 +65,12 @@ class TourSdkServiceProvider extends ServiceProvider
         $this->app->bind(BookingMirror::class, static fn(Application $app) => new BookingMirror(
             (int) $app['config']->get('travelo.hold_ttl_minutes', 30),
         ));
+
+        $this->app->bind(CustomerProvisioner::class, static fn(Application $app) => new CustomerProvisioner(
+            (bool) $app['config']->get('travelo.account.create_customer', true),
+            (bool) $app['config']->get('travelo.account.send_welcome_email', true),
+            $app['config']->get('travelo.account.user_model'),
+        ));
     }
 
     public function boot(): void
@@ -73,6 +80,10 @@ class TourSdkServiceProvider extends ServiceProvider
         // have to discover a second step to make it work.
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
+        // The welcome email a consumer rebrands by publishing this view, not by
+        // subclassing the Mailable.
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'travelo');
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../../config/travelo.php' => $this->app->configPath('travelo.php'),
@@ -81,6 +92,10 @@ class TourSdkServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../../database/migrations' => $this->app->databasePath('migrations'),
             ], 'travelo-migrations');
+
+            $this->publishes([
+                __DIR__ . '/../../resources/views' => $this->app->resourcePath('views/vendor/travelo'),
+            ], 'travelo-views');
         }
 
         $this->registerCatalogMacro();
@@ -109,15 +124,36 @@ class TourSdkServiceProvider extends ServiceProvider
             'prefix' => (string) $config->get('travelo.controller_mode.prefix', 'travelo'),
             'middleware' => (array) $config->get('travelo.controller_mode.middleware', ['api']),
         ], function () use ($auth): void {
-            Route::prefix('tours')->name('travelo.tours.')->group(function (): void {
-                // Literal segments first: '/{code}' would otherwise swallow
-                // 'references' and every get-* below it.
+            Route::prefix('tours')->name('travelo.tours.')->group(function () use ($auth): void {
+                // ── Catalog (literal segments first) ───────────────────────
                 Route::get('/', [TourCatalogController::class, 'index'])->name('index');
                 Route::get(ApiPaths::REFERENCES, [TourCatalogController::class, 'references'])->name('references');
                 Route::get(ApiPaths::SEASONAL, [TourCatalogController::class, 'seasonal'])->name('seasonal');
                 Route::get(ApiPaths::FEATURED, [TourCatalogController::class, 'featured'])->name('featured');
                 Route::get(ApiPaths::SIMILAR, [TourCatalogController::class, 'similar'])->name('similar');
                 Route::get(ApiPaths::ITINERARY . '/{id}', [TourCatalogController::class, 'itinerary'])->name('itinerary');
+
+                // ── Bookings — MUST come before {code} wildcard ────────────
+                // {code} would swallow GET /tours/bookings as show('bookings')
+                // if bookings were registered after it.
+                Route::prefix('bookings')->name('bookings.')->group(function () use ($auth): void {
+                    // Public: quote, promotion check, store — no auth needed
+                    Route::post(ApiPaths::QUOTE, [BookingController::class, 'quote'])->name('quote');
+                    Route::post(ApiPaths::CHECK_PROMOTION, [BookingController::class, 'checkPromotion'])->name('check-promotion');
+                    Route::post('/', [BookingController::class, 'store'])->name('store');
+
+                    // Reads/mutations require customer auth
+                    Route::middleware($auth)->group(function (): void {
+                        Route::get('/', [BookingController::class, 'index'])->name('index');
+                        Route::get('/{code}', [BookingController::class, 'show'])->name('show');
+                        Route::post('/{code}' . ApiPaths::CANCEL, [BookingController::class, 'cancel'])->name('cancel');
+                    });
+
+                    Route::post('/{code}' . ApiPaths::APPLICANT . '/{id}', [BookingController::class, 'updateApplicant'])
+                        ->name('update-applicant');
+                });
+
+                // ── Wildcard routes — stay AFTER literal/bookings ──────────
                 Route::get('/{code}', [TourCatalogController::class, 'show'])->name('show');
                 Route::get('/{code}' . ApiPaths::CALENDARS, [TourCatalogController::class, 'calendars'])->name('calendars');
                 Route::get('/{code}' . ApiPaths::CALENDAR_BY_DATE, [TourCatalogController::class, 'calendarByDate'])
@@ -127,30 +163,6 @@ class TourSdkServiceProvider extends ServiceProvider
                     ->name('review-images');
                 Route::get('/{id}' . ApiPaths::SCHEDULE, [TourCatalogController::class, 'schedule'])
                     ->name('schedule');
-            });
-
-            Route::prefix('bookings')->name('travelo.bookings.')->group(function () use ($auth): void {
-                // Public, like the storefront: a customer holds a seat before they
-                // have an account (travelo-api creates one from their email). Quote
-                // and promotion checks reserve nothing either.
-                Route::post(ApiPaths::QUOTE, [BookingController::class, 'quote'])->name('quote');
-                Route::post(ApiPaths::CHECK_PROMOTION, [BookingController::class, 'checkPromotion'])->name('check-promotion');
-                Route::post('/', [BookingController::class, 'store'])->name('store');
-
-                // Reads and mutations of an existing booking are per-customer.
-                // Without a guard, `index` would list every booking the partner
-                // has ever taken.
-                Route::middleware($auth)->group(function (): void {
-                    Route::get('/', [BookingController::class, 'index'])->name('index');
-                    Route::get('/{code}', [BookingController::class, 'show'])->name('show');
-                    Route::post('/{code}' . ApiPaths::CANCEL, [BookingController::class, 'cancel'])->name('cancel');
-                });
-
-                // update-applicant is public (like store): a guest who just created
-                // a booking fills passenger details afterwards. Ownership is checked
-                // inside the controller by matching the booking code in the mirror.
-                Route::post('/{code}' . ApiPaths::APPLICANT . '/{id}', [BookingController::class, 'updateApplicant'])
-                    ->name('update-applicant');
             });
         });
     }

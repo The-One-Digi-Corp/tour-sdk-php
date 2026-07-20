@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property string|null $upstream_applicant_id
- * @property array<string, mixed>|null $payload
  */
 class TourBookingApplicant extends Model
 {
@@ -18,7 +17,9 @@ class TourBookingApplicant extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'payload' => 'array',
+        'type' => 'integer',
+        'gender' => 'integer',
+        'date_of_birth' => 'date:Y-m-d',
     ];
 
     /**
@@ -27,5 +28,27 @@ class TourBookingApplicant extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(TourBooking::class, 'tour_booking_id');
+    }
+
+    /**
+     * The applicant as the partner API contract shapes it.
+     *
+     * `id` is the mirror's own id, on purpose: it is the handle the update-applicant
+     * route takes in its URL, then resolves to `upstream_applicant_id` before calling
+     * travelo-api. Callers address applicants by our id and never see theirs.
+     *
+     * @return array<string, mixed>
+     */
+    public function toContractArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'type' => $this->type,
+            'full_name' => $this->full_name,
+            'gender' => $this->gender,
+            'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
+            'nationality' => $this->nationality,
+            'passport_photo' => $this->passport_photo,
+        ];
     }
 }

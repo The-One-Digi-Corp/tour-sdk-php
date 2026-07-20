@@ -6,14 +6,17 @@ namespace TheOneDigi\TourSdk\Laravel\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use TheOneDigi\TourSdk\Api\BookingApi;
 use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
+use TheOneDigi\TourSdk\Laravel\Mail\BookingCreated;
 use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsApiErrors;
 use TheOneDigi\TourSdk\Laravel\Http\Concerns\ForwardsRequestContext;
 use TheOneDigi\TourSdk\Laravel\Models\TourBooking;
 use TheOneDigi\TourSdk\Laravel\Services\BookingMirror;
+use TheOneDigi\TourSdk\Laravel\Services\CustomerProvisioner;
 use TheOneDigi\TourSdk\Laravel\Support\BookingOwner;
 use TheOneDigi\TourSdk\PartnerClient;
 
@@ -41,6 +44,7 @@ class BookingController
         private readonly BookingApi $bookings,
         private readonly PartnerClient $client,
         private readonly BookingMirror $mirror,
+        private readonly CustomerProvisioner $provisioner,
     ) {
     }
 
@@ -115,26 +119,115 @@ class BookingController
             'applicants.*.passport_photo' => 'nullable|string',
         ]);
 
-        $ownerId = BookingOwner::id();
+        /** @var array{id: int|string|null, welcome_email: ?string, welcome_mail: ?\TheOneDigi\TourSdk\Laravel\Mail\CustomerAccountCreated}|null $provisioned */
+        $provisioned = null;
+        $mirrored = null;
 
-        return $this->forward(function () use ($request, $ownerId) {
+        $response = $this->forward(function () use ($request, &$provisioned, &$mirrored) {
             $idempotencyKey = (string) Str::orderedUuid();
 
             $body = $request->all();
             $body['idempotency_key'] = $idempotencyKey;
 
-            $envelope = $this->client->post(BookingApi::BASE, $body, [
-                'X-Partner-Idempotency-Key' => $idempotencyKey,
-            ] + $this->contextHeaders($request));
+            // Forward the shopper's own currency: travelo-api freezes it as the
+            // order's input_currency, which is what the payment screen shows the
+            // customer. The headline amounts come back canonical (USD) from the
+            // unified partner contract regardless, so the mirror stores USD while
+            // the input_* snapshot keeps the shopper's figures — no forcing needed.
+            $headers = ['X-Partner-Idempotency-Key' => $idempotencyKey] + $this->contextHeaders($request);
 
-            $order = $envelope['data']['order'] ?? null;
+            $envelope = $this->client->post(BookingApi::BASE, $body, $headers);
+
+            // travelo-api's partner endpoint returns the booking directly under
+            // `data`; the storefront shape nests it under `data.order`. Accept
+            // both — exactly as BookingApi::create() does — then always re-expose
+            // it under `data.order` so the consumer contract is stable regardless
+            // of which shape upstream used.
+            $data = is_array($envelope['data'] ?? null) ? $envelope['data'] : [];
+            $order = (isset($data['order']) && is_array($data['order'])) ? $data['order'] : $data;
 
             if (is_array($order) && $order !== []) {
-                $this->mirror->write(PartnerBookingResource::fromArray($order), $idempotencyKey, $ownerId);
+                $resolved = $this->provisioner->resolve([
+                    'name' => $request->input('name'),
+                    'email' => $request->input('email'),
+                ]);
+
+                $mirrored = $this->mirror->write(PartnerBookingResource::fromArray($order), $idempotencyKey, $resolved['id']);
+
+                // Set only after the mirror commits: a confirmation email for a
+                // booking that failed to persist would be a lie.
+                $provisioned = $resolved;
+
+                // travelo-api already returns the unified currency shape (`currency`
+                // is the canonical base, `input_*` carries the shopper's figures), so
+                // there is nothing to remap — only the envelope wrapper is normalised.
+                $envelope['data'] = ['order' => $order];
             }
 
             return $envelope;
         }, 'bookings.store');
+
+        $this->sendWelcomeEmail($provisioned, $response);
+        $this->sendBookingConfirmation($mirrored, $response);
+
+        return $response;
+    }
+
+    /**
+     * Email the customer that their booking was created.
+     *
+     * Fires for every successful booking (unlike the welcome mail, which is only
+     * for a brand-new account). Sent after the response and outside the booking
+     * transaction — a held seat must not roll back because SMTP was down, so a mail
+     * failure is reported and swallowed.
+     */
+    private function sendBookingConfirmation(?TourBooking $booking, JsonResponse $response): void
+    {
+        if ($booking === null || $response->getStatusCode() >= 300) {
+            return;
+        }
+
+        if (! (bool) config('travelo.booking.send_confirmation_email', true)) {
+            return;
+        }
+
+        $email = $booking->email;
+
+        if (! is_string($email) || $email === '') {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new BookingCreated($booking->loadMissing('detail')));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Send the generated-password email for an account this booking just created.
+     *
+     * After the response, never inside the booking transaction: a booking that
+     * holds a seat must not roll back because an SMTP server was down, so a mail
+     * failure is reported and swallowed. Skipped unless the booking succeeded.
+     *
+     * @param array{id: int|string|null, welcome_email: ?string, welcome_mail: ?\TheOneDigi\TourSdk\Laravel\Mail\CustomerAccountCreated}|null $provisioned
+     */
+    private function sendWelcomeEmail(?array $provisioned, JsonResponse $response): void
+    {
+        if ($provisioned === null || $provisioned['welcome_mail'] === null || $provisioned['welcome_email'] === null) {
+            return;
+        }
+
+        if ($response->getStatusCode() >= 300) {
+            return;
+        }
+
+        try {
+            Mail::to($provisioned['welcome_email'])->send($provisioned['welcome_mail']);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**
@@ -161,6 +254,7 @@ class BookingController
 
         $page = TourBooking::query()
             ->where('user_id', $ownerId)
+            ->with(['detail', 'applicants', 'refund'])
             ->latest('id')
             ->paginate($perPage);
 
@@ -170,7 +264,7 @@ class BookingController
             'per_page' => $page->perPage(),
             'last_page' => $page->lastPage(),
             'bookings' => array_map(
-                fn (TourBooking $booking) => $booking->upstream_payload ?? [],
+                fn (TourBooking $booking) => $booking->toContractArray(),
                 $page->items(),
             ),
         ]));
@@ -187,7 +281,9 @@ class BookingController
             return $this->notFound();
         }
 
-        return response()->json($this->envelope(200, 'Success', [], $booking->upstream_payload ?? []));
+        $booking->load(['detail', 'applicants', 'refund']);
+
+        return response()->json($this->envelope(200, 'Success', [], $booking->toContractArray()));
     }
 
     /**
