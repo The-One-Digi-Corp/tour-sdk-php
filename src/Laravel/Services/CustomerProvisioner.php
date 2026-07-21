@@ -27,7 +27,6 @@ class CustomerProvisioner
 {
     public function __construct(
         private readonly bool $createCustomer = true,
-        private readonly bool $sendWelcomeEmail = true,
         private readonly ?string $userModel = null,
     ) {}
 
@@ -75,10 +74,6 @@ class CustomerProvisioner
             }
 
             throw $e;
-        }
-
-        if (! $this->sendWelcomeEmail) {
-            return $this->result($user->getKey());
         }
 
         return [

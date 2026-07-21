@@ -534,18 +534,6 @@ class ControllerModeTest extends TestCase
         Mail::assertSent(BookingCreated::class, fn (BookingCreated $mail) => $mail->hasTo('a@x.com'));
     }
 
-    public function test_store_does_not_email_a_booking_confirmation_when_disabled(): void
-    {
-        config()->set('travelo.booking.send_confirmation_email', false);
-        Mail::fake();
-        $this->fakeUpstream([$this->envelope(['order' => $this->upstreamBooking()])]);
-        $this->asOwner(7);
-
-        $this->postJson('travelo/tours/bookings', $this->minBookingPayload())->assertOk();
-
-        Mail::assertNotSent(BookingCreated::class);
-    }
-
     public function test_store_uses_the_logged_in_owner_and_creates_no_account(): void
     {
         Mail::fake();

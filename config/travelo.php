@@ -42,31 +42,13 @@ return [
      |   create_customer      Look up / create a local user from the booking's email
      |                        so a guest checkout leaves an account behind. Off means
      |                        guest bookings stay owner-less, as before.
-     |   send_welcome_email   Mail the freshly created account its generated password.
-     |                        Only fires for accounts this SDK creates, never for a
-     |                        returning customer or a logged-in one.
      |   user_model           The Eloquent model to create. Null resolves the app's
      |                        own auth model — the table this SDK's users migration
      |                        matches — so a consumer normally leaves it alone.
      */
     'account' => [
         'create_customer' => (bool) env('TRAVELO_CREATE_CUSTOMER', true),
-        'send_welcome_email' => (bool) env('TRAVELO_SEND_WELCOME_EMAIL', true),
         'user_model' => env('TRAVELO_USER_MODEL'),
-    ],
-
-    /*
-     | Booking confirmation email. On every successful booking the SDK emails the
-     | customer a "booking created" confirmation — the counterpart to the account
-     | welcome mail, and likewise the SDK's job now, not travelo-api's. Unlike the
-     | welcome mail (only for brand-new accounts), this fires for every booking.
-     |
-     | Set false to disable — e.g. to send your own from the BookingMirrorExtension
-     | hook. Rebrand the content by publishing the view (see README), not by
-     | disabling this.
-     */
-    'booking' => [
-        'send_confirmation_email' => (bool) env('TRAVELO_SEND_BOOKING_EMAIL', true),
     ],
 
     /*

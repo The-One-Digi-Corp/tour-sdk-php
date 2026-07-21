@@ -245,6 +245,96 @@ Environment variables:
 | `TRAVELO_INTEGRATION_VERSION`      | No       | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`.          |
 | `TRAVELO_HOLD_TTL_MINUTES`         | No       | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
 
+### Email views
+
+The SDK always sends a welcome email when it creates a new customer account and
+a booking-created email after every successful booking. Both are sent after the
+booking transaction; SMTP errors are reported without rolling the booking back.
+
+The mailables render namespaced package views. With no app override, Laravel uses
+the defaults shipped in `resources/views/emails`. To change branding or content,
+publish the views:
+
+```bash
+php artisan vendor:publish --tag=travelo-views
+```
+
+This creates the following host-app files:
+
+| Host view | Available variables |
+| --- | --- |
+| `resources/views/vendor/travelo/emails/customer-account-created.blade.php` | `$user`, `$plainPassword` |
+| `resources/views/vendor/travelo/emails/booking-created.blade.php` | `$booking` and `$booking->detail`; use `$booking->input_total` and `$booking->input_currency` for the frozen customer total |
+
+Laravel automatically prefers either host file when it exists and falls back to
+the matching SDK default when it does not. No email feature flags or application
+code are required. You may also create or copy only one of the two files when only
+one email needs custom branding.
+
+The SDK defaults share the reusable v2 email structure below. Publishing
+`travelo-views` copies all of it, so a consumer may override one message, one
+component, or the common layout without duplicating the other templates:
+
+```text
+components/
+└── mails/tour/v2/
+    ├── contact-card.blade.php
+    └── order-summary.blade.php
+emails/
+├── booking-created.blade.php
+└── customer-account-created.blade.php
+mails/
+└── tour/v2/
+    ├── create-account.blade.php
+    ├── create-order.blade.php
+    └── layout.blade.php
+```
+
+`emails/booking-created.blade.php` and
+`emails/customer-account-created.blade.php` are the SDK mailable entry points.
+They delegate to the v2 templates under `mails/tour/v2`, matching the same
+folder convention used by the application email templates:
+
+```text
+mails/tour/v2/*.blade.php
+components/mails/tour/v2/*.blade.php
+```
+
+#### Override just one template (recommended)
+
+You do not have to publish everything. Because each view resolves through the
+`travelo::` namespace, creating a single file at the mirrored path under
+`resources/views/vendor/travelo/` overrides only that template; every other
+`travelo::...` view (layout, components, the other message) still falls back to
+the SDK default. This keeps you off the SDK's copies for the parts you did not
+change, so future SDK template fixes still reach you.
+
+For example, to re-brand only the booking email while reusing the SDK layout and
+summary component, create:
+
+```blade
+{{-- resources/views/vendor/travelo/mails/tour/v2/create-order.blade.php --}}
+@extends('travelo::mails.tour.v2.layout')
+
+@section('content')
+    <div class="text-center">
+        <div class="fs-h2 fw-medium text-primary">Đặt chỗ thành công!</div>
+        <div class="fs-h4">Mã đặt chỗ: #{{ $booking->order_code }}</div>
+    </div>
+
+    {{-- reuse the SDK's shared summary so amounts/participants stay identical --}}
+    @include('travelo::components.mails.tour.v2.order-summary', ['booking' => $booking])
+    @include('travelo::components.mails.tour.v2.contact-card', [
+        'title' => 'Cần hỗ trợ?',
+        'description' => 'Trả lời email này, đội ngũ của chúng tôi sẽ hỗ trợ bạn.',
+    ])
+@endsection
+```
+
+Delete the file and the SDK default is used again — no config, no code. Run
+`php artisan view:clear` after adding or removing an override so the compiled
+view cache is rebuilt.
+
 ## Laravel Usage
 
 Inject the API class you need:

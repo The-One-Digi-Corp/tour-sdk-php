@@ -13,29 +13,33 @@ class TourBookingDetail extends Model
 
     protected $guarded = [];
 
-    protected function casts(): array
-    {
-        return [
-            'departure_date' => 'date:Y-m-d',
-            'adult_quantity' => 'integer',
-            'child_quantity' => 'integer',
-            'infant_quantity' => 'integer',
-            'adult_price' => 'float',
-            'child_price' => 'float',
-            'infant_price' => 'float',
-            'discount_price' => 'float',
-            'input_adult_price' => 'float',
-            'input_child_price' => 'float',
-            'input_infant_price' => 'float',
-            'input_discount_price' => 'float',
-            'input_currency_version' => 'integer',
-            'input_currency_exchange_rate' => 'float',
-            'tour_id' => 'integer',
-            'tour_price_group_id' => 'integer',
-            'discount_type' => 'integer',
-            'discount_count' => 'integer',
-        ];
-    }
+    /**
+     * Use the property form for Laravel 10 consumers. The casts() method is only
+     * recognised by newer framework versions; on Laravel 10 departure_date was
+     * left as a string and the booking email failed while calling ->format().
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'departure_date' => 'date:Y-m-d',
+        'adult_quantity' => 'integer',
+        'child_quantity' => 'integer',
+        'infant_quantity' => 'integer',
+        'adult_price' => 'float',
+        'child_price' => 'float',
+        'infant_price' => 'float',
+        'discount_price' => 'float',
+        'input_adult_price' => 'float',
+        'input_child_price' => 'float',
+        'input_infant_price' => 'float',
+        'input_discount_price' => 'float',
+        'input_currency_version' => 'integer',
+        'input_currency_exchange_rate' => 'float',
+        'tour_id' => 'integer',
+        'tour_price_group_id' => 'integer',
+        'discount_type' => 'integer',
+        'discount_count' => 'integer',
+    ];
 
     public function booking(): BelongsTo
     {

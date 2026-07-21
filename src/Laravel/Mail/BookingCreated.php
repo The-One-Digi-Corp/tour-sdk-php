@@ -33,8 +33,10 @@ class BookingCreated extends Mailable
 
     public function envelope(): Envelope
     {
+        $appName = (string) config('app.name', 'Travelo');
+
         return new Envelope(
-            subject: 'Your booking is confirmed',
+            subject: sprintf('Booking ID #%s Created - %s', $this->booking->order_code, $appName),
         );
     }
 

@@ -68,7 +68,6 @@ class TourSdkServiceProvider extends ServiceProvider
 
         $this->app->bind(CustomerProvisioner::class, static fn(Application $app) => new CustomerProvisioner(
             (bool) $app['config']->get('travelo.account.create_customer', true),
-            (bool) $app['config']->get('travelo.account.send_welcome_email', true),
             $app['config']->get('travelo.account.user_model'),
         ));
     }
@@ -80,8 +79,9 @@ class TourSdkServiceProvider extends ServiceProvider
         // have to discover a second step to make it work.
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
-        // The welcome email a consumer rebrands by publishing this view, not by
-        // subclassing the Mailable.
+        // Laravel checks resources/views/vendor/travelo first, then falls back to
+        // these package views. Consumers can therefore rebrand either email without
+        // replacing the SDK mailables or changing any configuration.
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'travelo');
 
         if ($this->app->runningInConsole()) {

@@ -187,10 +187,6 @@ class BookingController
             return;
         }
 
-        if (! (bool) config('travelo.booking.send_confirmation_email', true)) {
-            return;
-        }
-
         $email = $booking->email;
 
         if (! is_string($email) || $email === '') {
@@ -198,7 +194,7 @@ class BookingController
         }
 
         try {
-            Mail::to($email)->send(new BookingCreated($booking->loadMissing('detail')));
+            Mail::to($email)->send(new BookingCreated($booking->loadMissing(['detail', 'applicants'])));
         } catch (\Throwable $e) {
             report($e);
         }
