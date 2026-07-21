@@ -8,6 +8,23 @@ points for when you want to call the Partner API from your own code.
 This SDK is the PHP sibling of the TypeScript `tour-sdk`; both clients target the
 same Partner API contract served by `travelo-api`.
 
+## Contents
+
+- [Recommended: controller mode (drop-in)](#recommended-controller-mode-drop-in)
+- [Status](#status)
+- [What the SDK does / does not do](#what-the-sdk-does)
+- [Installation](#installation)
+- [Integration checklist](#integration-checklist)
+- [Laravel setup](#laravel-setup) — env vars, [email views & overrides](#email-views)
+- [Laravel usage](#laravel-usage) · [Plain PHP usage](#plain-php-usage)
+- [Request payloads](#request-payloads)
+- [Tour Catalog API](#tour-catalog-api) · [Booking API](#booking-api) · [Booking flow](#booking-flow)
+- [Controller mode](#controller-mode) — routes, ownership, decorators
+- [Contract and DTO evolution](#contract-and-dto-evolution) · [Editing generated resources](#editing-generated-resources)
+- [Webhooks](#webhooks)
+- [Error handling](#error-handling) · [Security notes](#security-notes)
+- [Testing](#testing)
+
 ## Recommended: controller mode (drop-in)
 
 The primary way to use this package. Set:
@@ -112,7 +129,7 @@ In the consumer backend's `composer.json`:
     }
   ],
   "require": {
-    "theonedigi/tour-sdk-php": "^0.1"
+    "theonedigi/tour-sdk-php": "^0.2"
   }
 }
 ```
@@ -145,12 +162,12 @@ When developing locally:
   changing the SDK's `composer.json`, package version, dependencies, or Laravel
   auto-discovery metadata.
 - The local SDK `composer.json` includes an explicit package version so the path
-  repository can satisfy constraints such as `^0.1` even before a git tag exists.
+  repository can satisfy constraints such as `^0.2` even before a git tag exists.
 
 ### Git/VCS Installation
 
 Use this when the SDK is consumed without a local sibling directory. The SDK must
-be pushed to GitHub and tagged with a matching semver tag such as `v0.1.0`.
+be pushed to GitHub and tagged with a matching semver tag such as `v0.2.0`.
 
 ```json
 {
@@ -161,7 +178,7 @@ be pushed to GitHub and tagged with a matching semver tag such as `v0.1.0`.
     }
   ],
   "require": {
-    "theonedigi/tour-sdk-php": "^0.1"
+    "theonedigi/tour-sdk-php": "^0.2"
   }
 }
 ```
@@ -176,7 +193,7 @@ Notes:
 
 - If a consumer declares both `path` and `vcs`, the `path` repository must be
   listed before `vcs`.
-- A semver constraint such as `^0.1` needs a matching git tag when installing
+- A semver constraint such as `^0.2` needs a matching git tag when installing
   from `vcs`.
 - `composer.json` includes an explicit package version because a path repository
   cannot infer one unless HEAD is exactly on a tag.
@@ -244,6 +261,10 @@ Environment variables:
 | `TRAVELO_INTEGRATION_NAME`         | No       | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`.        |
 | `TRAVELO_INTEGRATION_VERSION`      | No       | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`.          |
 | `TRAVELO_HOLD_TTL_MINUTES`         | No       | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
+| `TRAVELO_CONTROLLER_MODE`          | No       | Register the drop-in endpoints. Defaults to `false`.                 |
+| `TRAVELO_ROUTE_PREFIX`             | No       | Prefix for controller-mode routes. Defaults to `travelo`.            |
+| `TRAVELO_CREATE_CUSTOMER`          | No       | Create/lookup a local customer account per booking. Defaults to `true`. |
+| `TRAVELO_USER_MODEL`               | No       | Eloquent model for that account. Defaults to the app's auth model.   |
 
 ### Email views
 
@@ -878,21 +899,27 @@ TRAVELO_ROUTE_PREFIX=travelo
 That is the whole integration. Migrations for the booking mirror ship with the
 package and run on `php artisan migrate`.
 
-Routes registered under the prefix:
+Everything the SDK registers is nested under `tours` (the integration is a tour
+integration), so with the default prefix the full paths are `/travelo/tours/...`.
+`be-travelo-partner` sets `TRAVELO_ROUTE_PREFIX=api/travelo`, making them
+`/api/travelo/tours/...`.
 
-| Method | Path                                                                                         | Auth              |
-| ------ | -------------------------------------------------------------------------------------------- | ----------------- |
+| Method | Path (relative to prefix)                                                                   | Auth              |
+| ------ | ------------------------------------------------------------------------------------------- | ----------------- |
 | GET    | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public            |
+| GET    | `tours/tour-itinerary/{id}`                                                                  | public            |
 | GET    | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date`                    | public            |
-| GET    | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews`                            | public            |
-| POST   | `bookings/quote`, `bookings/check-promotion`, `bookings`                                     | public            |
-| GET    | `bookings`, `bookings/{code}`                                                                | `auth_middleware` |
-| POST   | `bookings/{code}/cancel`, `bookings/{code}/applicant/{id}`                                   | `auth_middleware` |
+| GET    | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews`, `tours/{id}/get-schedule-tour` | public      |
+| POST   | `tours/bookings/quote`, `tours/bookings/check-promotion`, `tours/bookings`                   | public            |
+| POST   | `tours/bookings/{code}/applicant/{id}`                                                       | public            |
+| GET    | `tours/bookings`, `tours/bookings/{code}`                                                    | `auth_middleware` |
+| POST   | `tours/bookings/{code}/cancel`                                                               | `auth_middleware` |
 
 Creating a booking is public on purpose: a customer holds a seat before they have
-an account, and travelo-api creates one from their email. Quote and promotion
-checks reserve nothing. Everything that reads or mutates an _existing_ booking is
-per-customer and sits behind `auth_middleware`.
+an account, and the SDK creates one from their email. Quote and promotion checks
+reserve nothing, and `update-applicant` is public too — a guest fills passenger
+details right after booking. Everything that _lists or reads_ an existing booking
+is per-customer and sits behind `auth_middleware`.
 
 ### Routing conventions
 
@@ -901,10 +928,10 @@ different owners:
 
 | Prefix                    | Controller                        | Scope                                    |
 | ------------------------- | --------------------------------- | ---------------------------------------- |
-| `/api/travelo/bookings/*` | SDK package (`BookingController`) | HMAC-forwarded CRUD to travelo-api       |
+| `/api/travelo/tours/bookings/*` | SDK package (`BookingController`) | HMAC-forwarded CRUD to travelo-api       |
 | `/api/_booking/*`         | `BookingBridgeController` (local) | Payment flow + local mirror reads/writes |
 
-**`/api/travelo/bookings/*`** — Registered by the SDK when `TRAVELO_CONTROLLER_MODE=true`.
+**`/api/travelo/tours/bookings/*`** — Registered by the SDK when `TRAVELO_CONTROLLER_MODE=true`.
 Routes (create, update-applicant, cancel, list, show) are proxied to travelo-api
 via HMAC. The consuming app's `routes/api.php` does not declare these.
 
@@ -1136,43 +1163,6 @@ Fixtures:
   the TypeScript SDK.
 - `tests/fixtures/partner-api.openapi.json` keeps SDK endpoint coverage and
   generated DTOs aligned with the Partner API contract.
-
-## API list
-
-/travelo/tours → GET index
-/travelo/tours/references → GET references
-/travelo/tours/get-seasonal → GET seasonal
-/travelo/tours/get-featured → GET featured
-/travelo/tours/get-similar → GET similar
-/travelo/tours/itinerary/{id} → GET itinerary
-/travelo/tours/bookings → POST store
-/travelo/tours/bookings → GET index (auth)
-/travelo/tours/bookings/quote → POST quote
-/travelo/tours/bookings/check-promotion → POST check-promotion
-/travelo/tours/bookings/{code} → GET show (auth)
-/travelo/tours/bookings/{code}/cancel → POST cancel (auth)
-/travelo/tours/bookings/{code}/applicant/{id} → POST updateApplicant
-/travelo/tours/{code} → GET show
-/travelo/tours/{code}/calendars → GET calendars
-/travelo/tours/{code}/calendar-by-date → GET calendar-by-date
-/travelo/tours/{id}/reviews → GET reviews
-/travelo/tours/{id}/review-images → GET review-images
-/travelo/tours/{id}/schedule → GET schedule
-
-## Development Checklist
-
-When adding or changing Partner API endpoints:
-
-1. Refresh `tests/fixtures/partner-api.openapi.json` from `travelo-api` when the
-   public contract changes.
-2. Run `composer generate:contract`.
-3. Update the matching API class in `src/Api` if the path/action changed.
-4. Update stable hand-written request DTOs/resources only when the field should
-   be part of the recommended SDK API.
-5. Update contract coverage, generated DTO, request payload, and resource
-   mapping tests.
-6. Keep payment-local fields out of the SDK-facing booking schema.
-7. Run `composer check:contract` and the PHPUnit suite.
 
 ## License
 
