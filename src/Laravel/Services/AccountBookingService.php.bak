@@ -1,0 +1,684 @@
+<?php
+
+namespace App\Services\Account;
+
+use App\Constants\Order as OrderConstant;
+use App\Models\User;
+use App\Models\Wishlist;
+use App\Services\Currency\CurrencyConverter;
+use App\Services\Upload\UploadService;
+use App\Support\MediaUrl;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Modules\Flight\App\Models\FlightBooking;
+use Modules\Hotel\App\Models\HotelBooking;
+use Modules\Hotel\App\Models\HotelBookingCancellation;
+use Modules\Tour\App\Http\Resources\TourResource;
+use Modules\Tour\App\Models\Tour;
+use Modules\Tour\App\Models\TourBooking;
+use Modules\Tour\App\Models\TourBookingDetail;
+use Modules\Tour\App\Models\TourBookingRefund;
+use Modules\Tour\App\Models\TourReview;
+use Modules\Tour\App\Models\TourReviewImage;
+use Modules\Tour\App\Services\TourBookingService;
+use Modules\Tour\App\Services\TourBookingAmountDeriver;
+use Modules\Tour\App\Services\TourService;
+
+class AccountBookingService
+{
+    private TourBookingService $tourBookingService;
+    private CurrencyConverter $currencyConverter;
+    private TourService $tourService;
+    private TourBookingAmountDeriver $amountDeriver;
+
+    public function __construct(
+        TourBookingService $tourBookingService,
+        CurrencyConverter $currencyConverter,
+        TourService $tourService,
+        TourBookingAmountDeriver $amountDeriver,
+    ) {
+        $this->tourBookingService = $tourBookingService;
+        $this->currencyConverter = $currencyConverter;
+        $this->tourService = $tourService;
+        $this->amountDeriver = $amountDeriver;
+    }
+
+    /**
+     * Convert a base-currency (VND) amount to the display currency requested
+     * by the client via the X-Currency header (default USD).
+     *
+     * The Order model now always returns raw base values (VND); presentation
+     * conversion happens here at the service boundary, consistent with
+     * OrderResource / TourResource.
+     */
+    public function getOrders($time = null)
+    {
+        $user = Auth::user();
+
+        $subQuery = DB::table('tour_routes as tr')
+            ->select('tr.tour_id', DB::raw('MAX(tr.`order`) as max_order'))
+            ->groupBy('tr.tour_id');
+
+        $query = TourBooking::select(
+            'tour_bookings.id',
+            'tour_bookings.order_code',
+            'tour_bookings.user_id',
+            'tour_bookings.sub_total',
+            'tour_bookings.discount',
+            'tour_bookings.total',
+            'tour_bookings.status',
+            'tour_bookings.created_at',
+            'tour_bookings.base_currency',
+            'tour_bookings.input_currency',
+            'tour_bookings.input_currency_version',
+            'tour_bookings.input_sub_total',
+            'tour_bookings.input_discount',
+            'tour_bookings.input_total',
+            'tour_booking_details.departure_date',
+            'tours.id as tour_id',
+            'tours.thumbnail as tour_thumbnail',
+            'tour_translations.name as tour_name',
+            'cities.name_' . app()->getLocale() . ' as location',
+        )->leftJoin('tour_booking_details', 'tour_booking_details.tour_booking_id', '=', 'tour_bookings.id')
+            ->leftJoin('tours', 'tours.id', '=', 'tour_booking_details.tour_id')
+            ->leftJoin('tour_translations', function ($join) {
+                $join->on('tour_translations.tour_id', '=', 'tour_booking_details.tour_id')
+                    ->where('tour_translations.language', app()->getLocale());
+            })
+            ->leftJoinSub(
+                $subQuery,
+                'max_routes',
+                fn($join) =>
+                $join->on('max_routes.tour_id', 'tour_booking_details.tour_id')
+            )
+            ->leftJoin('tour_routes', function ($join) {
+                $join->on('tour_routes.tour_id', 'max_routes.tour_id')
+                    ->on('tour_routes.order', 'max_routes.max_order');
+            })
+            ->leftJoin('cities', 'cities.code', '=', 'tour_routes.destination_location_code')
+            ->where('user_id', $user->id);
+
+        if (!empty($time) && is_callable($time)) {
+            $time($query);
+        }
+        // Eager-load the real orderDetail relation (adult/child/infant price +
+        // quantity) so `total` is derived the same way as the detail endpoint
+        // (getOrderByOrderCode) — the raw `tour_booking_details.departure_date`
+        // column already joined above isn't enough for that. List pages are
+        // paginated small (2 per time bucket), so this is a cheap eager-load,
+        // not a per-row query.
+        $data = $query->with('orderDetail')->orderByDesc('created_at')->get();
+
+        $displayCurrency = strtoupper((string) request()->header('X-Currency', 'USD'));
+        $data->each(function ($order) use ($displayCurrency) {
+            $order->tour_thumbnail = MediaUrl::make($order->tour_thumbnail);
+            // Same derive-from-leaf-parts logic as OrderResource/getOrderByOrderCode
+            // — without it, this list's `total` could show a different figure than
+            // the detail page for the same order (currency-cast-analysis.md §13/§16).
+            $order->total = $this->amountDeriver->derive($order, $order->orderDetail, $displayCurrency)['total'];
+        });
+
+        return $data;
+    }
+
+    public function getOrderByOrderCode($code)
+    {
+        $order = TourBooking::select(
+            'tour_bookings.id',
+            'tour_bookings.order_code',
+            'tour_bookings.user_id',
+            'tour_bookings.total',
+            'tour_bookings.sub_total',
+            'tour_bookings.discount',
+            'tour_bookings.cost',
+            'tour_bookings.status',
+            'tour_bookings.payment_gateway_id',
+            'tour_bookings.created_at',
+            'tour_bookings.base_currency',
+            'tour_bookings.input_currency',
+            'tour_bookings.input_currency_version',
+            'tour_bookings.input_total',
+            'tour_bookings.input_sub_total',
+            'tour_bookings.input_discount',
+            'tour_bookings.input_cost',
+            'tour_bookings.name',
+            'tour_bookings.email',
+            'tour_bookings.email2',
+            'tour_bookings.phone',
+            'tour_bookings.dial_code',
+        )->where('user_id', Auth::user()->id)->where('order_code', $code)->first();
+
+        if (!$order) {
+            return null;
+        }
+
+        $orderDetail = $this->getOrderDetail($order->id);
+        $orderApplicant = $this->tourBookingService->getOrderApplicants($order->id);
+        $orderRefund = $this->tourBookingService->getOrderRefund($order->id);
+
+        $displayCurrency = strtoupper((string) request()->header('X-Currency', 'USD'));
+        $deriver = $this->amountDeriver;
+        // The one other currency the app currently supports (USD<->VND), for the
+        // sub-price shown alongside the primary amount — see §11.6/§12.
+        $altCurrency = $deriver->altCurrency($displayCurrency);
+
+        if ($order) {
+            // Derive sub_total/total from the already-converted per-pax leaf
+            // prices (adult/child/infant × quantity) instead of converting the
+            // pre-computed aggregate independently — otherwise round(a)+round(b)
+            // can differ from round(a+b) and the displayed breakdown stops
+            // summing to the displayed total (see currency-cast-analysis.md §13).
+            // Shared with OrderResource — this endpoint doesn't go through it
+            // because it serializes a custom joined query, not the Order model.
+            $primary = $deriver->derive($order, $orderDetail, $displayCurrency);
+            $alt     = $deriver->derive($order, $orderDetail, $altCurrency);
+
+            $order->total = $primary['total'];
+            $order->sub_total = $primary['sub_total'];
+            $order->discount = $primary['discount'];
+            $order->cost = $deriver->leaf($order, $order->cost, $order->input_cost, $displayCurrency);
+            // Additive fields (§11.6/§14.5) — sub-price UI reads these instead of
+            // recomputing from a live exchange rate.
+            $order->total_amounts = [
+                ['currency' => $displayCurrency, 'amount' => $primary['total']],
+                ['currency' => $altCurrency, 'amount' => $alt['total']],
+            ];
+            $order->sub_total_amounts = [
+                ['currency' => $displayCurrency, 'amount' => $primary['sub_total']],
+                ['currency' => $altCurrency, 'amount' => $alt['sub_total']],
+            ];
+
+            if ($orderDetail) {
+                $orderDetail->adult_price = $primary['adult_price'];
+                $orderDetail->child_price = $primary['child_price'];
+                $orderDetail->infant_price = $primary['infant_price'];
+                // group_price is always 0 at booking time (OrderService::createOrder)
+                // and isn't summed into sub_total anywhere — safe to convert independently.
+                $orderDetail->group_price = $deriver->leaf($order, $orderDetail->group_price, $orderDetail->input_group_price, $displayCurrency);
+                // Always equal to the order-level discount (OrderService::createOrder
+                // writes the same value to both) — reuse the already-derived figure.
+                $orderDetail->discount_price = $primary['discount'];
+            }
+        }
+
+        if ($orderRefund && isset($orderRefund->refund_total)) {
+            $baseCurrency = $order->base_currency ?? 'USD';
+            $version = $order->input_currency_version;
+            $orderRefund->refund_total = $this->currencyConverter->convert((float) $orderRefund->refund_total, $baseCurrency, $displayCurrency, 2, $version);
+        }
+
+        return [
+            'order' => $order,
+            'orderDetail' => $orderDetail,
+            'orderApplicant' => $orderApplicant,
+            'orderRefund' => $orderRefund,
+        ];
+    }
+
+    public function getOrderDetail($id)
+    {
+        $lastRouteSubQuery = DB::table('tour_routes as tr')
+            ->select('tr.tour_id', DB::raw('MAX(tr.`order`) as max_order'))
+            ->groupBy('tr.tour_id');
+
+        $orderDetail = TourBookingDetail::select(
+            'tour_booking_details.id',
+            'tour_booking_details.tour_booking_id',
+            'tour_booking_details.tour_id',
+            'tour_booking_details.tour_price_group_id',
+            'tour_booking_details.departure_date',
+            'tour_booking_details.adult_quantity',
+            'tour_booking_details.child_quantity',
+            'tour_booking_details.infant_quantity',
+            'tour_booking_details.adult_price',
+            'tour_booking_details.child_price',
+            'tour_booking_details.infant_price',
+            'tour_booking_details.group_price',
+            'tour_booking_details.discount_price',
+            'tour_booking_details.discount_type',
+            'tour_booking_details.discount_count',
+            'tour_booking_details.special_request',
+            'tour_booking_details.base_currency',
+            'tour_booking_details.input_currency',
+            'tour_booking_details.input_currency_version',
+            'tour_booking_details.input_currency_exchange_rate',
+            'tour_booking_details.input_adult_price',
+            'tour_booking_details.input_child_price',
+            'tour_booking_details.input_infant_price',
+            'tour_booking_details.input_group_price',
+            'tour_booking_details.input_discount_price',
+            'tours.code as tour_code',
+            'tours.thumbnail as tour_thumbnail',
+            'tour_translations.name as tour_name',
+            'tours.day as tour_day',
+            'tours.night as tour_night',
+            'cities.name_' . app()->getLocale() . ' as location',
+        )->leftJoin('tours', 'tours.id', '=', 'tour_booking_details.tour_id')
+            ->leftJoin('tour_translations', function ($join) {
+                $join->on('tour_booking_details.tour_id', '=', 'tour_translations.tour_id')
+                    ->where('tour_translations.language', app()->getLocale());
+            })
+            ->leftJoinSub(
+                $lastRouteSubQuery,
+                'last_route',
+                fn($join) => $join->on('last_route.tour_id', '=', 'tour_booking_details.tour_id')
+            )
+            ->leftJoin('tour_routes', function ($join) {
+                $join->on('tour_routes.tour_id', '=', 'last_route.tour_id')
+                    ->on('tour_routes.order', '=', 'last_route.max_order');
+            })
+            ->leftJoin('cities', 'cities.code', '=', 'tour_routes.destination_location_code')
+            ->where('tour_booking_details.tour_booking_id', $id)
+            ->first();
+
+        if (!empty($orderDetail)) {
+            $orderDetail->duration_text = Tour::formatDurationText($orderDetail->tour_day, $orderDetail->tour_night);
+
+            if (!empty($orderDetail->departure_date)) {
+                $orderDetail->return_date = Carbon::parse($orderDetail->departure_date)
+                    ->addDays((int) ($orderDetail->tour_night ?? 0))
+                    ->format('Y-m-d');
+            }
+        }
+
+        if (!empty($orderDetail) && $orderDetail->group_price > 0) {
+            $adult_quantity = $orderDetail->adult_quantity;
+            $group = array_reduce(config('project.groups', []), function ($carry, $range) use ($adult_quantity) {
+                return ($adult_quantity >= $range['min'] && $adult_quantity <= ($range['max'] === 'max' ? PHP_INT_MAX : $range['max']))
+                    ? $range
+                    : $carry;
+            }, null);
+        }
+
+        if (!empty($orderDetail)) {
+            $orderDetail->tour_thumbnail = MediaUrl::make($orderDetail->tour_thumbnail);
+        }
+
+        return $orderDetail;
+    }
+
+    public function getTours($request)
+    {
+        $type = $request->input('type');
+        $perPage = (int) $request->input('per_page', 6);
+        $perPage = max(1, min($perPage, 20));
+
+        $user = Auth::user();
+        $wishlist = Wishlist::where('user_id', $user->id)->get();
+
+        $query = $this->tourService->publicTourQuery()->whereIn('id', $wishlist->pluck('tour_id'));
+        if (!empty($type)) {
+            $query->where('type_id', $type);
+        }
+
+        $tours = $query->paginate($perPage);
+
+        return [
+            'data' => [
+                'current_page' => $tours->currentPage(),
+                'total' => $tours->total(),
+                'per_page' => $tours->perPage(),
+                'last_page' => $tours->lastPage(),
+                'tours' => TourResource::collection($tours),
+            ]
+        ];
+    }
+
+    public function updateInfo($request)
+    {
+        DB::beginTransaction();
+        try {
+            $userId = Auth::id();
+            $user = User::findOrFail($userId);
+            if (!empty($request->input('prf_fullname'))) {
+                $user->name = $request->input('prf_fullname');
+            }
+            if (!empty($request->input('prf_phone'))) {
+                $user->phone = $request->input('prf_phone');
+            }
+            if (!empty($request->input('prf_dial'))) {
+                $user->dial_code = $request->input('prf_dial');
+            }
+            if (!empty($request->input('prf_date_of_birth'))) {
+                $user->date_of_birth = date('Y-m-d', strtotime($request->input('prf_date_of_birth')));
+            }
+            if (!empty($request->input('prf_gender'))) {
+                $user->gender = (int) $request->input('prf_gender');
+            }
+            if (!empty($request->input('new_password'))) {
+                $user->password = Hash::make($request->input('new_password'));
+            }
+
+            $user->save();
+            DB::commit();
+            return $user;
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('update profile: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function review($request)
+    {
+        DB::beginTransaction();
+        try {
+            $tour_review = new TourReview;
+            $tour_review->tour_id = $request->input('tour_id');
+            $tour_review->user_id = $request->input('user_id');
+            $tour_review->rating = $request->input('rating');
+            $tour_review->review = $request->input('review');
+            $tour_review->save();
+
+            // Images are uploaded directly to S3 via the unified presigned-URL
+            // flow; the client submits the resulting fileNames (S3 keys).
+            $fileNames = collect($request->input('images', []))
+                ->filter()
+                ->map(fn($name) => MediaUrl::path($name))
+                ->filter()
+                ->values();
+
+            foreach ($fileNames as $fileName) {
+                $image = new TourReviewImage;
+                $image->tour_id = $request->input('tour_id');
+                $image->tour_review_id = $tour_review->id;
+                $image->image_path = $fileName;
+                $image->save();
+            }
+
+            // Promote from temporary → permanent so the cleanup job keeps them.
+            app(UploadService::class)->promote($fileNames->all());
+
+            $this->__refreshTourRatingStats($tour_review->tour_id);
+
+            DB::commit();
+            return true;
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('AccountService@review failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function __refreshTourRatingStats($tourId)
+    {
+        $stats = TourReview::where('tour_id', $tourId)
+            ->selectRaw('COUNT(*) as total_reviews, AVG(rating) as average_rating')
+            ->first();
+
+        Tour::where('id', $tourId)->update([
+            'total_reviews' => $stats->total_reviews ?? 0,
+            'average_rating' => round($stats->average_rating ?? 0, 1),
+        ]);
+    }
+
+    public function actionTourWishlist($id)
+    {
+        try {
+            logger('id ' . $id);
+            $user = Auth::user();
+            logger('user_id ' . $user->id);
+            $wishlist = Wishlist::where('user_id', $user->id)->where('tour_id', $id)->first();
+
+            if ($wishlist) {
+                $wishlist->delete();
+            } else {
+                $wishlist = new Wishlist;
+                $wishlist->user_id = $user->id;
+                $wishlist->tour_id = $id;
+                $wishlist->save();
+            }
+
+            return true;
+        } catch (Exception $e) {
+            Log::error('Error Updated wishlist: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function changePaymentMethod($code, $method)
+    {
+        return TourBooking::where('order_code', $code)->update([
+            'payment_gateway_id' => $method
+        ]);
+    }
+
+    public function cancelOrder($id)
+    {
+        $order = TourBooking::select('id', 'status')->findOrFail($id);
+
+        return DB::transaction(function () use ($order) {
+            // Only return inventory the first time the order leaves an active state,
+            // so repeated cancels can't double-release slots.
+            if (!in_array((int) $order->status, [TourBooking::CANCELED, TourBooking::REFUNDED], true)) {
+                $this->tourBookingService->releaseSlotForOrder($order);
+            }
+
+            return $order->update(['status' => TourBooking::CANCELED]);
+        });
+    }
+
+    /**
+     * Create a refund request for the authenticated user's own tour booking.
+     *
+     * Scoped to the logged-in user by order_code so one user can't refund
+     * another's booking. The refund rules (IN_PROGRESS only, full booking total,
+     * closed-guard) live in TourBookingService::createRefundRequest.
+     *
+     * @return array{status:string,refund?:array} 'ok' with refund, or
+     *                                             'not_found' / 'invalid_status' / 'closed'
+     */
+    public function requestTourRefund(string $orderCode, string $reasons): array
+    {
+        $order = TourBooking::select('id', 'status', 'total', 'base_currency', 'input_currency_version')
+            ->where('user_id', Auth::id())
+            ->where('order_code', $orderCode)
+            ->first();
+
+        if (!$order) {
+            return ['status' => 'not_found'];
+        }
+
+        $refund = $this->tourBookingService->createRefundRequest($order, $reasons, 'Customer refund request');
+
+        if (is_string($refund)) {
+            return ['status' => $refund];
+        }
+
+        $displayCurrency = strtoupper((string) request()->header('X-Currency', 'USD'));
+        $baseCurrency = strtoupper((string) ($order->base_currency ?? 'USD'));
+
+        return [
+            'status' => 'ok',
+            'refund' => [
+                'id' => $refund->id,
+                'refund_total' => $this->currencyConverter->convert((float) $refund->refund_total, $baseCurrency, $displayCurrency, 2, $order->input_currency_version),
+                'currency' => $displayCurrency,
+                'status' => $refund->status,
+                'status_text' => TourBookingRefund::STATUS_TEXT[$refund->status] ?? 'Unknown',
+            ],
+        ];
+    }
+
+    //Hotel Booking
+    public function getHotelBookings($page, $take, $time, $search = null)
+    {
+        $skip = $page * $take - $take;
+
+        $user_id = Auth::id();
+        $query = HotelBooking::select('id', 'code', 'total', 'status', 'created_at')
+            ->where('user_id', $user_id)
+            ->whereNull('deleted_at')
+            ->with(['detail.hotel', 'detail.room', 'detail.bedOptions']);
+
+        if (!empty($search)) {
+            $query->where('code', 'like', '%' . $search . '%');
+        }
+        if (!empty($time)) {
+            switch ($time) {
+                case OrderConstant::TIMES[1]:
+                    $query->whereYear('created_at', Carbon::now()->year);
+                    break;
+                case OrderConstant::TIMES[2]:
+                    $query->whereDate('created_at', '>=', Carbon::now()->subDays(90));
+                    break;
+                case OrderConstant::TIMES[3]:
+                    $query->whereDate('created_at', '>=', Carbon::now()->subDays(30));
+                    break;
+            }
+        }
+
+        $query->orderByDesc('created_at');
+
+        $total = $query->count();
+        $bookings = $query->skip($skip)->take($take)->get();
+
+        return [$total, $bookings];
+    }
+
+    public function getHotelBookingByCode($code)
+    {
+        $user_id = Auth::id();
+        $booking = HotelBooking::where('user_id', $user_id)
+            ->where('code', $code)
+            ->whereNull('deleted_at')
+            ->with(['detail.hotel', 'detail.room', 'detail.bedOptions', 'cancellation', 'refund'])
+            ->first();
+
+        if (!empty($booking)) {
+            return $booking;
+        }
+        return false;
+    }
+
+    public function cancelHotelBooking($id)
+    {
+        $user_id = Auth::id();
+        $booking = HotelBooking::where('user_id', $user_id)->where('id', $id)->whereNull('deleted_at')->first();
+
+        if (!empty($booking)) {
+            if ($booking->status == HotelBooking::IN_PROGRESS) {
+                $active = $this->__getActiveCancellationPolicy(
+                    json_decode($booking->detail->cancellation_policies, true),
+                    $booking->detail->refundable,
+                    $booking->service_fee,
+                    $booking->total
+                );
+
+                HotelBookingCancellation::create([
+                    'booking_id' => $booking->id,
+                    'cancel_fee' => $active['cancel_fee'] ?? 0,
+                    'refunded_amount' => $active['refunded_amount'] ?? 0,
+                    'status' => HotelBookingCancellation::PENDING,
+                ]);
+                return true;
+            } else if ($booking->status == HotelBooking::PENDING_PAYMENT) {
+                $booking->status = HotelBooking::CANCELED;
+                $booking->save();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function __getActiveCancellationPolicy(array $policies, int $isRefundable, int $serviceFee, int $total)
+    {
+        if (!$isRefundable) {
+            return [
+                'cancel_fee' => (float) $total,
+                'refunded_amount' => 0,
+            ];
+        }
+
+        $now = time();
+
+        // tìm policy active
+        $active = collect($policies)->first(function ($p) use ($now) {
+            $start = strtotime($p['start_date']);
+            $end = strtotime($p['end_date']);
+            return $now >= $start && $now <= $end;
+        });
+
+        if ($active) {
+            $penalty = (float) $active['penalty_amount'] + (float) ($serviceFee ?? 0);
+            return [
+                'cancel_fee' => $penalty,
+                'refunded_amount' => (float) $total - $penalty,
+            ];
+        }
+
+        // trước policy đầu tiên
+        if (!empty($policies)) {
+            $firstStart = strtotime($policies[0]['start_date']);
+            if ($now < $firstStart) {
+                return [
+                    'cancel_fee' => 0,
+                    'refunded_amount' => (float) $total,
+                ];
+            }
+        }
+
+        // sau tất cả policy
+        return [
+            'cancel_fee' => (float) $total,
+            'refunded_amount' => 0,
+        ];
+    }
+
+    //Flight Booking
+    public function getFlightBookings(int $page, int $take, string $time, ?string $search = null)
+    {
+        $skip = $page * $take - $take;
+
+        $user_id = Auth::id();
+        $query = FlightBooking::select('id', 'code', 'discount', 'sub_total', 'cost', 'total', 'status', 'created_at')
+            ->where('user_id', $user_id)
+            ->whereNot('status', FlightBooking::FAILED)
+            ->whereNull('deleted_at')
+            ->with('details.legs');
+
+        if (!empty($search)) {
+            $query->where('code', 'like', '%' . $search . '%');
+        }
+        if (!empty($time)) {
+            switch ($time) {
+                case OrderConstant::TIMES[1]:
+                    $query->whereYear('created_at', Carbon::now()->year);
+                    break;
+                case OrderConstant::TIMES[2]:
+                    $query->whereDate('created_at', '>=', Carbon::now()->subDays(90));
+                    break;
+                case OrderConstant::TIMES[3]:
+                    $query->whereDate('created_at', '>=', Carbon::now()->subDays(30));
+                    break;
+            }
+        }
+
+        $query->orderByDesc('created_at');
+
+        $total = $query->count();
+        $bookings = $query->skip($skip)->take($take)->get();
+
+        return [$total, $bookings];
+    }
+
+    public function getFlightBookingByCode(string $code)
+    {
+        $user_id = Auth::id();
+        $booking = FlightBooking::where('user_id', $user_id)
+            ->where('code', $code)
+            ->whereNot('status', FlightBooking::FAILED)
+            ->whereNull('deleted_at')
+            ->with(['details.legs', 'passengers', 'baggages', 'seats', 'ancillaries'])
+            ->first();
+
+        if (!empty($booking)) {
+            return $booking;
+        }
+        return false;
+    }
+}
