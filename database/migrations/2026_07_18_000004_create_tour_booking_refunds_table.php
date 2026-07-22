@@ -30,9 +30,12 @@ return new class extends Migration
             $table->text('reasons')->nullable();
             $table->text('feedback_staff')->nullable();
             $table->text('feedback_manager')->nullable();
-            $table->decimal('refund_total', 10, 2)->unsigned()->default(0);
+            $table->decimal('refund_total', 15, 2)->unsigned()->default(0);
             $table->string('currency', 3)->default('USD')->comment('Canonical storage unit — USD/VND');
             $table->unsignedTinyInteger('status')->default(1)->comment('1: New | 2: Pending | 3: Approved | 4: Disapproved');
+
+            $table->string('upstream_tour_booking_refund_id')->comment('ID of the refund request in the upstream system')->index();
+            $table->string('note')->nullable()->comment('Note from the upstream system');
 
             $table->timestamps();
         });
