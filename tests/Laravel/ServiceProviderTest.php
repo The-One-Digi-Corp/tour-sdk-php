@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TheOneDigi\TourSdk\Tests\Laravel;
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use TheOneDigi\TourSdk\Laravel\Facades\Travelo;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Api\BookingApi;
@@ -48,6 +49,56 @@ class ServiceProviderTest extends TestCase
         $this->assertSame('http://travelo.test', config('travelo.base_url'));
         $this->assertSame(30, config('travelo.hold_ttl_minutes'));
         $this->assertSame(300, config('travelo.webhook_max_skew_seconds'));
+    }
+
+    public function test_email_views_and_reusable_v2_parts_are_registered(): void
+    {
+        $hints = View::getFinder()->getHints()['travelo'];
+
+        $this->assertContains(
+            realpath(__DIR__ . '/../../resources/views'),
+            array_map(static fn (string $path) => realpath($path), $hints),
+        );
+        $this->assertSame(
+            realpath(__DIR__ . '/../../resources/views/emails/booking-created.blade.php'),
+            realpath(View::getFinder()->find('travelo::emails.booking-created')),
+        );
+        $this->assertTrue(View::exists('travelo::mails.tour.v2.layout'));
+        $this->assertTrue(View::exists('travelo::mails.tour.v2.create-order'));
+        $this->assertTrue(View::exists('travelo::mails.tour.v2.create-account'));
+        $this->assertTrue(View::exists('travelo::components.mails.tour.v2.order-summary'));
+        $this->assertTrue(View::exists('travelo::components.mails.tour.v2.contact-card'));
+    }
+
+    public function test_booking_email_entry_point_renders_the_v2_template(): void
+    {
+        $booking = (object) [
+            'order_code' => 'SDK123',
+            'name' => 'Test Customer',
+            'status' => 1,
+            'input_currency' => 'VND',
+            'input_total' => 805680,
+            'input_sub_total' => 805680,
+            'input_discount' => 0,
+            'created_at' => \Illuminate\Support\Carbon::parse('2026-07-20'),
+            'detail' => (object) [
+                'departure_date' => '2026-07-25',
+                'input_adult_price' => 805680,
+                'adult_quantity' => 1,
+                'input_child_price' => 0,
+                'child_quantity' => 0,
+                'input_infant_price' => 0,
+                'infant_quantity' => 0,
+            ],
+            'applicants' => collect(),
+        ];
+
+        $html = View::make('travelo::emails.booking-created', ['booking' => $booking])->render();
+
+        $this->assertStringContainsString('<html lang="en-US">', $html);
+        $this->assertStringContainsString('Booking ID: <span class="text-primary">#SDK123</span>', $html);
+        $this->assertStringContainsString('Payment Amount', $html);
+        $this->assertStringContainsString('805,680 VND', $html);
     }
 
     /**

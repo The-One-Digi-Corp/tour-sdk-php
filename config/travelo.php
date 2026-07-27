@@ -35,6 +35,23 @@ return [
     'timeout' => (float) env('TRAVELO_API_TIMEOUT', 10),
 
     /*
+     | Customer accounts. travelo-api used to create the customer's account and
+     | email them the password on every partner booking; that now belongs here, on
+     | the app the customer actually logs into.
+     |
+     |   create_customer      Look up / create a local user from the booking's email
+     |                        so a guest checkout leaves an account behind. Off means
+     |                        guest bookings stay owner-less, as before.
+     |   user_model           The Eloquent model to create. Null resolves the app's
+     |                        own auth model — the table this SDK's users migration
+     |                        matches — so a consumer normally leaves it alone.
+     */
+    'account' => [
+        'create_customer' => (bool) env('TRAVELO_CREATE_CUSTOMER', true),
+        'user_model' => env('TRAVELO_USER_MODEL'),
+    ],
+
+    /*
      | Signatures are rejected outside this skew (travelo-api's own limit is 300s).
      | Keep NTP running or every call 401s.
      */
@@ -55,4 +72,29 @@ return [
      | PARTNER_HOLD_TTL_MINUTES, change this with it.
      */
     'hold_ttl_minutes' => (int) env('TRAVELO_HOLD_TTL_MINUTES', 30),
+
+    /*
+     | Controller mode — the SDK registers the endpoints itself, so a consumer writes
+     | no controllers. Off by default: installing a package must never open HTTP
+     | routes on someone's app without them asking.
+     |
+     |   TRAVELO_CONTROLLER_MODE=true
+     |   TRAVELO_ROUTE_PREFIX=travelo
+     |
+     | `auth_middleware` guards the per-customer booking routes. Leaving it empty
+     | makes `GET /bookings` list every booking the partner has — set it.
+     |
+     | Ownership is resolved with Auth::id() by default. To use another guard:
+     |
+     |   BookingOwner::resolveUsing(fn () => Auth::guard('web')->id());
+     |
+     | (in a service provider — not here, because config may be cached and
+     | `config:cache` cannot serialise a closure.)
+     */
+    'controller_mode' => [
+        'enabled' => (bool) env('TRAVELO_CONTROLLER_MODE', false),
+        'prefix' => env('TRAVELO_ROUTE_PREFIX', 'travelo'),
+        'middleware' => ['api'],
+        'auth_middleware' => ['auth:sanctum'],
+    ],
 ];

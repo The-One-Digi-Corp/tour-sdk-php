@@ -46,6 +46,12 @@ class PartnerBookingDetailResource extends ArrayBackedResource
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
+    /**
+     * Canonical currency of the headline prices (unified contract). travelo-api
+     * renamed `base_currency` to `currency`; this reads the new name and falls back
+     * to the old one so a spec regenerated before that rename still hydrates.
+     */
+    public readonly string $currency;
     /* END MANUAL FIELDS */
 
     /**
@@ -87,5 +93,10 @@ class PartnerBookingDetailResource extends ArrayBackedResource
     }
 
     /* BEGIN MANUAL HYDRATION */
+    protected function hydrateManual(): void
+    {
+        $currency = $this->string('currency');
+        $this->currency = $currency !== '' ? $currency : $this->string('base_currency');
+    }
     /* END MANUAL HYDRATION */
 }

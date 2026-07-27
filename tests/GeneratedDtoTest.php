@@ -33,12 +33,14 @@ final class GeneratedDtoTest extends TestCase
     public function test_generated_request_objects_build_contract_payloads(): void
     {
         $create = new PartnerCheckoutCreateBookingRequest(
-            tourCode: 'IBTCARSGN3181',
-            departureDate: '2026-08-01',
-            adultQuantity: 1,
             name: 'Customer Name',
             phone: '0900000000',
             email: 'customer@example.com',
+            orderDetails: [
+                'tour_id' => 42,
+                'departure_date' => '2026-08-01',
+                'adult_quantity' => 1,
+            ],
             applicants: [
                 new PartnerCheckoutCreateBookingApplicantRequest(type: 1, fullName: 'Customer Name'),
             ],
@@ -46,12 +48,14 @@ final class GeneratedDtoTest extends TestCase
         );
 
         self::assertSame([
-            'tour_code' => 'IBTCARSGN3181',
-            'departure_date' => '2026-08-01',
-            'adult_quantity' => 1,
             'name' => 'Customer Name',
             'phone' => '0900000000',
             'email' => 'customer@example.com',
+            'order_details' => [
+                'tour_id' => 42,
+                'departure_date' => '2026-08-01',
+                'adult_quantity' => 1,
+            ],
             'applicants' => [
                 ['type' => 1, 'full_name' => 'Customer Name'],
             ],

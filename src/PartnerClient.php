@@ -29,7 +29,7 @@ use TheOneDigi\TourSdk\Api\TourApi;
 class PartnerClient
 {
     public const SDK_NAME = 'tour-sdk-php';
-    public const SDK_VERSION = '0.1.0';
+    public const SDK_VERSION = '0.2.0';
 
     private readonly PartnerSigner $signer;
 

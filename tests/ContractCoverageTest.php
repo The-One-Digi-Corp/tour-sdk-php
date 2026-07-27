@@ -70,6 +70,8 @@ final class ContractCoverageTest extends TestCase
             'GET /tours/{code}/calendar-by-date' => fn () => $client->tours()->calendarByDate('T-1', ['date' => '2026-08-01']),
             'GET /tours/{id}/get-list-reviews' => fn () => $client->tours()->reviews(7),
             'GET /tours/{id}/get-all-image-reviews' => fn () => $client->tours()->reviewImages(7),
+            'GET /tours/tour-itinerary/{id}' => fn () => $client->tours()->itinerary(7),
+            'GET /tours/{id}/get-schedule-tour' => fn () => $client->tours()->schedule(7, ['date' => '2026-08-01']),
 
             'GET /bookings' => fn () => $client->bookings()->list(),
             'POST /bookings' => fn () => $client->bookings()->create(['tour_code' => 'T-1'], 'idem-1'),

@@ -77,28 +77,30 @@ final class RequestPayloadTest extends TestCase
 
         $client->bookings()->create(
             new PartnerCheckoutCreateBookingRequest(
-                tourCode: 'IBTCARSGN3181',
-                departureDate: '2026-08-01',
                 name: 'Customer Name',
                 phone: '0900000000',
                 email: 'customer@example.com',
+                orderDetails: [
+                    'tour_id' => 42,
+                    'departure_date' => '2026-08-01',
+                    'adult_quantity' => 1,
+                    'special_request' => 'Window seat if possible',
+                ],
                 applicants: [
                     new PartnerCheckoutCreateBookingApplicantRequest(type: 1, fullName: 'Customer Name', nationality: 'VN'),
                 ],
-                adultQuantity: 1,
                 dialCode: '84',
-                specialRequest: 'Window seat if possible',
             ),
             'idem-123',
         );
 
         $body = $this->sentJson();
 
-        self::assertSame('IBTCARSGN3181', $body['tour_code']);
-        self::assertSame('2026-08-01', $body['departure_date']);
+        self::assertSame(42, $body['order_details']['tour_id']);
+        self::assertSame('2026-08-01', $body['order_details']['departure_date']);
         self::assertSame('Customer Name', $body['name']);
         self::assertSame('84', $body['dial_code']);
-        self::assertSame('Window seat if possible', $body['special_request']);
+        self::assertSame('Window seat if possible', $body['order_details']['special_request']);
         self::assertSame('Customer Name', $body['applicants'][0]['full_name']);
         self::assertSame('idem-123', $this->request()->getHeaderLine('X-Partner-Idempotency-Key'));
     }

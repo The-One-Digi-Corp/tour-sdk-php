@@ -1,16 +1,54 @@
 # Travelo Tour SDK for PHP
 
-PHP/Laravel SDK for the Travelo Partner API. It provides a signed HTTP client,
-typed API entry points for tour catalog and partner booking flows, Laravel
-service-provider wiring, optional catalog proxy routes, and webhook signature
-verification.
+A drop-in Laravel package for the Travelo Partner API. Include it, set three env
+values, and the tour catalog and partner booking endpoints exist on your app —
+no controllers to write. It also ships a signed HTTP client and typed API entry
+points for when you want to call the Partner API from your own code.
 
 This SDK is the PHP sibling of the TypeScript `tour-sdk`; both clients target the
 same Partner API contract served by `travelo-api`.
 
+## Contents
+
+- [Recommended: controller mode (drop-in)](#recommended-controller-mode-drop-in)
+- [Status](#status)
+- [What the SDK does / does not do](#what-the-sdk-does)
+- [Installation](#installation)
+- [Integration checklist](#integration-checklist)
+- [Laravel setup](#laravel-setup) — env vars, [email views & overrides](#email-views)
+- [Laravel usage](#laravel-usage) · [Plain PHP usage](#plain-php-usage)
+- [Request payloads](#request-payloads)
+- [Tour Catalog API](#tour-catalog-api) · [Booking API](#booking-api) · [Booking flow](#booking-flow)
+- [Controller mode](#controller-mode) — routes, ownership, decorators
+- [Contract and DTO evolution](#contract-and-dto-evolution) · [Editing generated resources](#editing-generated-resources)
+- [Webhooks](#webhooks)
+- [Error handling](#error-handling) · [Security notes](#security-notes)
+- [Testing](#testing)
+
+## Recommended: controller mode (drop-in)
+
+The primary way to use this package. Set:
+
+```dotenv
+TRAVELO_API_URL=http://localhost:8000
+TRAVELO_PARTNER_CLIENT_ID=...
+TRAVELO_PARTNER_SECRET=...
+TRAVELO_CONTROLLER_MODE=true
+```
+
+`php artisan migrate`, and the endpoints are live under `/travelo`. Set
+`TRAVELO_ROUTE_PREFIX` to move them — `be-travelo-partner` uses `api/travelo`, since
+the `api` middleware group adds no URL prefix of its own to package routes. Your
+app's only code is at most an auth middleware and an owner resolver — see
+[Controller Mode](#controller-mode). The HTTP contract the frontend consumes is in
+`.claude/docs/tour-sdk-package-contract.md`.
+
+Injecting `TourApi` / `BookingApi` into your own controllers ("SDK mode") still
+works and is documented below; controller mode is the default path.
+
 ## Status
 
-Current package version: `0.1.0`
+Current package version: `0.2.0`
 
 Runtime support:
 
@@ -43,7 +81,10 @@ PHP `>= 8.2`, depending on Composer resolution.
 
 - It does not manage partner-local payment tables.
 - It does not expose or create `payment_histories`.
-- It does not auto-register booking write routes in a Laravel consumer app.
+- It does not register any route unless you opt in with
+  `TRAVELO_CONTROLLER_MODE=true`; in SDK mode it opens no HTTP surface at all.
+- It does not route `confirm()` in either mode — that turns a held seat into a
+  sold one, so it stays callable only from your payment success path.
 - It does not call first-party checkout routes such as
   `/api/tours/bookings/checkout/{code}`.
 - It does not decide whether money is settled. The consuming partner app owns
@@ -78,18 +119,18 @@ In the consumer backend's `composer.json`:
 
 ```json
 {
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../tour-sdk-php",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
-    "require": {
-        "theonedigi/tour-sdk-php": "^0.1"
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../tour-sdk-php",
+      "options": {
+        "symlink": true
+      }
     }
+  ],
+  "require": {
+    "theonedigi/tour-sdk-php": "^0.2"
+  }
 }
 ```
 
@@ -121,24 +162,24 @@ When developing locally:
   changing the SDK's `composer.json`, package version, dependencies, or Laravel
   auto-discovery metadata.
 - The local SDK `composer.json` includes an explicit package version so the path
-  repository can satisfy constraints such as `^0.1` even before a git tag exists.
+  repository can satisfy constraints such as `^0.2` even before a git tag exists.
 
 ### Git/VCS Installation
 
 Use this when the SDK is consumed without a local sibling directory. The SDK must
-be pushed to GitHub and tagged with a matching semver tag such as `v0.1.0`.
+be pushed to GitHub and tagged with a matching semver tag such as `v0.2.0`.
 
 ```json
 {
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:The-One-Digi-Corp/tour-sdk-php.git"
-        }
-    ],
-    "require": {
-        "theonedigi/tour-sdk-php": "^0.1"
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:The-One-Digi-Corp/tour-sdk-php.git"
     }
+  ],
+  "require": {
+    "theonedigi/tour-sdk-php": "^0.2"
+  }
 }
 ```
 
@@ -152,7 +193,7 @@ Notes:
 
 - If a consumer declares both `path` and `vcs`, the `path` repository must be
   listed before `vcs`.
-- A semver constraint such as `^0.1` needs a matching git tag when installing
+- A semver constraint such as `^0.2` needs a matching git tag when installing
   from `vcs`.
 - `composer.json` includes an explicit package version because a path repository
   cannot infer one unless HEAD is exactly on a tag.
@@ -209,17 +250,111 @@ TRAVELO_HOLD_TTL_MINUTES=30
 
 Environment variables:
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `TRAVELO_API_URL` | Yes | Origin of `travelo-api`. A trailing `/api` is stripped. |
-| `TRAVELO_PARTNER_CLIENT_ID` | Yes | Partner credential client id. |
-| `TRAVELO_PARTNER_SECRET` | Yes | Shared secret for API request signing and webhook verification. |
-| `TRAVELO_DEFAULT_CURRENCY` | No | Sent as `X-Currency` on SDK requests. Defaults to `USD`. |
-| `TRAVELO_API_TIMEOUT` | No | HTTP timeout in seconds. Defaults to `10`. |
-| `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | No | Accepted webhook timestamp skew. Defaults to `300`. |
-| `TRAVELO_INTEGRATION_NAME` | No | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`. |
-| `TRAVELO_INTEGRATION_VERSION` | No | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`. |
-| `TRAVELO_HOLD_TTL_MINUTES` | No | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
+| Variable                           | Required | Purpose                                                              |
+| ---------------------------------- | -------- | -------------------------------------------------------------------- |
+| `TRAVELO_API_URL`                  | Yes      | Origin of `travelo-api`. A trailing `/api` is stripped.              |
+| `TRAVELO_PARTNER_CLIENT_ID`        | Yes      | Partner credential client id.                                        |
+| `TRAVELO_PARTNER_SECRET`           | Yes      | Shared secret for API request signing and webhook verification.      |
+| `TRAVELO_DEFAULT_CURRENCY`         | No       | Sent as `X-Currency` on SDK requests. Defaults to `USD`.             |
+| `TRAVELO_API_TIMEOUT`              | No       | HTTP timeout in seconds. Defaults to `10`.                           |
+| `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | No       | Accepted webhook timestamp skew. Defaults to `300`.                  |
+| `TRAVELO_INTEGRATION_NAME`         | No       | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`.        |
+| `TRAVELO_INTEGRATION_VERSION`      | No       | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`.          |
+| `TRAVELO_HOLD_TTL_MINUTES`         | No       | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
+| `TRAVELO_CONTROLLER_MODE`          | No       | Register the drop-in endpoints. Defaults to `false`.                 |
+| `TRAVELO_ROUTE_PREFIX`             | No       | Prefix for controller-mode routes. Defaults to `travelo`.            |
+| `TRAVELO_CREATE_CUSTOMER`          | No       | Create/lookup a local customer account per booking. Defaults to `true`. |
+| `TRAVELO_USER_MODEL`               | No       | Eloquent model for that account. Defaults to the app's auth model.   |
+
+### Email views
+
+The SDK always sends a welcome email when it creates a new customer account and
+a booking-created email after every successful booking. Both are sent after the
+booking transaction; SMTP errors are reported without rolling the booking back.
+
+The mailables render namespaced package views. With no app override, Laravel uses
+the defaults shipped in `resources/views/emails`. To change branding or content,
+publish the views:
+
+```bash
+php artisan vendor:publish --tag=travelo-views
+```
+
+This creates the following host-app files:
+
+| Host view | Available variables |
+| --- | --- |
+| `resources/views/vendor/travelo/emails/customer-account-created.blade.php` | `$user`, `$plainPassword` |
+| `resources/views/vendor/travelo/emails/booking-created.blade.php` | `$booking` and `$booking->detail`; use `$booking->input_total` and `$booking->input_currency` for the frozen customer total |
+
+Laravel automatically prefers either host file when it exists and falls back to
+the matching SDK default when it does not. No email feature flags or application
+code are required. You may also create or copy only one of the two files when only
+one email needs custom branding.
+
+The SDK defaults share the reusable v2 email structure below. Publishing
+`travelo-views` copies all of it, so a consumer may override one message, one
+component, or the common layout without duplicating the other templates:
+
+```text
+components/
+└── mails/tour/v2/
+    ├── contact-card.blade.php
+    └── order-summary.blade.php
+emails/
+├── booking-created.blade.php
+└── customer-account-created.blade.php
+mails/
+└── tour/v2/
+    ├── create-account.blade.php
+    ├── create-order.blade.php
+    └── layout.blade.php
+```
+
+`emails/booking-created.blade.php` and
+`emails/customer-account-created.blade.php` are the SDK mailable entry points.
+They delegate to the v2 templates under `mails/tour/v2`, matching the same
+folder convention used by the application email templates:
+
+```text
+mails/tour/v2/*.blade.php
+components/mails/tour/v2/*.blade.php
+```
+
+#### Override just one template (recommended)
+
+You do not have to publish everything. Because each view resolves through the
+`travelo::` namespace, creating a single file at the mirrored path under
+`resources/views/vendor/travelo/` overrides only that template; every other
+`travelo::...` view (layout, components, the other message) still falls back to
+the SDK default. This keeps you off the SDK's copies for the parts you did not
+change, so future SDK template fixes still reach you.
+
+For example, to re-brand only the booking email while reusing the SDK layout and
+summary component, create:
+
+```blade
+{{-- resources/views/vendor/travelo/mails/tour/v2/create-order.blade.php --}}
+@extends('travelo::mails.tour.v2.layout')
+
+@section('content')
+    <div class="text-center">
+        <div class="fs-h2 fw-medium text-primary">Đặt chỗ thành công!</div>
+        <div class="fs-h4">Mã đặt chỗ: #{{ $booking->order_code }}</div>
+    </div>
+
+    {{-- reuse the SDK's shared summary so amounts/participants stay identical --}}
+    @include('travelo::components.mails.tour.v2.order-summary', ['booking' => $booking])
+    @include('travelo::components.mails.tour.v2.contact-card', [
+        'title' => 'Cần hỗ trợ?',
+        'description' => 'Trả lời email này, đội ngũ của chúng tôi sẽ hỗ trợ bạn.',
+    ])
+@endsection
+```
+
+Delete the file and the SDK default is used again — no config, no code. Run
+`php artisan view:clear` after adding or removing an override so the compiled
+view cache is rebuilt.
 
 ## Laravel Usage
 
@@ -332,18 +467,18 @@ $availability = $client->tours()->calendarByDateResource(
 
 Available request objects:
 
-| Class | Use |
-| --- | --- |
-| `BookingQuoteRequest` | Price pre-check before holding inventory. |
-| `BookingCreateRequest` | Create an upstream booking hold. |
-| `BookingApplicantRequest` | Passenger/applicant item inside `BookingCreateRequest`. |
-| `BookingUpdateApplicantRequest` | Update one applicant on an existing booking. |
-| `BookingListRequest` | Filter/paginate partner booking history. |
-| `CheckPromotionRequest` | Validate a promotion code. |
-| `TourListRequest` | Search/filter catalog tours. |
-| `TourTakeRequest` | Simple `take` query for featured/seasonal lists. |
-| `SimilarToursRequest` | Query tours similar to a code or id. |
-| `TourCalendarDateRequest` | Check availability for one departure date. |
+| Class                           | Use                                                     |
+| ------------------------------- | ------------------------------------------------------- |
+| `BookingQuoteRequest`           | Price pre-check before holding inventory.               |
+| `BookingCreateRequest`          | Create an upstream booking hold.                        |
+| `BookingApplicantRequest`       | Passenger/applicant item inside `BookingCreateRequest`. |
+| `BookingUpdateApplicantRequest` | Update one applicant on an existing booking.            |
+| `BookingListRequest`            | Filter/paginate partner booking history.                |
+| `CheckPromotionRequest`         | Validate a promotion code.                              |
+| `TourListRequest`               | Search/filter catalog tours.                            |
+| `TourTakeRequest`               | Simple `take` query for featured/seasonal lists.        |
+| `SimilarToursRequest`           | Query tours similar to a code or id.                    |
+| `TourCalendarDateRequest`       | Check availability for one departure date.              |
 
 Array payloads remain supported for backward compatibility and for newly added
 Partner API fields before the SDK models them.
@@ -404,10 +539,10 @@ forking the generator.
 Keep these regions small. The contract currently carries **98%** of the fields;
 what is left in MANUAL is there for a stated reason, not by default:
 
-| Resource | Manual field | Why |
-| --- | --- | --- |
-| `PartnerBookingResource` | `detail`, `applicants`, `refund` | Friendlier aliases over the contract's `tour_booking_*` keys, plus `payableAmount()`/`payableCurrency()`. Which amount to charge is not something a schema can say. `tour_booking_detail` is also still a bare `array` upstream — `array_merge()` in `PartnerBookingResource::toArray()` is opaque to Scramble. |
-| `TourCalendarDetailResource` | `prices` | Upstream resolves them through `TourCalendarDetailPriceResource::collection(...)->resolve()`, which Scramble does not follow. |
+| Resource                     | Manual field                     | Why                                                                                                                                                                                                                                                                                                             |
+| ---------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PartnerBookingResource`     | `detail`, `applicants`, `refund` | Friendlier aliases over the contract's `tour_booking_*` keys, plus `payableAmount()`/`payableCurrency()`. Which amount to charge is not something a schema can say. `tour_booking_detail` is also still a bare `array` upstream — `array_merge()` in `PartnerBookingResource::toArray()` is opaque to Scramble. |
+| `TourCalendarDetailResource` | `prices`                         | Upstream resolves them through `TourCalendarDetailPriceResource::collection(...)->resolve()`, which Scramble does not follow.                                                                                                                                                                                   |
 
 When travelo-api starts describing one of these, delete it from MANUAL and let
 AUTO take over — that is the direction of travel. `composer check:contract` tells
@@ -416,16 +551,16 @@ you the moment generated output stops matching what is committed.
 ### Why the contract goes wrong, and how it got fixed
 
 Scramble infers from a resource's `toArray()`. It handles `$data['x'] = ...`
-assignments fine; what defeats it is losing the *type* of what it is reading.
+assignments fine; what defeats it is losing the _type_ of what it is reading.
 Everything the SDK used to hand-write traced back to one of these, and each was
 fixed in travelo-api rather than papered over here:
 
-| Symptom in the contract | Cause | Fix |
-| --- | --- | --- |
-| `id`/`status` typed `string` | Scramble cannot tell which model `$this->id` proxies to | `@mixin` on the resource |
-| Whole schema is `array` with no properties | `parent::toArray()` | `@mixin` on the resource |
-| Money typed `string` | value comes from `app(Service::class)->method()`, which Scramble will not resolve — a `@var` on the variable does not help either | cast at the point of use: `(float) $primary['total']` |
-| A typed object collapses to `array` | `array_merge()` | unfixed; spreading instead emits an invalid schema (an unnamed `""` property), so `array_merge` stays and the SDK types the field by hand |
+| Symptom in the contract                    | Cause                                                                                                                             | Fix                                                                                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`/`status` typed `string`               | Scramble cannot tell which model `$this->id` proxies to                                                                           | `@mixin` on the resource                                                                                                                  |
+| Whole schema is `array` with no properties | `parent::toArray()`                                                                                                               | `@mixin` on the resource                                                                                                                  |
+| Money typed `string`                       | value comes from `app(Service::class)->method()`, which Scramble will not resolve — a `@var` on the variable does not help either | cast at the point of use: `(float) $primary['total']`                                                                                     |
+| A typed object collapses to `array`        | `array_merge()`                                                                                                                   | unfixed; spreading instead emits an invalid schema (an unnamed `""` property), so `array_merge` stays and the SDK types the field by hand |
 
 Before touching a resource in travelo-api, run its contract snapshot test — these
 edits must change the documentation and nothing else:
@@ -750,27 +885,134 @@ Contract drift should be caught by:
 - Resource mapping tests for typed response fields.
 - Consumer backend tests that mock SDK APIs with request/resource objects.
 
-## Laravel Catalog Proxy
+## Controller Mode
 
-The SDK can register opt-in, read-only catalog proxy routes:
+The SDK can register the endpoints itself, so a consumer writes no controllers.
+It is off by default — installing a package must never open HTTP routes on
+someone's app without them saying so.
+
+```dotenv
+TRAVELO_CONTROLLER_MODE=true
+TRAVELO_ROUTE_PREFIX=travelo
+```
+
+That is the whole integration. Migrations for the booking mirror ship with the
+package and run on `php artisan migrate`.
+
+Everything the SDK registers is nested under `tours` (the integration is a tour
+integration), so with the default prefix the full paths are `/travelo/tours/...`.
+`be-travelo-partner` sets `TRAVELO_ROUTE_PREFIX=api/travelo`, making them
+`/api/travelo/tours/...`.
+
+| Method | Path (relative to prefix)                                                                   | Auth              |
+| ------ | ------------------------------------------------------------------------------------------- | ----------------- |
+| GET    | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public            |
+| GET    | `tours/tour-itinerary/{id}`                                                                  | public            |
+| GET    | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date`                    | public            |
+| GET    | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews`, `tours/{id}/get-schedule-tour` | public      |
+| POST   | `tours/bookings/quote`, `tours/bookings/check-promotion`, `tours/bookings`                   | public            |
+| POST   | `tours/bookings/{code}/applicant/{id}`                                                       | public            |
+| GET    | `tours/bookings`, `tours/bookings/{code}`                                                    | `auth_middleware` |
+| POST   | `tours/bookings/{code}/cancel`                                                               | `auth_middleware` |
+
+Creating a booking is public on purpose: a customer holds a seat before they have
+an account, and the SDK creates one from their email. Quote and promotion checks
+reserve nothing, and `update-applicant` is public too — a guest fills passenger
+details right after booking. Everything that _lists or reads_ an existing booking
+is per-customer and sits behind `auth_middleware`.
+
+### Routing conventions
+
+The consuming app (`be-travelo-partner`) exposes two booking route prefixes with
+different owners:
+
+| Prefix                    | Controller                        | Scope                                    |
+| ------------------------- | --------------------------------- | ---------------------------------------- |
+| `/api/travelo/tours/bookings/*` | SDK package (`BookingController`) | HMAC-forwarded CRUD to travelo-api       |
+| `/api/_booking/*`         | `BookingBridgeController` (local) | Payment flow + local mirror reads/writes |
+
+**`/api/travelo/tours/bookings/*`** — Registered by the SDK when `TRAVELO_CONTROLLER_MODE=true`.
+Routes (create, update-applicant, cancel, list, show) are proxied to travelo-api
+via HMAC. The consuming app's `routes/api.php` does not declare these.
+
+**`/api/_booking/*`** — Declared in the consuming app's `routes/api.php`. Serves
+payment-adjacent endpoints: order lookup (reads the local mirror), checkout,
+return-url, and IPN. These live outside the SDK because they depend on the host's
+payment providers and local database schema.
+
+The split keeps payment logic out of the SDK package, while still letting the
+package handle upstream CRUD uniformly for any consumer.
+
+### Ownership
+
+Booking reads come from the local mirror, not from upstream, and that is a
+security boundary rather than an optimisation. `GET api/partner/bookings`
+upstream returns **every booking belonging to the partner** — it is scoped by the
+client_id in the HMAC, not by any customer. Forwarding it would hand each visitor
+the names, emails and amounts of everyone else's bookings.
+
+Ownership defaults to `Auth::id()`. For another guard, register a resolver in a
+service provider:
+
+```php
+use TheOneDigi\TourSdk\Laravel\Support\BookingOwner;
+
+BookingOwner::resolveUsing(fn () => Auth::guard('web')->id());
+```
+
+It goes in a provider rather than config because `config:cache` cannot serialise
+a closure — it would fail at deploy time, on the one machine nobody tests on.
+
+Set `travelo.controller_mode.auth_middleware` too. The controllers refuse when no
+owner resolves, but the guard is what should be stopping the request first.
+
+### Merging host-local data (wishlist)
+
+The package reads tours from travelo-api and knows nothing about the host's users,
+so anything user-scoped — a wishlist flag, a "booked before" badge — comes from the
+host through a decorator, not a controller the host overrides:
+
+```php
+use TheOneDigi\TourSdk\Laravel\Support\TourCatalogDecorator;
+
+// in a service provider
+TourCatalogDecorator::extend(function (array $tours, Request $request): array {
+    return WishlistMerger::apply($tours, Auth::id());
+});
+```
+
+It runs on every catalog list (`index`, `get-seasonal`, `get-featured`, `get-similar`)
+and on `show`, after the upstream payload arrives and before it is returned. A
+decorator receives the tour arrays as upstream returned them and must return one
+entry per input entry, in order. With no decorator registered the payload is
+forwarded verbatim.
+
+### No confirm route
+
+`confirm` is not routable in either mode, by design. It turns a held seat into a
+sold one, and only the consuming app's payment flow knows whether money arrived.
+A route would let anyone confirm a booking nobody paid for. Call
+`Travelo::bookings()->confirm($code)` from your payment success path instead.
+
+### Current limitation — no payment yet
+
+Bookings created through controller mode are held and mirrored, but nothing
+confirms them, so they expire on travelo-api's clock after
+`hold_ttl_minutes`. Wiring payment is the next step; until then use SDK mode for
+checkout, or call `confirm()` yourself.
+
+## Laravel Catalog Proxy (superseded)
+
+Predates controller mode and stays for compatibility. Prefer
+`TRAVELO_CONTROLLER_MODE=true` — it covers the same catalog reads with explicit
+routes instead of a `{path}` catch-all.
 
 ```php
 use Illuminate\Support\Facades\Route;
 
-Route::traveloCatalog();
-```
-
-This creates a GET route under `catalog/{path}` and only allows `tours` paths.
-
-Custom prefix and middleware:
-
-```php
+Route::traveloCatalog();                       // GET /catalog/tours...
 Route::traveloCatalog('catalog', ['throttle:60,1']);
-Route::traveloCatalog('v2/content', ['auth:sanctum']);
 ```
-
-The SDK intentionally does not register booking write routes. Booking writes and
-payment policy belong in the consuming app.
 
 ## Webhooks
 
@@ -921,21 +1163,6 @@ Fixtures:
   the TypeScript SDK.
 - `tests/fixtures/partner-api.openapi.json` keeps SDK endpoint coverage and
   generated DTOs aligned with the Partner API contract.
-
-## Development Checklist
-
-When adding or changing Partner API endpoints:
-
-1. Refresh `tests/fixtures/partner-api.openapi.json` from `travelo-api` when the
-   public contract changes.
-2. Run `composer generate:contract`.
-3. Update the matching API class in `src/Api` if the path/action changed.
-4. Update stable hand-written request DTOs/resources only when the field should
-   be part of the recommended SDK API.
-5. Update contract coverage, generated DTO, request payload, and resource
-   mapping tests.
-6. Keep payment-local fields out of the SDK-facing booking schema.
-7. Run `composer check:contract` and the PHPUnit suite.
 
 ## License
 

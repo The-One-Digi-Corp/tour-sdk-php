@@ -111,7 +111,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -283,6 +283,7 @@
             },
             "post": {
                 "operationId": "partnerCheckoutCreateBooking",
+                "description": "Accepts both the flat SDK format (tour_code + departure_date) and the\nlegacy nested format (order_details.*). Client-sent prices are validated\nas optional but ignored \u2014 all pricing is server-authoritative from the\ninternal quote.",
                 "summary": "Create a booking order for a whitelisted tour",
                 "tags": [
                     "PartnerBooking"
@@ -306,7 +307,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -353,37 +354,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "tour_code": {
-                                        "type": "string"
-                                    },
-                                    "departure_date": {
-                                        "type": "string",
-                                        "format": "date-time"
-                                    },
-                                    "adult_quantity": {
-                                        "type": "integer",
-                                        "minimum": 1
-                                    },
-                                    "child_quantity": {
-                                        "type": [
-                                            "integer",
-                                            "null"
-                                        ],
-                                        "minimum": 0
-                                    },
-                                    "infant_quantity": {
-                                        "type": [
-                                            "integer",
-                                            "null"
-                                        ],
-                                        "minimum": 0
-                                    },
-                                    "promotion_code": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
-                                    },
                                     "name": {
                                         "type": "string",
                                         "minLength": 2,
@@ -414,6 +384,12 @@
                                         "format": "email",
                                         "maxLength": 80
                                     },
+                                    "promotion_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
                                     "idempotency_key": {
                                         "type": [
                                             "string",
@@ -421,8 +397,52 @@
                                         ],
                                         "maxLength": 80
                                     },
-                                    "special_request": {
-                                        "type": "string"
+                                    "order_details": {
+                                        "type": "object",
+                                        "properties": {
+                                            "tour_id": {
+                                                "type": "integer"
+                                            },
+                                            "tour_price_group_id": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
+                                            "departure_date": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "adult_quantity": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                            },
+                                            "child_quantity": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 0
+                                            },
+                                            "infant_quantity": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 0
+                                            },
+                                            "special_request": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "tour_id",
+                                            "departure_date",
+                                            "adult_quantity"
+                                        ]
                                     },
                                     "applicants": {
                                         "type": "array",
@@ -433,12 +453,10 @@
                                     }
                                 },
                                 "required": [
-                                    "tour_code",
-                                    "departure_date",
-                                    "adult_quantity",
                                     "name",
                                     "phone",
                                     "email",
+                                    "order_details",
                                     "applicants"
                                 ]
                             }
@@ -512,27 +530,56 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 404
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 404
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
                                         },
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 404
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Tour not found or not whitelisted for partner."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
                                     ]
                                 }
                             }
@@ -554,7 +601,15 @@
                                             "const": "Booking created successfully."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "type": "object",
+                                            "properties": {
+                                                "order": {
+                                                    "$ref": "#/components/schemas/PartnerBookingResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "order"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -582,7 +637,15 @@
                                             "const": "Booking retrieved (idempotent)"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PartnerBookingResource"
+                                            "type": "object",
+                                            "properties": {
+                                                "order": {
+                                                    "$ref": "#/components/schemas/PartnerBookingResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "order"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -756,7 +819,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1069,7 +1132,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1313,7 +1376,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1491,7 +1554,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1703,7 +1766,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1931,7 +1994,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2415,7 +2478,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2612,7 +2675,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2686,7 +2749,7 @@
                         }
                     },
                     "200": {
-                        "description": "",
+                        "description": "Resources, not raw models: a partner reads this in one language and\nshould not have to pick name_en/name_vi or dig through a translations\narray \u2014 every other partner endpoint already answers localised.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2701,8 +2764,53 @@
                                             "const": "Success"
                                         },
                                         "data": {
-                                            "type": "array",
-                                            "items": {}
+                                            "type": "object",
+                                            "properties": {
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CategoryResource"
+                                                    }
+                                                },
+                                                "types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TourTypeResource"
+                                                    }
+                                                },
+                                                "sub_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TourSubTypeResource"
+                                                    }
+                                                },
+                                                "travel_styles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TagResource"
+                                                    }
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TagResource"
+                                                    }
+                                                },
+                                                "destinations": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/CityResource"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "categories",
+                                                "types",
+                                                "sub_types",
+                                                "travel_styles",
+                                                "tags",
+                                                "destinations"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -2786,7 +2894,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2989,7 +3097,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3214,7 +3322,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3386,6 +3494,190 @@
                 ]
             }
         },
+        "/tours/tour-itinerary/{id}": {
+            "get": {
+                "operationId": "partnerToursGetItinerary",
+                "description": "The {id} path segment is the tour id; only tours whitelisted for the partner\nare accessible (mirrors the public tour `tour-itinerary`).",
+                "summary": "Get the day-by-day itinerary of a whitelisted tour",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1784260897"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tour itinerary."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
         "/tours/{code}": {
             "get": {
                 "operationId": "partnerToursGetByCode",
@@ -3420,7 +3712,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3597,7 +3889,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3805,7 +4097,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4103,7 +4395,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4368,7 +4660,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1784110259"
+                        "example": "1784260897"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4523,6 +4815,212 @@
                     }
                 ]
             }
+        },
+        "/tours/{id}/get-schedule-tour": {
+            "get": {
+                "operationId": "partnerToursGetSchedule",
+                "description": "One entry per departure date with its remaining slots and price, so the\npartner site can render a schedule picker (mirrors the public tour\n`get-schedule-tour`). Prices are in the `X-Currency` currency.",
+                "summary": "List the bookable departures of a whitelisted tour from a date onward",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() / 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1784260897"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http://localhost/api/partner/bookings/BKG123456/cancel signs path api/partner/bookings/BKG123456/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST /bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tour schedule."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "scheduleTour": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "required": [
+                                                "scheduleTour"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -4646,6 +5144,57 @@
                     "slug"
                 ],
                 "title": "CategoryResource"
+            },
+            "CityResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "is_popular": {
+                        "type": "integer"
+                    },
+                    "is_active": {
+                        "type": "integer"
+                    },
+                    "country": {
+                        "$ref": "#/components/schemas/CountryResource"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "code",
+                    "is_popular",
+                    "is_active"
+                ],
+                "title": "CityResource"
+            },
+            "CountryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "code"
+                ],
+                "title": "CountryResource"
             },
             "ImageResource": {
                 "type": "object",

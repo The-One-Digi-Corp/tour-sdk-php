@@ -7,8 +7,13 @@ namespace TheOneDigi\TourSdk\Laravel;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\PartnerClient;
+use TheOneDigi\TourSdk\Laravel\Http\Controllers\BookingController;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\CatalogProxyController;
+use TheOneDigi\TourSdk\Laravel\Http\Controllers\TourCatalogController;
+use TheOneDigi\TourSdk\Laravel\Services\BookingMirror;
+use TheOneDigi\TourSdk\Laravel\Services\CustomerProvisioner;
 use TheOneDigi\TourSdk\Api\BookingApi;
 use TheOneDigi\TourSdk\Api\TourApi;
 use TheOneDigi\TourSdk\WebhookVerifier;
@@ -18,11 +23,18 @@ use TheOneDigi\TourSdk\WebhookVerifier;
  * its API classes and the webhook verifier are wired from config, so a consumer
  * writes no boilerplate and every consumer wires them identically.
  *
- * What this deliberately does NOT do is register routes for booking writes.
- * `confirm` turns a held seat into a sold one; when that is allowed is the
- * consumer's payment policy, not the SDK's. Auto-exposing it would hand every
- * partner an endpoint that confirms bookings nobody paid for. Catalog reads are
- * opt-in via `Route::traveloCatalog()`.
+ * Two modes, side by side:
+ *
+ *  - SDK mode (always on): inject TourApi / BookingApi and write your own controllers.
+ *  - Controller mode (`travelo.controller_mode.enabled`): the SDK registers the
+ *    endpoints itself and the consumer writes none.
+ *
+ * Controller mode is off by default. Installing a package should never open HTTP
+ * routes on someone's app without them saying so.
+ *
+ * `confirm` has no route in either mode. Confirming turns a held seat into a sold
+ * one, and only the consumer's payment flow knows whether money arrived — a route
+ * would let anyone confirm a booking nobody paid for.
  */
 class TourSdkServiceProvider extends ServiceProvider
 {
@@ -30,7 +42,7 @@ class TourSdkServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/travelo.php', 'travelo');
 
-        $this->app->singleton(PartnerClient::class, static fn (Application $app) => PartnerClient::fromConfig([
+        $this->app->singleton(PartnerClient::class, static fn(Application $app) => PartnerClient::fromConfig([
             'base_url' => $app['config']->get('travelo.base_url'),
             'client_id' => $app['config']->get('travelo.client_id'),
             'secret' => $app['config']->get('travelo.secret'),
@@ -42,24 +54,179 @@ class TourSdkServiceProvider extends ServiceProvider
 
         // Bound so consumers can inject exactly the API surface they use, and double it
         // in tests, instead of hand-rolling a wrapper each time.
-        $this->app->bind(BookingApi::class, static fn (Application $app) => $app->make(PartnerClient::class)->bookings());
-        $this->app->bind(TourApi::class, static fn (Application $app) => $app->make(PartnerClient::class)->tours());
+        $this->app->bind(BookingApi::class, static fn(Application $app) => $app->make(PartnerClient::class)->bookings());
+        $this->app->bind(TourApi::class, static fn(Application $app) => $app->make(PartnerClient::class)->tours());
 
-        $this->app->singleton(WebhookVerifier::class, static fn (Application $app) => new WebhookVerifier(
+        $this->app->singleton(WebhookVerifier::class, static fn(Application $app) => new WebhookVerifier(
             (string) $app['config']->get('travelo.secret'),
             (int) $app['config']->get('travelo.webhook_max_skew_seconds', 300),
+        ));
+
+        $this->app->bind(BookingMirror::class, static fn(Application $app) => new BookingMirror(
+            (int) $app['config']->get('travelo.hold_ttl_minutes', 30),
+        ));
+
+        $this->app->bind(CustomerProvisioner::class, static fn(Application $app) => new CustomerProvisioner(
+            (bool) $app['config']->get('travelo.account.create_customer', true),
+            $app['config']->get('travelo.account.user_model'),
         ));
     }
 
     public function boot(): void
     {
+        // Loaded unconditionally: the mirror tables must exist before controller
+        // mode is switched on, and a consumer flipping a config flag should not
+        // have to discover a second step to make it work.
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+
+        // Laravel checks resources/views/vendor/travelo first, then falls back to
+        // these package views. Consumers can therefore rebrand either email without
+        // replacing the SDK mailables or changing any configuration.
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'travelo');
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../../config/travelo.php' => $this->app->configPath('travelo.php'),
             ], 'travelo-config');
+
+            $this->publishes([
+                __DIR__ . '/../../database/migrations' => $this->app->databasePath('migrations'),
+            ], 'travelo-migrations');
+
+            $this->publishes([
+                __DIR__ . '/../../resources/views' => $this->app->resourcePath('views/vendor/travelo'),
+            ], 'travelo-views');
         }
 
         $this->registerCatalogMacro();
+        $this->registerControllerModeRoutes();
+        $this->configureScrambleTags();
+    }
+
+    /**
+     * Controller mode: every endpoint a consumer would otherwise hand-write.
+     *
+     * Routes are declared one by one rather than as a `{path}` catch-all. A regex
+     * can whitelist a GET path; it can say nothing about a POST body, and booking
+     * writes live in this group.
+     */
+    private function registerControllerModeRoutes(): void
+    {
+        $config = $this->app['config'];
+
+        if (! $config->get('travelo.controller_mode.enabled', false)) {
+            return;
+        }
+
+        $auth = (array) $config->get('travelo.controller_mode.auth_middleware', []);
+
+        Route::group([
+            'prefix' => (string) $config->get('travelo.controller_mode.prefix', 'travelo'),
+            'middleware' => (array) $config->get('travelo.controller_mode.middleware', ['api']),
+        ], function () use ($auth): void {
+            Route::prefix('tours')->name('travelo.tours.')->group(function () use ($auth): void {
+                // ── Catalog (literal segments first) ───────────────────────
+                Route::get('/', [TourCatalogController::class, 'index'])->name('index');
+                Route::get(ApiPaths::REFERENCES, [TourCatalogController::class, 'references'])->name('references');
+                Route::get(ApiPaths::SEASONAL, [TourCatalogController::class, 'seasonal'])->name('seasonal');
+                Route::get(ApiPaths::FEATURED, [TourCatalogController::class, 'featured'])->name('featured');
+                Route::get(ApiPaths::SIMILAR, [TourCatalogController::class, 'similar'])->name('similar');
+                Route::get(ApiPaths::ITINERARY . '/{id}', [TourCatalogController::class, 'itinerary'])->name('itinerary');
+
+                // ── Bookings — MUST come before {code} wildcard ────────────
+                // {code} would swallow GET /tours/bookings as show('bookings')
+                // if bookings were registered after it.
+                Route::prefix('bookings')->name('bookings.')->group(function () use ($auth): void {
+                    // Public: quote, promotion check, store — no auth needed
+                    Route::post(ApiPaths::QUOTE, [BookingController::class, 'quote'])->name('quote');
+                    Route::post(ApiPaths::CHECK_PROMOTION, [BookingController::class, 'checkPromotion'])->name('check-promotion');
+                    Route::post('/', [BookingController::class, 'store'])->name('store');
+
+                    // Reads/mutations require customer auth
+                    Route::middleware($auth)->group(function (): void {
+                        Route::get('/', [BookingController::class, 'index'])->name('index');
+                        Route::get('/{code}', [BookingController::class, 'show'])->name('show');
+                        Route::post('/{code}' . ApiPaths::CANCEL, [BookingController::class, 'cancel'])->name('cancel');
+                    });
+
+                    Route::post('/{code}' . ApiPaths::APPLICANT . '/{id}', [BookingController::class, 'updateApplicant'])
+                        ->name('update-applicant');
+                });
+
+                // ── Wildcard routes — stay AFTER literal/bookings ──────────
+                Route::get('/{code}', [TourCatalogController::class, 'show'])->name('show');
+                Route::get('/{code}' . ApiPaths::CALENDARS, [TourCatalogController::class, 'calendars'])->name('calendars');
+                Route::get('/{code}' . ApiPaths::CALENDAR_BY_DATE, [TourCatalogController::class, 'calendarByDate'])
+                    ->name('calendar-by-date');
+                Route::get('/{id}' . ApiPaths::REVIEWS, [TourCatalogController::class, 'reviews'])->name('reviews');
+                Route::get('/{id}' . ApiPaths::REVIEW_IMAGES, [TourCatalogController::class, 'reviewImages'])
+                    ->name('review-images');
+                Route::get('/{id}' . ApiPaths::SCHEDULE, [TourCatalogController::class, 'schedule'])
+                    ->name('schedule');
+            });
+        });
+    }
+
+    /**
+     * Auto-prefix all SDK controller tags with "SDK " and group them at the top
+     * of the API docs when Scramble is installed.
+     *
+     * Discovers controllers by scanning the filesystem — no manual mapping needed
+     * when a new controller is added.
+     *
+     * No hard dependency on Scramble — this only runs when the host app has it.
+     */
+    private function configureScrambleTags(): void
+    {
+        if (! class_exists(\Dedoc\Scramble\Scramble::class)) {
+            return;
+        }
+
+        /** @var list<string> Controller class basenames minus "Controller" suffix */
+        $sdkTags = array_values(array_filter(array_map(
+            fn(string $filename): string => basename($filename, 'Controller.php'),
+            glob(__DIR__ . '/Http/Controllers/*Controller.php') ?: [],
+        )));
+
+        if ($sdkTags === []) {
+            return;
+        }
+
+        \Dedoc\Scramble\Scramble::afterOpenApiGenerated(
+            function (\Dedoc\Scramble\Support\Generator\OpenApi $openApi) use ($sdkTags): void {
+                foreach ($openApi->paths as $path) {
+                    foreach ($path->operations as $operation) {
+                        $operation->tags = array_map(
+                            fn(string $tag): string => in_array($tag, $sdkTags, true)
+                                ? "SDK TOUR - {$tag}"
+                                : $tag,
+                            $operation->tags,
+                        );
+                    }
+                }
+
+                // Collect all unique tags from all operations after renaming.
+                $seen = [];
+                foreach ($openApi->paths as $path) {
+                    foreach ($path->operations as $operation) {
+                        foreach ($operation->tags as $tag) {
+                            $seen[$tag] = true;
+                        }
+                    }
+                }
+
+                $tagNames = array_keys($seen);
+
+                $sdkOnes = array_values(array_filter($tagNames, fn(string $t): bool => str_starts_with($t, 'SDK ')));
+                $others = array_values(array_filter($tagNames, fn(string $t): bool => ! str_starts_with($t, 'SDK ')));
+                sort($others);
+
+                $openApi->tags = array_map(
+                    fn(string $name) => new \Dedoc\Scramble\Support\Generator\Tag($name),
+                    [...$sdkOnes, ...$others],
+                );
+            },
+        );
     }
 
     /**
