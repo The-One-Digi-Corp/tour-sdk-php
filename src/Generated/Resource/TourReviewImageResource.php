@@ -22,8 +22,8 @@ class TourReviewImageResource extends ArrayBackedResource
     public readonly int $tourId;
     public readonly int $tourReviewId;
     public readonly string $imagePath;
-    public readonly string $createdAt;
-    public readonly string $updatedAt;
+    public readonly ?string $createdAt;
+    public readonly ?string $updatedAt;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -41,8 +41,8 @@ class TourReviewImageResource extends ArrayBackedResource
         $this->tourId = $this->int('tour_id');
         $this->tourReviewId = $this->int('tour_review_id');
         $this->imagePath = $this->string('image_path');
-        $this->createdAt = $this->string('created_at');
-        $this->updatedAt = $this->string('updated_at');
+        $this->createdAt = $this->nullableString('created_at');
+        $this->updatedAt = $this->nullableString('updated_at');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

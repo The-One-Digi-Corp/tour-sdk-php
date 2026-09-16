@@ -26,11 +26,10 @@ class PartnerBookingResource extends ArrayBackedResource
     public readonly float $total;
     public readonly float $cost;
     public readonly string $currency;
-    public readonly string $baseCurrency;
     public readonly string $inputCurrency;
-    /** @var array<string, mixed>|list<mixed> */
+    /** @var list<MoneyAmountResource> */
     public readonly array $subTotalAmounts;
-    /** @var array<string, mixed>|list<mixed> */
+    /** @var list<MoneyAmountResource> */
     public readonly array $totalAmounts;
     public readonly ?string $promotionCode;
     public readonly ?string $name;
@@ -38,6 +37,7 @@ class PartnerBookingResource extends ArrayBackedResource
     public readonly ?string $email2;
     public readonly ?int $dialCode;
     public readonly ?string $phone;
+    public readonly int $userId;
     public readonly ?string $paidAt;
     public readonly ?string $createdAt;
     public readonly ?PartnerBookingDetailResource $tourBookingDetail;
@@ -75,16 +75,16 @@ class PartnerBookingResource extends ArrayBackedResource
         $this->total = $this->float('total');
         $this->cost = $this->float('cost');
         $this->currency = $this->string('currency');
-        $this->baseCurrency = $this->string('base_currency');
         $this->inputCurrency = $this->string('input_currency');
-        $this->subTotalAmounts = $this->array('sub_total_amounts');
-        $this->totalAmounts = $this->array('total_amounts');
+        $this->subTotalAmounts = self::resourceList($this->array('sub_total_amounts'), MoneyAmountResource::class);
+        $this->totalAmounts = self::resourceList($this->array('total_amounts'), MoneyAmountResource::class);
         $this->promotionCode = $this->nullableString('promotion_code');
         $this->name = $this->nullableString('name');
         $this->email = $this->nullableString('email');
         $this->email2 = $this->nullableString('email2');
         $this->dialCode = $this->nullableInt('dial_code');
         $this->phone = $this->nullableString('phone');
+        $this->userId = $this->int('user_id');
         $this->paidAt = $this->nullableString('paid_at');
         $this->createdAt = $this->nullableString('created_at');
         $this->tourBookingDetail = is_array($this->get('tour_booking_detail')) ? PartnerBookingDetailResource::fromArray($this->get('tour_booking_detail')) : null;

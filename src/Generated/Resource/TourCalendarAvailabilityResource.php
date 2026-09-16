@@ -31,6 +31,7 @@ class TourCalendarAvailabilityResource extends ArrayBackedResource
     public readonly array $allPrices;
     public readonly ?TourPriceGroupRangeResource $matchedRange;
     public readonly ?TourPriceGroupResource $priceGroup;
+    public readonly ?string $holdId;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -56,6 +57,7 @@ class TourCalendarAvailabilityResource extends ArrayBackedResource
         $this->allPrices = self::resourceList($this->array('all_prices'), TourCalendarPriceResource::class);
         $this->matchedRange = is_array($this->get('matched_range')) ? TourPriceGroupRangeResource::fromArray($this->get('matched_range')) : null;
         $this->priceGroup = is_array($this->get('price_group')) ? TourPriceGroupResource::fromArray($this->get('price_group')) : null;
+        $this->holdId = $this->nullableString('hold_id');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

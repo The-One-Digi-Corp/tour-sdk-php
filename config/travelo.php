@@ -35,6 +35,18 @@ return [
     'timeout' => (float) env('TRAVELO_API_TIMEOUT', 10),
 
     /*
+     | Currencies travelo-api actually prices in. In SDK mode, a caller's
+     | X-Currency header (see TourSdkServiceProvider::requestCurrency()) is only
+     | honoured when it's in this list — anything else (a typo, an unrelated
+     | header set by some other part of the host app, a probing client) falls
+     | back to the configured default above instead of being forwarded blindly.
+     */
+    'supported_currencies' => array_values(array_filter(array_map(
+        'strtoupper',
+        array_map('trim', explode(',', (string) env('TRAVELO_SUPPORTED_CURRENCIES', 'USD,VND'))),
+    ))),
+
+    /*
      | Customer accounts. travelo-api used to create the customer's account and
      | email them the password on every partner booking; that now belongs here, on
      | the app the customer actually logs into.

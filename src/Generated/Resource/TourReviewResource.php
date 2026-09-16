@@ -23,8 +23,8 @@ class TourReviewResource extends ArrayBackedResource
     public readonly int $userId;
     public readonly float $rating;
     public readonly string $review;
-    public readonly string $createdAt;
-    public readonly string $updatedAt;
+    public readonly ?string $createdAt;
+    public readonly ?string $updatedAt;
     /** @var list<TourReviewImageResource> */
     public readonly array $images;
     /** @var array<string, mixed>|list<mixed>|null */
@@ -47,8 +47,8 @@ class TourReviewResource extends ArrayBackedResource
         $this->userId = $this->int('user_id');
         $this->rating = $this->float('rating');
         $this->review = $this->string('review');
-        $this->createdAt = $this->string('created_at');
-        $this->updatedAt = $this->string('updated_at');
+        $this->createdAt = $this->nullableString('created_at');
+        $this->updatedAt = $this->nullableString('updated_at');
         $this->images = self::resourceList($this->array('images'), TourReviewImageResource::class);
         $this->user = is_array($this->get('user')) ? $this->get('user') : null;
         /* END AUTO HYDRATION */

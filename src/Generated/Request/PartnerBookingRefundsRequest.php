@@ -10,14 +10,14 @@ use TheOneDigi\TourSdk\Common\RequestPayload;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI operation partnerAccountListRefunds (POST /bookings/refunds).
+ * Generated from OpenAPI operation partnerBooking.refunds (POST /bookings/refunds).
  *
  * Everything outside MANUAL BODY is rewritten by composer generate:contract.
  * MANUAL BODY survives regeneration: override normalizeManual() there to fold
  * travelo-api's backward-compatible query aliases onto one canonical key before
  * fromArray() maps them.
  */
-class PartnerAccountListRefundsRequest implements RequestPayload
+class PartnerBookingRefundsRequest implements RequestPayload
 {
     use BuildsPayload;
 

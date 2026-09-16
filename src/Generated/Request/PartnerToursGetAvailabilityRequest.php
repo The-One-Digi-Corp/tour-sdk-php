@@ -10,7 +10,7 @@ use TheOneDigi\TourSdk\Common\RequestPayload;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI operation partnerToursGetAvailability (GET /tours/{code}/calendar-by-date).
+ * Generated from OpenAPI operation partnerToursGetAvailability (GET /tours/{id}/calendar-by-date).
  *
  * Everything outside MANUAL BODY is rewritten by composer generate:contract.
  * MANUAL BODY survives regeneration: override normalizeManual() there to fold

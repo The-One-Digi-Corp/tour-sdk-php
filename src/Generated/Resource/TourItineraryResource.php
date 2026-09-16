@@ -18,10 +18,10 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 class TourItineraryResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
-    public readonly string $id;
+    public readonly int $id;
     public readonly string $title;
     public readonly string $description;
-    public readonly string $dayNumber;
+    public readonly int $dayNumber;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -35,10 +35,10 @@ class TourItineraryResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
-        $this->id = $this->string('id');
+        $this->id = $this->int('id');
         $this->title = $this->string('title');
         $this->description = $this->string('description');
-        $this->dayNumber = $this->string('day_number');
+        $this->dayNumber = $this->int('day_number');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

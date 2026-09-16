@@ -42,11 +42,27 @@ class TourSdkServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/travelo.php', 'travelo');
 
-        $this->app->singleton(PartnerClient::class, static fn(Application $app) => PartnerClient::fromConfig([
+        // `scoped`, not `singleton`: the app's locale/currency can change per
+        // request/job, and a singleton would freeze whatever was current the
+        // first time this resolved for the life of the worker (Octane, queue
+        // workers) — every request after the first would keep reading the
+        // wrong Accept-Language / X-Currency. `scoped` behaves like a
+        // singleton outside Octane, so this costs nothing on classic PHP-FPM.
+        //
+        // SDK-mode consumers (TourApi/BookingApi injected directly, no
+        // controller-mode route) get the caller's own X-Currency here instead
+        // of a fixed config default — the same header ForwardsRequestContext
+        // forwards for controller mode, so both modes localise/price
+        // identically. Honoured only when it's one of
+        // config('travelo.supported_currencies'); anything else, or a caller
+        // with no request in scope (a queue job), falls back to
+        // config('travelo.currency'). See requestCurrency() below.
+        $this->app->scoped(PartnerClient::class, static fn(Application $app) => PartnerClient::fromConfig([
             'base_url' => $app['config']->get('travelo.base_url'),
             'client_id' => $app['config']->get('travelo.client_id'),
             'secret' => $app['config']->get('travelo.secret'),
-            'currency' => $app['config']->get('travelo.currency'),
+            'currency' => self::requestCurrency($app),
+            'locale' => $app->getLocale(),
             'timeout' => $app['config']->get('travelo.timeout'),
             'integration_name' => $app['config']->get('travelo.integration.name'),
             'integration_version' => $app['config']->get('travelo.integration.version'),
@@ -70,6 +86,38 @@ class TourSdkServiceProvider extends ServiceProvider
             (bool) $app['config']->get('travelo.account.create_customer', true),
             $app['config']->get('travelo.account.user_model'),
         ));
+    }
+
+    /**
+     * The caller's X-Currency when a request is in scope AND that currency is
+     * one travelo-api actually prices in, else the configured default. Read
+     * directly off the request rather than some app-wide "current currency"
+     * concept — Laravel has no such concept built in the way it does for
+     * locale (app()->setLocale()), so there is nothing else to read this from.
+     *
+     * Validated against `travelo.supported_currencies` rather than forwarded
+     * verbatim: this runs for every SDK-mode resolution of PartnerClient, not
+     * just requests a consumer built for Travelo, so an unrelated header (or a
+     * typo, or a client just probing) must not silently swap the currency for
+     * code that has nothing to do with a shopper checkout.
+     */
+    private static function requestCurrency(Application $app): ?string
+    {
+        $default = $app['config']->get('travelo.currency');
+
+        if (! $app->bound('request')) {
+            return $default;
+        }
+
+        $currency = strtoupper(trim((string) $app['request']->header('X-Currency', '')));
+
+        if ($currency === '') {
+            return $default;
+        }
+
+        $supported = (array) $app['config']->get('travelo.supported_currencies', []);
+
+        return in_array($currency, $supported, true) ? $currency : $default;
     }
 
     public function boot(): void

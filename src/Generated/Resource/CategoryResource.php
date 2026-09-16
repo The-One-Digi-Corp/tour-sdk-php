@@ -25,6 +25,7 @@ class CategoryResource extends ArrayBackedResource
     public readonly string $slug;
     public readonly ?string $description;
     public readonly ?string $remainingTranslationSlug;
+    public readonly ?string $blogsCount;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -45,6 +46,7 @@ class CategoryResource extends ArrayBackedResource
         $this->slug = $this->string('slug');
         $this->description = $this->nullableString('description');
         $this->remainingTranslationSlug = $this->nullableString('remaining_translation_slug');
+        $this->blogsCount = $this->nullableString('blogs_count');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

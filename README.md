@@ -54,7 +54,7 @@ Runtime support:
 
 - PHP `^8.1`
 - Guzzle `^7.2`
-- Laravel components `^10.0|^11.0|^12.0`
+- Laravel components `^10.0|^11.0|^12.0|^13.0`
 
 Development/test note: the currently installed PHPUnit dependency may require
 PHP `>= 8.2`, depending on Composer resolution.
