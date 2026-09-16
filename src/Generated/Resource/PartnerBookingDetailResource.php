@@ -34,7 +34,6 @@ class PartnerBookingDetailResource extends ArrayBackedResource
     public readonly int $discountCount;
     public readonly ?string $specialRequest;
     public readonly ?PartnerBookingDetailTourResource $tour;
-    public readonly string $baseCurrency;
     public readonly float $inputAdultPrice;
     public readonly float $inputChildPrice;
     public readonly float $inputInfantPrice;
@@ -78,7 +77,6 @@ class PartnerBookingDetailResource extends ArrayBackedResource
         $this->discountCount = $this->int('discount_count');
         $this->specialRequest = $this->nullableString('special_request');
         $this->tour = is_array($this->get('tour')) ? PartnerBookingDetailTourResource::fromArray($this->get('tour')) : null;
-        $this->baseCurrency = $this->string('base_currency');
         $this->inputAdultPrice = $this->float('input_adult_price');
         $this->inputChildPrice = $this->float('input_child_price');
         $this->inputInfantPrice = $this->float('input_infant_price');

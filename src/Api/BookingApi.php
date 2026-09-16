@@ -7,9 +7,11 @@ namespace TheOneDigi\TourSdk\Api;
 use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Common\RequestPayload;
+use TheOneDigi\TourSdk\Generated\Request\PartnerBookingRefundsRequest;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingApplicantResource;
 use TheOneDigi\TourSdk\Generated\Resource\BookingListResource;
 use TheOneDigi\TourSdk\Generated\Resource\BookingQuoteResource;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingRefundResource;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 
 /**
@@ -175,6 +177,47 @@ class BookingApi
         $applicant = $data['applicant'] ?? $data;
 
         return PartnerBookingApplicantResource::fromArray(is_array($applicant) ? $applicant : []);
+    }
+
+    /**
+     * Refund status for up to 100 bookings at once. Each entry carries
+     * tour_booking_id, order_code, booking_status and a nested refund object
+     * (null if none was requested) — richer than PartnerBookingRefundResource,
+     * so this stays an untyped array.
+     *
+     * @param list<int|string> $tourBookingIds
+     * @return list<array<string, mixed>>
+     */
+    public function refundsByBookingIds(array $tourBookingIds): array
+    {
+        $payload = new PartnerBookingRefundsRequest(tourBookingIds: $tourBookingIds);
+
+        $data = $this->client->data($this->client->post(self::BASE . ApiPaths::REFUNDS, $payload->toArray()));
+
+        return $data['refunds'] ?? [];
+    }
+
+    /**
+     * Requests a refund for a paid booking (IN_PROGRESS only). Unwraps down to
+     * the refund object, matching create()'s `order` unwrapping.
+     *
+     * @return array<string, mixed>
+     */
+    public function requestRefund(string $code, array|RequestPayload $payload = []): array
+    {
+        $data = $this->client->data(
+            $this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::REQUEST_REFUND, $this->payload($payload)),
+        );
+
+        return isset($data['refund']) && is_array($data['refund']) ? $data['refund'] : $data;
+    }
+
+    /**
+     * Same endpoint as requestRefund(), returned as a typed SDK resource.
+     */
+    public function requestRefundResource(string $code, array|RequestPayload $payload = []): PartnerBookingRefundResource
+    {
+        return PartnerBookingRefundResource::fromArray($this->requestRefund($code, $payload));
     }
 
     /**

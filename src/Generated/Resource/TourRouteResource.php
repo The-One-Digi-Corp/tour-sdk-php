@@ -18,7 +18,7 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 class TourRouteResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
-    public readonly string $id;
+    public readonly int $id;
     public readonly ?string $code;
     public readonly ?string $name;
     /* END AUTO FIELDS */
@@ -34,7 +34,7 @@ class TourRouteResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
-        $this->id = $this->string('id');
+        $this->id = $this->int('id');
         $this->code = $this->nullableString('code');
         $this->name = $this->nullableString('name');
         /* END AUTO HYDRATION */

@@ -42,6 +42,12 @@ class ApiPaths
     /** POST /check-promotion */
     public const CHECK_PROMOTION = '/check-promotion';
 
+    /** POST /refunds */
+    public const REFUNDS = '/refunds';
+
+    /** POST /{code}/request-refund */
+    public const REQUEST_REFUND = '/request-refund';
+
     // ── Tour-catalog sub-paths ───────────────────────────────────────────
 
     /** GET /references */

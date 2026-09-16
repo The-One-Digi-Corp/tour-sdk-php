@@ -18,13 +18,13 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 class TourPriceResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
-    public readonly string $id;
+    public readonly int $id;
     public readonly float $adultPrice;
     public readonly float $childPrice;
     public readonly float $infantPrice;
-    public readonly ?string $rangeId;
-    public readonly ?string $minPax;
-    public readonly ?string $maxPax;
+    public readonly ?int $rangeId;
+    public readonly ?int $minPax;
+    public readonly ?int $maxPax;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -38,13 +38,13 @@ class TourPriceResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
-        $this->id = $this->string('id');
+        $this->id = $this->int('id');
         $this->adultPrice = $this->float('adult_price');
         $this->childPrice = $this->float('child_price');
         $this->infantPrice = $this->float('infant_price');
-        $this->rangeId = $this->nullableString('range_id');
-        $this->minPax = $this->nullableString('min_pax');
-        $this->maxPax = $this->nullableString('max_pax');
+        $this->rangeId = $this->nullableInt('range_id');
+        $this->minPax = $this->nullableInt('min_pax');
+        $this->maxPax = $this->nullableInt('max_pax');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

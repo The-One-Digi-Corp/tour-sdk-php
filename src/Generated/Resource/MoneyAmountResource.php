@@ -9,18 +9,17 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI schema TourTypeResource.
+ * Generated from OpenAPI schema MoneyAmountResource.
  *
  * AUTO FIELDS and AUTO HYDRATION are rewritten by composer generate:contract.
  * MANUAL FIELDS and MANUAL HYDRATION survive regeneration — put hand-written
  * fields there. A manual property replaces the auto field of the same name.
  */
-class TourTypeResource extends ArrayBackedResource
+class MoneyAmountResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
-    public readonly int $id;
-    public readonly string $title;
-    public readonly int $isUnlimitedSlot;
+    public readonly string $currency;
+    public readonly float $amount;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -34,9 +33,8 @@ class TourTypeResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
-        $this->id = $this->int('id');
-        $this->title = $this->string('title');
-        $this->isUnlimitedSlot = $this->int('is_unlimited_slot');
+        $this->currency = $this->string('currency');
+        $this->amount = $this->float('amount');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

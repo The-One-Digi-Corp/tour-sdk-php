@@ -22,11 +22,12 @@ class PartnerTourResource extends ArrayBackedResource
     public readonly string $currency;
     public readonly string $code;
     public readonly string $name;
+    public readonly string $thumbnailAlt;
+    public readonly mixed $averageRating;
+    public readonly mixed $totalReviews;
     public readonly ?string $createdAt;
+    public readonly ?string $updatedAt;
     public readonly string $duration;
-    /** @var array<string, mixed>|list<mixed> */
-    public readonly array $translations;
-    public readonly ?string $durationText;
     public readonly ?string $vehicle;
     public readonly ?string $slug;
     public readonly ?string $overview;
@@ -43,8 +44,6 @@ class PartnerTourResource extends ArrayBackedResource
     public readonly ?string $maxAge;
     public readonly ?string $featured;
     public readonly ?string $seasonalHighlight;
-    public readonly ?string $averageRating;
-    public readonly ?string $totalReviews;
     public readonly ?string $day;
     public readonly ?string $night;
     public readonly ?string $thumbnail;
@@ -52,12 +51,10 @@ class PartnerTourResource extends ArrayBackedResource
     public readonly ?string $remainingTranslationSlug;
     /** @var list<TourPriceResource> */
     public readonly array $prices;
-    /** @var list<ImageResource> */
+    /** @var list<TourImageResource> */
     public readonly array $images;
     public readonly ?TourRouteResource $endLocation;
-    public readonly ?TourRouteResource $endLocation2;
     public readonly ?TourRouteResource $startLocation;
-    public readonly ?TourRouteResource $startLocation2;
     /** @var list<TourItineraryResource> */
     public readonly array $itineraries;
     /** @var list<TourCalendarResource> */
@@ -66,12 +63,9 @@ class PartnerTourResource extends ArrayBackedResource
     public readonly array $tags;
     /** @var list<TagResource> */
     public readonly array $travelStyles;
-    /** @var list<TagResource> */
-    public readonly array $travelStyles2;
     public readonly ?CategoryResource $category;
     public readonly ?TourTypeResource $type;
     public readonly ?TourSubTypeResource $subType;
-    public readonly ?TourSubTypeResource $subType2;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -89,10 +83,12 @@ class PartnerTourResource extends ArrayBackedResource
         $this->currency = $this->string('currency');
         $this->code = $this->string('code');
         $this->name = $this->string('name');
+        $this->thumbnailAlt = $this->string('thumbnail_alt');
+        $this->averageRating = $this->get('average_rating');
+        $this->totalReviews = $this->get('total_reviews');
         $this->createdAt = $this->nullableString('created_at');
+        $this->updatedAt = $this->nullableString('updated_at');
         $this->duration = $this->string('duration');
-        $this->translations = $this->array('translations');
-        $this->durationText = $this->nullableString('duration_text');
         $this->vehicle = $this->nullableString('vehicle');
         $this->slug = $this->nullableString('slug');
         $this->overview = $this->nullableString('overview');
@@ -109,28 +105,22 @@ class PartnerTourResource extends ArrayBackedResource
         $this->maxAge = $this->nullableString('max_age');
         $this->featured = $this->nullableString('featured');
         $this->seasonalHighlight = $this->nullableString('seasonal_highlight');
-        $this->averageRating = $this->nullableString('average_rating');
-        $this->totalReviews = $this->nullableString('total_reviews');
         $this->day = $this->nullableString('day');
         $this->night = $this->nullableString('night');
         $this->thumbnail = $this->nullableString('thumbnail');
         $this->isWishlist = $this->nullableString('is_wishlist');
         $this->remainingTranslationSlug = $this->nullableString('remaining_translation_slug');
         $this->prices = self::resourceList($this->array('prices'), TourPriceResource::class);
-        $this->images = self::resourceList($this->array('images'), ImageResource::class);
-        $this->endLocation = is_array($this->get('endLocation')) ? TourRouteResource::fromArray($this->get('endLocation')) : null;
-        $this->endLocation2 = is_array($this->get('end_location')) ? TourRouteResource::fromArray($this->get('end_location')) : null;
-        $this->startLocation = is_array($this->get('startLocation')) ? TourRouteResource::fromArray($this->get('startLocation')) : null;
-        $this->startLocation2 = is_array($this->get('start_location')) ? TourRouteResource::fromArray($this->get('start_location')) : null;
+        $this->images = self::resourceList($this->array('images'), TourImageResource::class);
+        $this->endLocation = is_array($this->get('end_location')) ? TourRouteResource::fromArray($this->get('end_location')) : null;
+        $this->startLocation = is_array($this->get('start_location')) ? TourRouteResource::fromArray($this->get('start_location')) : null;
         $this->itineraries = self::resourceList($this->array('itineraries'), TourItineraryResource::class);
         $this->calendars = self::resourceList($this->array('calendars'), TourCalendarResource::class);
         $this->tags = self::resourceList($this->array('tags'), TagResource::class);
-        $this->travelStyles = self::resourceList($this->array('travelStyles'), TagResource::class);
-        $this->travelStyles2 = self::resourceList($this->array('travel_styles'), TagResource::class);
+        $this->travelStyles = self::resourceList($this->array('travel_styles'), TagResource::class);
         $this->category = is_array($this->get('category')) ? CategoryResource::fromArray($this->get('category')) : null;
         $this->type = is_array($this->get('type')) ? TourTypeResource::fromArray($this->get('type')) : null;
-        $this->subType = is_array($this->get('subType')) ? TourSubTypeResource::fromArray($this->get('subType')) : null;
-        $this->subType2 = is_array($this->get('sub_type')) ? TourSubTypeResource::fromArray($this->get('sub_type')) : null;
+        $this->subType = is_array($this->get('sub_type')) ? TourSubTypeResource::fromArray($this->get('sub_type')) : null;
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

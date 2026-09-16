@@ -18,10 +18,10 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 class TourCalendarResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
-    public readonly string $id;
+    public readonly int $id;
     public readonly string $startDate;
     public readonly string $endDate;
-    public readonly string $maxSlotsPerDay;
+    public readonly ?int $maxSlotsPerDay;
     /** @var list<TourCalendarPriceResource> */
     public readonly array $prices;
     /* END AUTO FIELDS */
@@ -37,10 +37,10 @@ class TourCalendarResource extends ArrayBackedResource
         parent::__construct($attributes);
 
         /* BEGIN AUTO HYDRATION */
-        $this->id = $this->string('id');
+        $this->id = $this->int('id');
         $this->startDate = $this->string('start_date');
         $this->endDate = $this->string('end_date');
-        $this->maxSlotsPerDay = $this->string('max_slots_per_day');
+        $this->maxSlotsPerDay = $this->nullableInt('max_slots_per_day');
         $this->prices = self::resourceList($this->array('prices'), TourCalendarPriceResource::class);
         /* END AUTO HYDRATION */
 

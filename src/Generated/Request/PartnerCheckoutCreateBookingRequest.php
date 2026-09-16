@@ -32,6 +32,7 @@ class PartnerCheckoutCreateBookingRequest implements RequestPayload
         public readonly ?string $email2 = null,
         public readonly ?string $promotionCode = null,
         public readonly ?string $idempotencyKey = null,
+        public readonly ?string $specialRequest = null,
         /**
          * Payload keys fromArray() actually saw, so an explicit null survives
          * toArray(). Empty when the request is built with named arguments.
@@ -60,6 +61,7 @@ class PartnerCheckoutCreateBookingRequest implements RequestPayload
             email2: (array_key_exists('email2', $payload) && $payload['email2'] !== null ? (string) $payload['email2'] : null),
             promotionCode: (array_key_exists('promotion_code', $payload) && $payload['promotion_code'] !== null ? (string) $payload['promotion_code'] : null),
             idempotencyKey: (array_key_exists('idempotency_key', $payload) && $payload['idempotency_key'] !== null ? (string) $payload['idempotency_key'] : null),
+            specialRequest: (array_key_exists('special_request', $payload) && $payload['special_request'] !== null ? (string) $payload['special_request'] : null),
             providedKeys: array_keys($payload),
         );
     }
@@ -79,6 +81,7 @@ class PartnerCheckoutCreateBookingRequest implements RequestPayload
             'email2' => $this->email2,
             'promotion_code' => $this->promotionCode,
             'idempotency_key' => $this->idempotencyKey,
+            'special_request' => $this->specialRequest,
         ]);
     }
 

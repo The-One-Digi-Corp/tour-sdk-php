@@ -65,9 +65,9 @@ final class ContractCoverageTest extends TestCase
             'GET /tours/get-seasonal' => fn () => $client->tours()->seasonal(['take' => 2]),
             'GET /tours/get-featured' => fn () => $client->tours()->featured(['take' => 2]),
             'GET /tours/get-similar' => fn () => $client->tours()->similar(['tour_code' => 'T-1']),
-            'GET /tours/{code}' => fn () => $client->tours()->show('T-1'),
-            'GET /tours/{code}/calendars' => fn () => $client->tours()->calendars('T-1'),
-            'GET /tours/{code}/calendar-by-date' => fn () => $client->tours()->calendarByDate('T-1', ['date' => '2026-08-01']),
+            'GET /tours/{id}' => fn () => $client->tours()->show('T-1'),
+            'GET /tours/{id}/calendars' => fn () => $client->tours()->calendars('T-1'),
+            'GET /tours/{id}/calendar-by-date' => fn () => $client->tours()->calendarByDate('T-1', ['date' => '2026-08-01']),
             'GET /tours/{id}/get-list-reviews' => fn () => $client->tours()->reviews(7),
             'GET /tours/{id}/get-all-image-reviews' => fn () => $client->tours()->reviewImages(7),
             'GET /tours/tour-itinerary/{id}' => fn () => $client->tours()->itinerary(7),
@@ -77,10 +77,12 @@ final class ContractCoverageTest extends TestCase
             'POST /bookings' => fn () => $client->bookings()->create(['tour_code' => 'T-1'], 'idem-1'),
             'POST /bookings/quote' => fn () => $client->bookings()->quote(['tour_code' => 'T-1']),
             'POST /bookings/check-promotion' => fn () => $client->bookings()->checkPromotion(['code' => 'X']),
+            'POST /bookings/refunds' => fn () => $client->bookings()->refundsByBookingIds(['1']),
             'GET /bookings/{code}' => fn () => $client->bookings()->show('TB-1'),
             'POST /bookings/{code}/confirm' => fn () => $client->bookings()->confirm('TB-1'),
             'POST /bookings/{code}/cancel' => fn () => $client->bookings()->cancel('TB-1'),
             'POST /bookings/{code}/applicant/{id}' => fn () => $client->bookings()->updateApplicant('TB-1', 7, []),
+            'POST /bookings/{code}/request-refund' => fn () => $client->bookings()->requestRefund('TB-1', ['reasons' => 'test']),
         ];
     }
 
@@ -169,9 +171,14 @@ final class ContractCoverageTest extends TestCase
             self::assertCount(1, $this->transactions, "{$operation} did not issue exactly one request.");
 
             $request = $this->transactions[0]['request'];
-            // {code} is a tour code under /tours and a booking code under /bookings.
+            // {code} is a booking code under /bookings. The contract labels every
+            // /tours placeholder {id}, but the 3 tour-detail routes are still called
+            // with a tour code (show/calendars/calendarByDate) — the rest with a
+            // numeric id (reviews/reviewImages/itinerary/schedule).
             $code = str_starts_with($specPath, '/bookings') ? 'TB-1' : 'T-1';
-            $expectedPath = self::PREFIX . strtr($specPath, ['{code}' => $code, '{id}' => '7']);
+            $tourDetailRoutes = ['/tours/{id}', '/tours/{id}/calendars', '/tours/{id}/calendar-by-date'];
+            $idValue = in_array($specPath, $tourDetailRoutes, true) ? 'T-1' : '7';
+            $expectedPath = self::PREFIX . strtr($specPath, ['{code}' => $code, '{id}' => $idValue]);
 
             self::assertSame($expectedMethod, $request->getMethod(), "{$operation} used the wrong HTTP method.");
             self::assertSame($expectedPath, $request->getUri()->getPath(), "{$operation} hit the wrong path.");
