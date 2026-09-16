@@ -1,0 +1,12 @@
+# Pin text files to LF regardless of core.autocrlf on the checkout machine.
+#
+# tools/generate-contract-dtos.php always emits LF. On Windows with
+# core.autocrlf=true, a plain checkout rewrites those same files to CRLF, so a
+# byte-for-byte comparison (GeneratedDtoTest / `composer check:contract`) reports
+# spurious drift that isn't a real contract change. Forcing eol=lf here makes the
+# working tree match what the generator produces, on every OS.
+* text=auto eol=lf
+
+*.php text eol=lf
+*.json text eol=lf
+*.md text eol=lf

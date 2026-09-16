@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TheOneDigi\TourSdk\Tests\Laravel;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use TheOneDigi\TourSdk\Laravel\Facades\Travelo;
@@ -26,6 +27,54 @@ class ServiceProviderTest extends TestCase
     public function test_the_client_is_a_singleton(): void
     {
         $this->assertSame($this->app->make(PartnerClient::class), $this->app->make(PartnerClient::class));
+    }
+
+    /**
+     * SDK-mode consumers (no controller-mode route) get the same
+     * currency-follows-the-shopper behaviour controller mode gets from
+     * ForwardsRequestContext — but only for a currency travelo-api actually
+     * prices in.
+     */
+    public function test_sdk_mode_uses_the_requests_currency_when_supported(): void
+    {
+        $this->app->instance('request', Request::create('/', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'vnd']));
+
+        $this->assertSame('VND', $this->resolvedCurrency());
+    }
+
+    /**
+     * An X-Currency travelo-api doesn't price in must not silently replace the
+     * configured default — this header is read for every SDK-mode resolution
+     * of PartnerClient, including code that has nothing to do with a shopper
+     * checkout, so an unrelated or mistyped value should be a no-op.
+     */
+    public function test_sdk_mode_ignores_an_unsupported_currency(): void
+    {
+        $this->app->instance('request', Request::create('/', 'GET', [], [], [], ['HTTP_X_CURRENCY' => 'EUR']));
+
+        $this->assertSame('USD', $this->resolvedCurrency());
+    }
+
+    public function test_sdk_mode_falls_back_to_the_default_with_no_currency_header(): void
+    {
+        $this->app->instance('request', Request::create('/', 'GET'));
+
+        $this->assertSame('USD', $this->resolvedCurrency());
+    }
+
+    public function test_sdk_mode_falls_back_to_the_default_with_no_request_in_scope(): void
+    {
+        $this->app->forgetInstance('request');
+
+        $this->assertSame('USD', $this->resolvedCurrency());
+    }
+
+    private function resolvedCurrency(): ?string
+    {
+        $property = new \ReflectionProperty(PartnerClient::class, 'defaultCurrency');
+        $property->setAccessible(true);
+
+        return $property->getValue($this->app->make(PartnerClient::class));
     }
 
     public function test_the_facade_reaches_the_api_classes(): void
