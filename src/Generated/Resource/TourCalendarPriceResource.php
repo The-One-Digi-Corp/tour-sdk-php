@@ -19,15 +19,13 @@ class TourCalendarPriceResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
     public readonly int $id;
+    public readonly string $currency;
     public readonly float $adultPrice;
     public readonly float $childPrice;
     public readonly float $infantPrice;
     public readonly ?int $rangeId;
     public readonly ?int $minPax;
     public readonly ?int $maxPax;
-    public readonly ?float $costAdult;
-    public readonly ?float $costChild;
-    public readonly ?float $costInfant;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -42,15 +40,13 @@ class TourCalendarPriceResource extends ArrayBackedResource
 
         /* BEGIN AUTO HYDRATION */
         $this->id = $this->int('id');
+        $this->currency = $this->string('currency');
         $this->adultPrice = $this->float('adult_price');
         $this->childPrice = $this->float('child_price');
         $this->infantPrice = $this->float('infant_price');
         $this->rangeId = $this->nullableInt('range_id');
         $this->minPax = $this->nullableInt('min_pax');
         $this->maxPax = $this->nullableInt('max_pax');
-        $this->costAdult = is_numeric($this->get('cost_adult')) ? (float) $this->get('cost_adult') : null;
-        $this->costChild = is_numeric($this->get('cost_child')) ? (float) $this->get('cost_child') : null;
-        $this->costInfant = is_numeric($this->get('cost_infant')) ? (float) $this->get('cost_infant') : null;
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

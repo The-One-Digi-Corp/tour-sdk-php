@@ -10,14 +10,14 @@ use TheOneDigi\TourSdk\Common\RequestPayload;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI operation partnerToursSearch (GET /tours).
+ * Generated from OpenAPI operation partnerToursSearchIds (GET /tours/ids).
  *
  * Everything outside MANUAL BODY is rewritten by composer generate:contract.
  * MANUAL BODY survives regeneration: override normalizeManual() there to fold
  * travelo-api's backward-compatible query aliases onto one canonical key before
  * fromArray() maps them.
  */
-class PartnerToursSearchRequest implements RequestPayload
+class PartnerToursSearchIdsRequest implements RequestPayload
 {
     use BuildsPayload;
 
@@ -39,9 +39,6 @@ class PartnerToursSearchRequest implements RequestPayload
         public readonly ?string $budget = null,
         public readonly ?string $departureDate = null,
         public readonly ?string $date = null,
-        public readonly ?string $sortBy = null,
-        public readonly ?int $page = null,
-        public readonly ?int $perPage = null,
         /**
          * Payload keys fromArray() actually saw, so an explicit null survives
          * toArray(). Empty when the request is built with named arguments.
@@ -78,9 +75,6 @@ class PartnerToursSearchRequest implements RequestPayload
             budget: (array_key_exists('budget', $payload) && $payload['budget'] !== null ? (string) $payload['budget'] : null),
             departureDate: (array_key_exists('departure_date', $payload) && $payload['departure_date'] !== null ? (string) $payload['departure_date'] : null),
             date: (array_key_exists('date', $payload) && $payload['date'] !== null ? (string) $payload['date'] : null),
-            sortBy: (array_key_exists('sortBy', $payload) && $payload['sortBy'] !== null ? (string) $payload['sortBy'] : null),
-            page: (array_key_exists('page', $payload) && $payload['page'] !== null ? (int) $payload['page'] : null),
-            perPage: (array_key_exists('per_page', $payload) && $payload['per_page'] !== null ? (int) $payload['per_page'] : null),
             providedKeys: array_keys($payload),
         );
     }
@@ -108,46 +102,9 @@ class PartnerToursSearchRequest implements RequestPayload
             'budget' => $this->budget,
             'departure_date' => $this->departureDate,
             'date' => $this->date,
-            'sortBy' => $this->sortBy,
-            'page' => $this->page,
-            'per_page' => $this->perPage,
         ]);
     }
 
     /* BEGIN MANUAL BODY */
-    /**
-     * travelo-api accepts several spellings of the same filter for backward
-     * compatibility — it validates `search` and `q`, `minPrice` and `price_min`,
-     * and so on — so the contract lists each alias as its own parameter. Sending
-     * two spellings of one filter is ambiguous, so they are folded onto the
-     * canonical key here and the aliases dropped.
-     *
-     * This is the class of bug that bit the TypeScript SDK (`sort` sent where the
-     * API wanted `sortBy`): the request looked valid and the filter silently did
-     * nothing.
-     *
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
-     */
-    protected static function normalizeManual(array $payload): array
-    {
-        $aliases = [
-            'search' => 'q',
-            'sub_type' => 'list_sub_types',
-            'minPrice' => 'price_min',
-            'maxPrice' => 'price_max',
-            'departure_date' => 'date',
-        ];
-
-        foreach ($aliases as $canonical => $alias) {
-            if (! isset($payload[$canonical]) && isset($payload[$alias])) {
-                $payload[$canonical] = $payload[$alias];
-            }
-
-            unset($payload[$alias]);
-        }
-
-        return $payload;
-    }
     /* END MANUAL BODY */
 }

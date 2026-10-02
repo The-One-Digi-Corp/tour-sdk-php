@@ -62,10 +62,16 @@ class ApiPaths
     /** GET /get-similar */
     public const SIMILAR = '/get-similar';
 
-    /** GET /{code}/calendars */
+    /** GET /ids */
+    public const IDS = '/ids';
+
+    /** GET /sync */
+    public const SYNC = '/sync';
+
+    /** GET /{id}/calendars */
     public const CALENDARS = '/calendars';
 
-    /** GET /{code}/calendar-by-date */
+    /** GET /{id}/calendar-by-date */
     public const CALENDAR_BY_DATE = '/calendar-by-date';
 
     /** GET /{id}/get-list-reviews */

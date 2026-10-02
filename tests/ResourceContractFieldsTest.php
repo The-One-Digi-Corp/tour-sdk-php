@@ -83,14 +83,11 @@ final class ResourceContractFieldsTest extends TestCase
         self::assertNotContains('costAdult', $this->declaredProperties(\TheOneDigi\TourSdk\Generated\Resource\TourPriceResource::class));
     }
 
-    public function test_calendar_prices_do_expose_cost_because_the_contract_declares_it(): void
+    public function test_calendar_prices_no_longer_expose_cost_now_that_the_contract_omits_it(): void
     {
-        self::assertArrayHasKey('cost_adult', $this->schema('TourCalendarPriceResource')['properties'] ?? []);
-
-        $price = TourCalendarPriceResource::fromArray(['cost_adult' => '20.14']);
-
-        self::assertContains('costAdult', $this->declaredProperties(TourCalendarPriceResource::class));
-        self::assertSame(20.14, $price->costAdult);
+        // travelo-api stopped sending what Travelo pays on public calendar prices.
+        self::assertArrayNotHasKey('cost_adult', $this->schema('TourCalendarPriceResource')['properties'] ?? []);
+        self::assertNotContains('costAdult', $this->declaredProperties(TourCalendarPriceResource::class));
     }
 
     public function test_every_contract_field_on_partner_tour_resource_is_reachable(): void

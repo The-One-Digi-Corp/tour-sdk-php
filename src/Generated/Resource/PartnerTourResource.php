@@ -19,6 +19,7 @@ class PartnerTourResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
     public readonly int $id;
+    public readonly mixed $departureDates;
     public readonly string $currency;
     public readonly string $code;
     public readonly string $name;
@@ -28,6 +29,7 @@ class PartnerTourResource extends ArrayBackedResource
     public readonly ?string $createdAt;
     public readonly ?string $updatedAt;
     public readonly string $duration;
+    public readonly ?string $tourDirection;
     public readonly ?string $vehicle;
     public readonly ?string $slug;
     public readonly ?string $overview;
@@ -80,6 +82,7 @@ class PartnerTourResource extends ArrayBackedResource
 
         /* BEGIN AUTO HYDRATION */
         $this->id = $this->int('id');
+        $this->departureDates = $this->get('departure_dates');
         $this->currency = $this->string('currency');
         $this->code = $this->string('code');
         $this->name = $this->string('name');
@@ -89,6 +92,7 @@ class PartnerTourResource extends ArrayBackedResource
         $this->createdAt = $this->nullableString('created_at');
         $this->updatedAt = $this->nullableString('updated_at');
         $this->duration = $this->string('duration');
+        $this->tourDirection = $this->nullableString('tour_direction');
         $this->vehicle = $this->nullableString('vehicle');
         $this->slug = $this->nullableString('slug');
         $this->overview = $this->nullableString('overview');

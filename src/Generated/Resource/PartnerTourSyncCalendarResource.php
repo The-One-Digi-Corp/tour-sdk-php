@@ -9,28 +9,26 @@ use TheOneDigi\TourSdk\Common\ArrayBackedResource;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI schema TourCalendarDetailPriceResource.
+ * Generated from OpenAPI schema PartnerTourSyncCalendarResource.
  *
  * AUTO FIELDS and AUTO HYDRATION are rewritten by composer generate:contract.
  * MANUAL FIELDS and MANUAL HYDRATION survive regeneration — put hand-written
  * fields there. A manual property replaces the auto field of the same name.
  */
-class TourCalendarDetailPriceResource extends ArrayBackedResource
+class PartnerTourSyncCalendarResource extends ArrayBackedResource
 {
     /* BEGIN AUTO FIELDS */
     public readonly int $id;
-    public readonly int $tourCalendarId;
-    public readonly ?int $tourPriceGroupRangeId;
-    public readonly float $adultPrice;
-    public readonly float $childPrice;
-    public readonly float $infantPrice;
-    public readonly string $currency;
-    public readonly int $isActive;
+    public readonly string $startDate;
+    public readonly string $endDate;
+    public readonly ?int $maxSlotsPerDay;
     public readonly ?string $createdAt;
     public readonly ?string $updatedAt;
-    public readonly ?int $rangeId;
-    public readonly ?int $minPax;
-    public readonly ?int $maxPax;
+    /** @var list<PartnerTourSyncPriceResource> */
+    public readonly array $prices;
+    /** @var array<string, mixed>|list<mixed> */
+    public readonly array $overrides;
+    public readonly ?TourPriceGroupResource $priceGroup;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -45,18 +43,14 @@ class TourCalendarDetailPriceResource extends ArrayBackedResource
 
         /* BEGIN AUTO HYDRATION */
         $this->id = $this->int('id');
-        $this->tourCalendarId = $this->int('tour_calendar_id');
-        $this->tourPriceGroupRangeId = $this->nullableInt('tour_price_group_range_id');
-        $this->adultPrice = $this->float('adult_price');
-        $this->childPrice = $this->float('child_price');
-        $this->infantPrice = $this->float('infant_price');
-        $this->currency = $this->string('currency');
-        $this->isActive = $this->int('is_active');
+        $this->startDate = $this->string('start_date');
+        $this->endDate = $this->string('end_date');
+        $this->maxSlotsPerDay = $this->nullableInt('max_slots_per_day');
         $this->createdAt = $this->nullableString('created_at');
         $this->updatedAt = $this->nullableString('updated_at');
-        $this->rangeId = $this->nullableInt('range_id');
-        $this->minPax = $this->nullableInt('min_pax');
-        $this->maxPax = $this->nullableInt('max_pax');
+        $this->prices = self::resourceList($this->array('prices'), PartnerTourSyncPriceResource::class);
+        $this->overrides = $this->array('overrides');
+        $this->priceGroup = is_array($this->get('price_group')) ? TourPriceGroupResource::fromArray($this->get('price_group')) : null;
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

@@ -137,10 +137,10 @@ class TourCatalogController
     /**
      * Get detailed information of one tour.
      */
-    public function show(Request $request, string $code): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($code), [], $this->contextHeaders($request)),
+            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($id), [], $this->contextHeaders($request)),
             'tours.show',
             fn (array $p) => $this->decorateOne($request, $p),
         );
@@ -149,10 +149,10 @@ class TourCatalogController
     /**
      * List active departure calendars for one tour.
      */
-    public function calendars(Request $request, string $code): JsonResponse
+    public function calendars(Request $request, string $id): JsonResponse
     {
         return $this->forward(
-            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDARS, $request->query(), $this->contextHeaders($request)),
+            fn () => $this->client->get(TourApi::BASE . '/' . rawurlencode($id) . ApiPaths::CALENDARS, $request->query(), $this->contextHeaders($request)),
             'tours.calendars',
         );
     }
@@ -160,7 +160,7 @@ class TourCatalogController
     /**
      * Check availability and price for one departure date.
      */
-    public function calendarByDate(Request $request, string $code): JsonResponse
+    public function calendarByDate(Request $request, string $id): JsonResponse
     {
         $request->validate([
             'date' => 'required|date',
@@ -169,7 +169,7 @@ class TourCatalogController
 
         return $this->forward(
             fn () => $this->client->get(
-                TourApi::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDAR_BY_DATE,
+                TourApi::BASE . '/' . rawurlencode($id) . ApiPaths::CALENDAR_BY_DATE,
                 $request->query(),
                 $this->contextHeaders($request),
             ),

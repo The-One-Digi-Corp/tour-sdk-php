@@ -109,7 +109,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -254,7 +254,7 @@
                                         },
                                         "errors": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": []
                                         },
                                         "data": {
                                             "type": "null"
@@ -303,7 +303,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -767,7 +767,7 @@
                                                 },
                                                 "errors": {
                                                     "type": "array",
-                                                    "items": {}
+                                                    "items": []
                                                 },
                                                 "data": {
                                                     "type": "null"
@@ -820,7 +820,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1069,7 +1069,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1294,7 +1294,7 @@
                                                 "errors": {
                                                     "type": "object",
                                                     "properties": {
-                                                        "remaining_slots": {},
+                                                        "remaining_slots": [],
                                                         "is_available": {
                                                             "type": "boolean"
                                                         }
@@ -1328,7 +1328,7 @@
                                                 },
                                                 "errors": {
                                                     "type": "array",
-                                                    "items": {}
+                                                    "items": []
                                                 },
                                                 "data": {
                                                     "type": "null"
@@ -1381,7 +1381,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1565,7 +1565,7 @@
                                         },
                                         "errors": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": []
                                         },
                                         "data": {
                                             "type": "null"
@@ -1624,7 +1624,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -1800,7 +1800,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2011,7 +2011,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2222,7 +2222,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2459,7 +2459,7 @@
                                         },
                                         "errors": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": []
                                         },
                                         "data": {
                                             "type": "null"
@@ -2533,7 +2533,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2862,6 +2862,32 @@
                         }
                     },
                     {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type ids joined by \"_\", e.g. 1_2 (1: Short-term Tour, 2: Long-term Tour).",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tour_direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "inbound",
+                                "outbound",
+                                null
+                            ]
+                        }
+                    },
+                    {
                         "name": "sub_type",
                         "in": "query",
                         "schema": {
@@ -3018,7 +3044,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3147,37 +3173,7 @@
                         }
                     },
                     "422": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 422
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Validation error"
-                                        },
-                                        "errors": {
-                                            "type": "array",
-                                            "items": {}
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
+                        "$ref": "#\/components\/responses\/ValidationException"
                     }
                 },
                 "security": [
@@ -3214,7 +3210,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3371,6 +3367,540 @@
                 ]
             }
         },
+        "\/tours\/ids": {
+            "get": {
+                "operationId": "partnerToursSearchIds",
+                "summary": "The ids of every tour matching the same filters as index(), unpaged and unsorted: for\na partner that keeps its own copy (sync) and filters, sorts and pages on its own\nprices, while the content filters stay here",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "going_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 20
+                        }
+                    },
+                    {
+                        "name": "travel_style",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "list_travel_styles",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type ids joined by \"_\", e.g. 1_2 (1: Short-term Tour, 2: Long-term Tour).",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tour_direction",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "inbound",
+                                "outbound",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sub_type",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "list_sub_types",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "minPrice",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "number",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "maxPrice",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "number",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "price_min",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "number",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "price_max",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "number",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "budget",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "under-500",
+                                "500-1000",
+                                "1000-2000",
+                                "2000-3000",
+                                "above-3000",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "departure_date",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1790916000"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tours."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "total",
+                                                "ids"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/tours\/sync": {
+            "get": {
+                "operationId": "partnerToursSync",
+                "summary": "Every tour whitelisted for the partner, page by page, with all a partner needs to keep\nits own copy: names in every language, base prices, calendars, their prices and\noverrides. Meant for a background sync, not for a storefront",
+                "tags": [
+                    "PartnerTour"
+                ],
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1790916000"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error retrieving tours."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "tours": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#\/components\/schemas\/PartnerTourSyncResource"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "total",
+                                                "per_page",
+                                                "last_page",
+                                                "tours"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
         "\/tours\/get-seasonal": {
             "get": {
                 "operationId": "partnerToursGetSeasonal",
@@ -3431,7 +3961,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3632,7 +4162,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3855,7 +4385,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4067,7 +4597,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4242,7 +4772,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4446,7 +4976,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4681,7 +5211,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -4911,7 +5441,7 @@
                                                 },
                                                 "errors": {
                                                     "type": "array",
-                                                    "items": {}
+                                                    "items": []
                                                 },
                                                 "data": {
                                                     "type": "null"
@@ -5002,7 +5532,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -5265,7 +5795,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -5472,7 +6002,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1788773900"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -6333,6 +6863,7 @@
                     "id": {
                         "type": "integer"
                     },
+                    "departure_dates": [],
                     "currency": {
                         "type": "string"
                     },
@@ -6341,6 +6872,10 @@
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "tour_direction": {
+                        "type": "string",
+                        "description": "inbound: runs inside Vietnam | outbound: runs abroad"
                     },
                     "vehicle": {
                         "type": "string"
@@ -6506,6 +7041,7 @@
                 },
                 "required": [
                     "id",
+                    "departure_dates",
                     "currency",
                     "code",
                     "name",
@@ -6517,6 +7053,290 @@
                     "duration"
                 ],
                 "title": "PartnerTourResource"
+            },
+            "PartnerTourSyncCalendarResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "start_date": {
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "type": "string"
+                    },
+                    "max_slots_per_day": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price_group": {
+                        "$ref": "#\/components\/schemas\/TourPriceGroupResource"
+                    },
+                    "prices": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#\/components\/schemas\/PartnerTourSyncPriceResource"
+                        }
+                    },
+                    "overrides": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "start_date": {
+                                    "type": "string"
+                                },
+                                "end_date": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "integer",
+                                    "description": "1: price adjustment | 2: unavailable"
+                                },
+                                "prices": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#\/components\/schemas\/PartnerTourSyncPriceResource"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "start_date",
+                                "end_date",
+                                "type",
+                                "prices"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "start_date",
+                    "end_date",
+                    "max_slots_per_day",
+                    "created_at",
+                    "updated_at",
+                    "prices",
+                    "overrides"
+                ],
+                "title": "PartnerTourSyncCalendarResource"
+            },
+            "PartnerTourSyncPriceResource": {
+                "type": "object",
+                "properties": {
+                    "range_id": {
+                        "type": "integer"
+                    },
+                    "min_pax": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "max_pax": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "adult_price": {
+                        "type": "number"
+                    },
+                    "child_price": {
+                        "type": "number"
+                    },
+                    "infant_price": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "range_id",
+                    "min_pax",
+                    "max_pax",
+                    "currency",
+                    "adult_price",
+                    "child_price",
+                    "infant_price"
+                ],
+                "title": "PartnerTourSyncPriceResource"
+            },
+            "PartnerTourSyncResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "tour_direction": {
+                        "type": "string",
+                        "description": "inbound: runs inside Vietnam | outbound: runs abroad"
+                    },
+                    "base_price": {
+                        "type": "number"
+                    },
+                    "day": {
+                        "type": "integer"
+                    },
+                    "night": {
+                        "type": "integer"
+                    },
+                    "thumbnail": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "translations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "language": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "slug": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "language",
+                                "name",
+                                "slug"
+                            ]
+                        }
+                    },
+                    "category": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "type": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "title_en": {
+                                "type": "string"
+                            },
+                            "title_vi": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "title_en",
+                            "title_vi"
+                        ]
+                    },
+                    "sub_type": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "title": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "title"
+                        ]
+                    },
+                    "price_group": {
+                        "$ref": "#\/components\/schemas\/TourPriceGroupResource"
+                    },
+                    "prices": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#\/components\/schemas\/PartnerTourSyncPriceResource"
+                        }
+                    },
+                    "calendars": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#\/components\/schemas\/PartnerTourSyncCalendarResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "currency",
+                    "tour_direction",
+                    "base_price",
+                    "day",
+                    "night",
+                    "thumbnail",
+                    "created_at",
+                    "updated_at",
+                    "translations",
+                    "category",
+                    "type",
+                    "sub_type",
+                    "prices",
+                    "calendars"
+                ],
+                "title": "PartnerTourSyncResource"
             },
             "TagResource": {
                 "type": "object",
@@ -6667,24 +7487,6 @@
                     "infant_price": {
                         "type": "number"
                     },
-                    "cost_adult": {
-                        "type": [
-                            "number",
-                            "null"
-                        ]
-                    },
-                    "cost_child": {
-                        "type": [
-                            "number",
-                            "null"
-                        ]
-                    },
-                    "cost_infant": {
-                        "type": [
-                            "number",
-                            "null"
-                        ]
-                    },
                     "currency": {
                         "type": "string"
                     },
@@ -6729,9 +7531,6 @@
                     "adult_price",
                     "child_price",
                     "infant_price",
-                    "cost_adult",
-                    "cost_child",
-                    "cost_infant",
                     "currency",
                     "is_active",
                     "created_at",
@@ -6873,6 +7672,9 @@
                     "id": {
                         "type": "integer"
                     },
+                    "currency": {
+                        "type": "string"
+                    },
                     "adult_price": {
                         "type": "number"
                     },
@@ -6880,15 +7682,6 @@
                         "type": "number"
                     },
                     "infant_price": {
-                        "type": "number"
-                    },
-                    "cost_adult": {
-                        "type": "number"
-                    },
-                    "cost_child": {
-                        "type": "number"
-                    },
-                    "cost_infant": {
                         "type": "number"
                     },
                     "range_id": {
@@ -6912,6 +7705,7 @@
                 },
                 "required": [
                     "id",
+                    "currency",
                     "adult_price",
                     "child_price",
                     "infant_price",

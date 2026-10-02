@@ -460,7 +460,7 @@ $booking = $client->bookings()->createResource(
 );
 
 $availability = $client->tours()->calendarByDateResource(
-    'IBTCARSGN3181',
+    10, // tour id
     new TourCalendarDateRequest(date: '2026-08-01', pax: 2),
 );
 ```
@@ -578,9 +578,13 @@ $client->tours()->references();
 $client->tours()->seasonal(['take' => 6]);
 $client->tours()->featured(['take' => 6]);
 $client->tours()->similar(['tour_code' => 'IBTCARSGN3181']);
-$client->tours()->show('IBTCARSGN3181');
-$client->tours()->calendars('IBTCARSGN3181');
-$client->tours()->calendarByDate('IBTCARSGN3181', ['date' => '2026-08-01', 'pax' => 2]);
+$client->tours()->list(['tour_direction' => 'inbound', 'type' => '1']); // Short-term inbound
+$client->tours()->sync(['page' => 1, 'per_page' => 50]);
+$client->tours()->idList(['search' => 'ha long', 'tour_direction' => 'outbound']); // [3, 8, ...]
+// show/calendars/calendarByDate take the numeric tour id; a tour code is a 404.
+$client->tours()->show(10);
+$client->tours()->calendars(10);
+$client->tours()->calendarByDate(10, ['date' => '2026-08-01', 'pax' => 2]);
 $client->tours()->reviews(1);
 $client->tours()->reviewImages(1);
 ```
@@ -715,18 +719,48 @@ as the final charge amount. Prices can change between quote and create.
 `payment_histories` is not part of the SDK contract. If a partner app needs a
 payment history table, it must create and own that table locally.
 
+### Syncing a local copy
+
+`sync()` pages through every tour whitelisted for the partner with what a local copy
+needs: names in every language, base prices per pax range, and every active calendar
+with its prices and overrides (type 1 price adjustment, 2 unavailable). Prices are in
+the tour's own currency and never include Travelo's cost. It is a backend call for a
+scheduled sync; controller mode does not route it.
+
+```php
+$page = 1;
+do {
+    $data = $client->tours()->sync(['page' => $page, 'per_page' => 50]);
+    foreach ($data['tours'] as $tour) {
+        $resource = PartnerTourSyncResource::fromArray($tour);
+        // upsert $resource->calendars, $resource->prices ...
+    }
+} while ($page++ < $data['last_page']);
+```
+
+With a local copy, the partner can sell at its own prices and still let Travelo match
+the content: `ids()` / `idList()` take the same filters as `list()` (search, going_to,
+category, `type`, `tour_direction` inbound|outbound, travel styles, sub types, dates)
+and return the id of every matching tour, unpaged and unsorted. Filter those ids by
+your own prices, then sort and page locally.
+
+```php
+$ids = $client->tours()->idList(['going_to' => 'HAN', 'list_travel_styles' => '2_5']);
+// SELECT ... FROM tours WHERE provider_tour_id IN ($ids) AND min_price <= 500 ORDER BY min_price
+```
+
 ## Tour Resources
 
 Catalog methods also have typed variants for the common response shapes:
 
 ```php
 $tours = $client->tours()->listResources(['take' => 12]);
-$tour = $client->tours()->showResource('IBTCARSGN3181');
+$tour = $client->tours()->showResource(10);
 $featured = $client->tours()->featuredResources(['take' => 6]);
 $seasonal = $client->tours()->seasonalResources(['take' => 6]);
 $similar = $client->tours()->similarResources(['tour_code' => 'IBTCARSGN3181']);
-$calendars = $client->tours()->calendarsResources('IBTCARSGN3181');
-$date = $client->tours()->calendarByDateResource('IBTCARSGN3181', [
+$calendars = $client->tours()->calendarsResources(10);
+$date = $client->tours()->calendarByDateResource(10, [
     'date' => '2026-08-01',
     'pax' => 2,
 ]);
@@ -735,7 +769,7 @@ $date = $client->tours()->calendarByDateResource('IBTCARSGN3181', [
 Resource example:
 
 ```php
-$tour = $client->tours()->showResource('IBTCARSGN3181');
+$tour = $client->tours()->showResource(10);
 
 $tour->code;
 $tour->name;
@@ -908,7 +942,7 @@ integration), so with the default prefix the full paths are `/travelo/tours/...`
 | ------ | ------------------------------------------------------------------------------------------- | ----------------- |
 | GET    | `tours`, `tours/references`, `tours/get-seasonal`, `tours/get-featured`, `tours/get-similar` | public            |
 | GET    | `tours/tour-itinerary/{id}`                                                                  | public            |
-| GET    | `tours/{code}`, `tours/{code}/calendars`, `tours/{code}/calendar-by-date`                    | public            |
+| GET    | `tours/{id}`, `tours/{id}/calendars`, `tours/{id}/calendar-by-date`                          | public            |
 | GET    | `tours/{id}/get-list-reviews`, `tours/{id}/get-all-image-reviews`, `tours/{id}/get-schedule-tour` | public      |
 | POST   | `tours/bookings/quote`, `tours/bookings/check-promotion`, `tours/bookings`                   | public            |
 | POST   | `tours/bookings/{code}/applicant/{id}`                                                       | public            |

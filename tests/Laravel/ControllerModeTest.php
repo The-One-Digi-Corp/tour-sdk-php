@@ -282,7 +282,7 @@ class ControllerModeTest extends TestCase
             $tours,
         ));
 
-        $response = $this->getJson('travelo/tours/T-9');
+        $response = $this->getJson('travelo/tours/9');
 
         $response->assertOk();
         $this->assertTrue($response->json('data.is_wishlisted'));

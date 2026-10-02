@@ -202,9 +202,13 @@ class TourSdkServiceProvider extends ServiceProvider
                 });
 
                 // ── Wildcard routes — stay AFTER literal/bookings ──────────
-                Route::get('/{code}', [TourCatalogController::class, 'show'])->name('show');
-                Route::get('/{code}' . ApiPaths::CALENDARS, [TourCatalogController::class, 'calendars'])->name('calendars');
-                Route::get('/{code}' . ApiPaths::CALENDAR_BY_DATE, [TourCatalogController::class, 'calendarByDate'])
+                // Upstream addresses a tour by its numeric id; a code there is a 404.
+                Route::get('/{id}', [TourCatalogController::class, 'show'])->whereNumber('id')->name('show');
+                Route::get('/{id}' . ApiPaths::CALENDARS, [TourCatalogController::class, 'calendars'])
+                    ->whereNumber('id')
+                    ->name('calendars');
+                Route::get('/{id}' . ApiPaths::CALENDAR_BY_DATE, [TourCatalogController::class, 'calendarByDate'])
+                    ->whereNumber('id')
                     ->name('calendar-by-date');
                 Route::get('/{id}' . ApiPaths::REVIEWS, [TourCatalogController::class, 'reviews'])->name('reviews');
                 Route::get('/{id}' . ApiPaths::REVIEW_IMAGES, [TourCatalogController::class, 'reviewImages'])

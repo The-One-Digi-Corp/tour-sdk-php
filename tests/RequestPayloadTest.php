@@ -167,7 +167,7 @@ final class RequestPayloadTest extends TestCase
         $client->tours()->list(new PartnerToursSearchRequest(search: 'hcm', page: 1, perPage: 12));
         $client->tours()->featured(new PartnerToursGetFeaturedRequest(6, page: 2, perPage: 6));
         $client->tours()->similar(new PartnerToursGetSimilarRequest(tourCode: 'IBTCARSGN3181', take: 4, page: 1, perPage: 4));
-        $client->tours()->calendarByDate('IBTCARSGN3181', new PartnerToursGetAvailabilityRequest('2026-08-01', pax: 2));
+        $client->tours()->calendarByDate(10, new PartnerToursGetAvailabilityRequest('2026-08-01', pax: 2));
 
         parse_str($this->request(0)->getUri()->getQuery(), $listQuery);
         parse_str($this->request(1)->getUri()->getQuery(), $featuredQuery);

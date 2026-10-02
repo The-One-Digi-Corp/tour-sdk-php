@@ -11,6 +11,7 @@ use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDateResource;
 use TheOneDigi\TourSdk\Generated\Resource\TourCalendarDetailResource;
 use TheOneDigi\TourSdk\Generated\Resource\TourListResource;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerTourResource;
+use TheOneDigi\TourSdk\Generated\Resource\PartnerTourSyncResource;
 
 /**
  * Tour catalog endpoints. All read-only and all requiring the `tour:read` scope.
@@ -46,6 +47,31 @@ class TourApi
     }
 
     /**
+     * The ids of every tour matching the same filters as list() (search, going_to,
+     * category, type, tour_direction, travel styles, sub types, dates…), unpaged and
+     * unsorted. Returns `{total, ids}`. For a partner that keeps its own copy (sync()) and
+     * filters, sorts and pages on its own prices.
+     *
+     * @return array<string, mixed>
+     */
+    public function ids(array|RequestPayload $params = []): array
+    {
+        return $this->client->data($this->client->get(self::BASE . ApiPaths::IDS, $this->payload($params)));
+    }
+
+    /**
+     * Just the ids of ids().
+     *
+     * @return list<int>
+     */
+    public function idList(array|RequestPayload $params = []): array
+    {
+        $ids = $this->ids($params)['ids'] ?? [];
+
+        return array_values(array_map('intval', is_array($ids) ? $ids : []));
+    }
+
+    /**
      * Filter vocabulary: categories, types, sub_types, travel_styles, tags, destinations.
      *
      * @return array<string, mixed>
@@ -53,6 +79,34 @@ class TourApi
     public function references(): array
     {
         return $this->client->data($this->client->get(self::BASE . ApiPaths::REFERENCES));
+    }
+
+    /**
+     * Every tour whitelisted for the partner, page by page, with what a local copy needs:
+     * names in every language, base prices, calendars with their prices and overrides.
+     * Returns `{current_page, total, per_page, last_page, tours}`. Meant for a background
+     * sync, not a storefront.
+     *
+     * @return array<string, mixed>
+     */
+    public function sync(array|RequestPayload $params = []): array
+    {
+        return $this->client->data($this->client->get(self::BASE . ApiPaths::SYNC, $this->payload($params)));
+    }
+
+    /**
+     * The tours of one sync() page as typed resources.
+     *
+     * @return list<PartnerTourSyncResource>
+     */
+    public function syncResources(array|RequestPayload $params = []): array
+    {
+        $tours = $this->sync($params)['tours'] ?? [];
+
+        return array_values(array_map(
+            static fn (array $tour): PartnerTourSyncResource => PartnerTourSyncResource::fromArray($tour),
+            array_filter(is_array($tours) ? $tours : [], 'is_array'),
+        ));
     }
 
     /**
@@ -95,27 +149,30 @@ class TourApi
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    public function show(string $code): array
-    {
-        return $this->client->data($this->client->get(self::BASE . '/' . rawurlencode($code)));
-    }
-
-    public function showResource(string $code): PartnerTourResource
-    {
-        return PartnerTourResource::fromArray($this->show($code));
-    }
-
-    /**
-     * Departure calendar for a tour.
+     * Addressed by the numeric tour **id**, like every tour endpoint but search; a tour
+     * code is a 404.
      *
      * @return array<string, mixed>
      */
-    public function calendars(string $code, array|RequestPayload $params = []): array
+    public function show(int|string $tourId): array
+    {
+        return $this->client->data($this->client->get(self::BASE . '/' . rawurlencode((string) $tourId)));
+    }
+
+    public function showResource(int|string $tourId): PartnerTourResource
+    {
+        return PartnerTourResource::fromArray($this->show($tourId));
+    }
+
+    /**
+     * Departure calendar for a tour, addressed by tour **id**.
+     *
+     * @return array<string, mixed>
+     */
+    public function calendars(int|string $tourId, array|RequestPayload $params = []): array
     {
         return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDARS, $this->payload($params)),
+            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::CALENDARS, $this->payload($params)),
         );
     }
 
@@ -123,9 +180,9 @@ class TourApi
      * @param array<string, mixed> $params
      * @return list<TourCalendarDetailResource>
      */
-    public function calendarsResources(string $code, array|RequestPayload $params = []): array
+    public function calendarsResources(int|string $tourId, array|RequestPayload $params = []): array
     {
-        $data = $this->calendars($code, $params);
+        $data = $this->calendars($tourId, $params);
         $items = array_is_list($data) ? $data : ($data['calendars'] ?? []);
 
         if (! is_array($items)) {
@@ -149,9 +206,9 @@ class TourApi
      * @param array<string, mixed> $params
      * @return list<TourCalendarDetailResource>
      */
-    public function calendarResources(string $code, array|RequestPayload $params = []): array
+    public function calendarResources(int|string $tourId, array|RequestPayload $params = []): array
     {
-        return $this->calendarsResources($code, $params);
+        return $this->calendarsResources($tourId, $params);
     }
 
     /**
@@ -159,19 +216,20 @@ class TourApi
      * "availability" check in a storefront is built on.
      *
      * Reads only — it reserves nothing. Seats are held by creating a booking.
+     * Addressed by tour **id**.
      *
      * @return array<string, mixed>
      */
-    public function calendarByDate(string $code, array|RequestPayload $params): array
+    public function calendarByDate(int|string $tourId, array|RequestPayload $params): array
     {
         return $this->client->data(
-            $this->client->get(self::BASE . '/' . rawurlencode($code) . ApiPaths::CALENDAR_BY_DATE, $this->payload($params)),
+            $this->client->get(self::BASE . '/' . rawurlencode((string) $tourId) . ApiPaths::CALENDAR_BY_DATE, $this->payload($params)),
         );
     }
 
-    public function calendarByDateResource(string $code, array|RequestPayload $params): TourCalendarDateResource
+    public function calendarByDateResource(int|string $tourId, array|RequestPayload $params): TourCalendarDateResource
     {
-        return TourCalendarDateResource::fromArray($this->calendarByDate($code, $params));
+        return TourCalendarDateResource::fromArray($this->calendarByDate($tourId, $params));
     }
 
     /**
