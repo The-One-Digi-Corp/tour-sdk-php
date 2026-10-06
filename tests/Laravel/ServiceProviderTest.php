@@ -96,7 +96,6 @@ class ServiceProviderTest extends TestCase
     public function test_config_is_merged_so_consumers_need_not_publish_it(): void
     {
         $this->assertSame('http://travelo.test', config('travelo.base_url'));
-        $this->assertSame(30, config('travelo.hold_ttl_minutes'));
         $this->assertSame(300, config('travelo.webhook_max_skew_seconds'));
     }
 

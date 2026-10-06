@@ -245,7 +245,6 @@ TRAVELO_API_TIMEOUT=10
 TRAVELO_WEBHOOK_MAX_SKEW_SECONDS=300
 TRAVELO_INTEGRATION_NAME=be-travelo-partner
 TRAVELO_INTEGRATION_VERSION=dev
-TRAVELO_HOLD_TTL_MINUTES=30
 ```
 
 Environment variables:
@@ -260,7 +259,6 @@ Environment variables:
 | `TRAVELO_WEBHOOK_MAX_SKEW_SECONDS` | No       | Accepted webhook timestamp skew. Defaults to `300`.                  |
 | `TRAVELO_INTEGRATION_NAME`         | No       | Sent as `X-Travelo-Integration-Name`. Defaults to `APP_NAME`.        |
 | `TRAVELO_INTEGRATION_VERSION`      | No       | Sent as `X-Travelo-Integration-Version`. Defaults to `dev`.          |
-| `TRAVELO_HOLD_TTL_MINUTES`         | No       | Consumer-side mirror of upstream booking hold TTL. Defaults to `30`. |
 | `TRAVELO_CONTROLLER_MODE`          | No       | Register the drop-in endpoints. Defaults to `false`.                 |
 | `TRAVELO_ROUTE_PREFIX`             | No       | Prefix for controller-mode routes. Defaults to `travelo`.            |
 | `TRAVELO_CREATE_CUSTOMER`          | No       | Create/lookup a local customer account per booking. Defaults to `true`. |
@@ -648,8 +646,8 @@ The Partner API uses a two-step booking model:
    own gateway.
 4. After money is settled locally, the partner app calls `confirm()`.
 5. If payment fails or local mirroring fails, the partner app calls `cancel()`.
-6. If no confirmation arrives before the hold TTL, upstream expires the hold and
-   releases the seats.
+6. The hold lasts until the departure date. A booking still unpaid once that date
+   has passed can no longer be confirmed; upstream expires it (daily).
 
 ```php
 use Illuminate\Support\Str;
@@ -1031,8 +1029,8 @@ A route would let anyone confirm a booking nobody paid for. Call
 ### Current limitation — no payment yet
 
 Bookings created through controller mode are held and mirrored, but nothing
-confirms them, so they expire on travelo-api's clock after
-`hold_ttl_minutes`. Wiring payment is the next step; until then use SDK mode for
+confirms them, so they expire on travelo-api's clock once their departure date
+has passed. Wiring payment is the next step; until then use SDK mode for
 checkout, or call `confirm()` yourself.
 
 ## Laravel Catalog Proxy (superseded)

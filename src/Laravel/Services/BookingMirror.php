@@ -26,8 +26,6 @@ use TheOneDigi\TourSdk\Laravel\Support\BookingMirrorExtension;
  */
 class BookingMirror
 {
-    public function __construct(private readonly int $holdTtlMinutes = 30) {}
-
     public function write(
         PartnerBookingResource $upstream,
         ?string $idempotencyKey = null,
@@ -65,8 +63,8 @@ class BookingMirror
                 'upstream_tour_booking_id' => $upstream->id,
             ]);
 
-            // Set once. A replay must not push the hold window forward — the seat
-            // upstream expires on its original clock, not ours.
+            // Set once. A replayed create returns the same upstream booking; it must
+            // not overwrite the original idempotency key or owner.
             if (! $booking->exists) {
                 $booking->idempotency_key = $idempotencyKey;
                 $booking->user_id = $ownerId;
