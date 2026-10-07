@@ -12,7 +12,6 @@ use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\BookingController;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\CatalogProxyController;
 use TheOneDigi\TourSdk\Laravel\Http\Controllers\TourCatalogController;
-use TheOneDigi\TourSdk\Laravel\Services\BookingMirror;
 use TheOneDigi\TourSdk\Laravel\Services\CustomerProvisioner;
 use TheOneDigi\TourSdk\Api\BookingApi;
 use TheOneDigi\TourSdk\Api\TourApi;
@@ -76,10 +75,6 @@ class TourSdkServiceProvider extends ServiceProvider
         $this->app->singleton(WebhookVerifier::class, static fn(Application $app) => new WebhookVerifier(
             (string) $app['config']->get('travelo.secret'),
             (int) $app['config']->get('travelo.webhook_max_skew_seconds', 300),
-        ));
-
-        $this->app->bind(BookingMirror::class, static fn(Application $app) => new BookingMirror(
-            (int) $app['config']->get('travelo.hold_ttl_minutes', 30),
         ));
 
         $this->app->bind(CustomerProvisioner::class, static fn(Application $app) => new CustomerProvisioner(

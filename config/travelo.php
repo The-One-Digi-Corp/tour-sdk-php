@@ -12,7 +12,6 @@ return [
      | TRAVELO_WEBHOOK_MAX_SKEW_SECONDS=300
      | TRAVELO_INTEGRATION_NAME=be-travelo-partner
      | TRAVELO_INTEGRATION_VERSION=dev
-     | TRAVELO_HOLD_TTL_MINUTES=30
      |
      | TRAVELO_API_URL, TRAVELO_PARTNER_CLIENT_ID, and TRAVELO_PARTNER_SECRET
      | are required. Keep TRAVELO_PARTNER_SECRET out of source control.
@@ -76,14 +75,6 @@ return [
         'name' => env('TRAVELO_INTEGRATION_NAME', env('APP_NAME', 'laravel')),
         'version' => env('TRAVELO_INTEGRATION_VERSION', 'dev'),
     ],
-
-    /*
-     | Mirrors config('partner.hold_ttl_minutes') on travelo-api: how long a created
-     | booking keeps its seats before upstream releases them. Consumers that take
-     | payment must close their payment window before this. If travelo-api changes
-     | PARTNER_HOLD_TTL_MINUTES, change this with it.
-     */
-    'hold_ttl_minutes' => (int) env('TRAVELO_HOLD_TTL_MINUTES', 30),
 
     /*
      | Controller mode — the SDK registers the endpoints itself, so a consumer writes

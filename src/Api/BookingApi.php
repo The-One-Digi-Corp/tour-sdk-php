@@ -17,9 +17,10 @@ use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
 /**
  * Partner booking endpoints.
  *
- * Two-step booking: create() reserves the slot (PENDING_PAYMENT) and starts the
- * hold TTL; the partner collects payment on their side, then calls confirm().
- * Holds never confirmed are expired server-side and their seats released.
+ * Two-step booking: create() reserves the slot (PENDING_PAYMENT); the partner
+ * collects payment on their side, then calls confirm(). The hold lasts until the
+ * departure date: once it has passed unpaid, the booking is expired server-side
+ * (daily) and confirm() is refused.
  *
  * Read calls need the `tour:read` scope, writes need `tour:book`.
  *
