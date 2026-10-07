@@ -6154,6 +6154,377 @@
                     }
                 ]
             }
+        },
+        "\/bookings\/{code}\/review": {
+            "post": {
+                "operationId": "partnerAccountReviewTour",
+                "summary": "The booking's customer reviews its tour. The partner decides when its customer may, even\nbefore the tour (the service, the site): the review belongs to the tour, as one written on\nthe website does, and the booking only names the tour and its user. `reviewer_name` is who\nthe partner site knows the reviewer as, shown instead of that user's name. Photos are files\nuploaded first through `uploads\/pre-signed-url`",
+                "tags": [
+                    "PartnerBooking"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1791356860"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rating": {
+                                        "type": "number",
+                                        "minimum": 1,
+                                        "maximum": 5
+                                    },
+                                    "review": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "reviewer_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 100
+                                    },
+                                    "images": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "rating",
+                                    "review"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error adding review."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 201
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Review added successfully."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "review": {
+                                                    "$ref": "#\/components\/schemas\/TourReviewResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "review"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Booking not found."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/uploads\/pre-signed-url": {
+            "post": {
+                "operationId": "partnerUploadsPreSignedUrl",
+                "tags": [
+                    "PartnerUpload"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1791356860"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file_type": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "folder": {
+                                        "type": "string",
+                                        "enum": [
+                                            ""
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "file_type",
+                                    "folder"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Upload URL generated"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "preSignedUrl": {
+                                                    "$ref": "#\/components\/schemas\/UploadResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "preSignedUrl"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -8047,7 +8418,10 @@
                                 "type": "integer"
                             },
                             "name": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "avatar": {
                                 "type": [
@@ -8129,6 +8503,42 @@
                     "is_unlimited_slot"
                 ],
                 "title": "TourTypeResource"
+            },
+            "UploadResource": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "fileName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "mediaUrl": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "error",
+                    "url",
+                    "fileName",
+                    "mediaUrl"
+                ],
+                "title": "UploadResource"
             }
         },
         "responses": {

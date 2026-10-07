@@ -85,6 +85,9 @@ final class ContractCoverageTest extends TestCase
             'POST /bookings/{code}/cancel' => fn () => $client->bookings()->cancel('TB-1'),
             'POST /bookings/{code}/applicant/{id}' => fn () => $client->bookings()->updateApplicant('TB-1', 7, []),
             'POST /bookings/{code}/request-refund' => fn () => $client->bookings()->requestRefund('TB-1', ['reasons' => 'test']),
+            'POST /bookings/{code}/review' => fn () => $client->bookings()->review('TB-1', ['rating' => 5, 'review' => 'test']),
+
+            'POST /uploads/pre-signed-url' => fn () => $client->bookings()->reviewPhotoUploadResource('jpeg'),
         ];
     }
 

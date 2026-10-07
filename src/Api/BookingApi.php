@@ -8,11 +8,13 @@ use TheOneDigi\TourSdk\Common\ApiPaths;
 use TheOneDigi\TourSdk\PartnerClient;
 use TheOneDigi\TourSdk\Common\RequestPayload;
 use TheOneDigi\TourSdk\Generated\Request\PartnerBookingRefundsRequest;
+use TheOneDigi\TourSdk\Generated\Request\PartnerUploadsPreSignedUrlRequest;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingApplicantResource;
 use TheOneDigi\TourSdk\Generated\Resource\BookingListResource;
 use TheOneDigi\TourSdk\Generated\Resource\BookingQuoteResource;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingRefundResource;
 use TheOneDigi\TourSdk\Generated\Resource\PartnerBookingResource;
+use TheOneDigi\TourSdk\Generated\Resource\UploadResource;
 
 /**
  * Partner booking endpoints.
@@ -219,6 +221,36 @@ class BookingApi
     public function requestRefundResource(string $code, array|RequestPayload $payload = []): PartnerBookingRefundResource
     {
         return PartnerBookingRefundResource::fromArray($this->requestRefund($code, $payload));
+    }
+
+    /**
+     * An upload link for one review photo in Travelo's storage: PUT the file to `url`,
+     * then pass `fileName` in review()'s `images`. `$fileType` is jpeg, png or webp.
+     */
+    public function reviewPhotoUploadResource(string $fileType): UploadResource
+    {
+        $payload = new PartnerUploadsPreSignedUrlRequest(fileType: $fileType, folder: 'tours/reviews');
+        $data = $this->client->data(
+            $this->client->post(ApiPaths::UPLOADS . ApiPaths::PRE_SIGNED_URL, $payload->toArray()),
+        );
+
+        return UploadResource::fromArray(is_array($data['preSignedUrl'] ?? null) ? $data['preSignedUrl'] : []);
+    }
+
+    /**
+     * The booking's customer reviews its tour, whenever the partner lets them:
+     * `rating` 1–5 by halves, `review`, and `images` — the `fileName`s of photos uploaded
+     * through reviewPhotoUploadResource(). Unwraps down to the review object.
+     *
+     * @return array<string, mixed>
+     */
+    public function review(string $code, array|RequestPayload $payload): array
+    {
+        $data = $this->client->data(
+            $this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::REVIEW, $this->payload($payload)),
+        );
+
+        return isset($data['review']) && is_array($data['review']) ? $data['review'] : $data;
     }
 
     /**

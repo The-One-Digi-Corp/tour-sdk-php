@@ -25,6 +25,12 @@ class ApiPaths
     /** @var string Tour-catalog endpoints base. */
     public const TOURS = 'api/partner/tours';
 
+    /** @var string Upload links for files kept in Travelo's storage. */
+    public const UPLOADS = 'api/partner/uploads';
+
+    /** POST /pre-signed-url */
+    public const PRE_SIGNED_URL = '/pre-signed-url';
+
     // ── Booking sub-paths ────────────────────────────────────────────────
 
     /** POST /{code}/confirm */
@@ -47,6 +53,9 @@ class ApiPaths
 
     /** POST /{code}/request-refund */
     public const REQUEST_REFUND = '/request-refund';
+
+    /** POST /{code}/review */
+    public const REVIEW = '/review';
 
     // ── Tour-catalog sub-paths ───────────────────────────────────────────
 
