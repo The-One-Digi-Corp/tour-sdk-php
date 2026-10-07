@@ -39,6 +39,9 @@ class ApiPaths
     /** POST /{code}/cancel */
     public const CANCEL = '/cancel';
 
+    /** POST /{code}/complete */
+    public const COMPLETE = '/complete';
+
     /** POST /{code}/applicant/{id} */
     public const APPLICANT = '/applicant';
 
@@ -53,6 +56,12 @@ class ApiPaths
 
     /** POST /{code}/request-refund */
     public const REQUEST_REFUND = '/request-refund';
+
+    /** POST /{code}/refund */
+    public const REFUND = '/refund';
+
+    /** POST /{code}/disapprove-refund */
+    public const DISAPPROVE_REFUND = '/disapprove-refund';
 
     /** POST /{code}/review */
     public const REVIEW = '/review';

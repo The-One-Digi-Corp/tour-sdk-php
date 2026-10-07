@@ -127,6 +127,22 @@ class BookingApi
     }
 
     /**
+     * The partner finished serving the paid booking: IN_PROGRESS → COMPLETED.
+     * Safe to call more than once.
+     *
+     * @return array<string, mixed>
+     */
+    public function complete(string $code): array
+    {
+        return $this->client->data($this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::COMPLETE));
+    }
+
+    public function completeResource(string $code): PartnerBookingResource
+    {
+        return PartnerBookingResource::fromArray($this->complete($code));
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function show(string $code): array
@@ -201,8 +217,10 @@ class BookingApi
     }
 
     /**
-     * Requests a refund for a paid booking (IN_PROGRESS only). Unwraps down to
-     * the refund object, matching create()'s `order` unwrapping.
+     * Requests a refund for a paid booking (IN_PROGRESS only), or updates the pending one:
+     * `reasons`, and optionally `refund_total` (at most the booking total) and `feedback_staff`
+     * once the partner's staff reviewed it. Unwraps down to the refund object, matching
+     * create()'s `order` unwrapping.
      *
      * @return array<string, mixed>
      */
@@ -221,6 +239,43 @@ class BookingApi
     public function requestRefundResource(string $code, array|RequestPayload $payload = []): PartnerBookingRefundResource
     {
         return PartnerBookingRefundResource::fromArray($this->requestRefund($code, $payload));
+    }
+
+    /**
+     * The partner refunded its customer, for an amount it decided: `refund_total` in the
+     * booking's currency (at most its total) and `reasons`. Travelo records the refund as
+     * approved and the paid booking (IN_PROGRESS only) becomes REFUNDED.
+     *
+     * @return array<string, mixed>
+     */
+    public function refund(string $code, array|RequestPayload $payload): array
+    {
+        return $this->client->data(
+            $this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::REFUND, $this->payload($payload)),
+        );
+    }
+
+    public function refundResource(string $code, array|RequestPayload $payload): PartnerBookingResource
+    {
+        return PartnerBookingResource::fromArray($this->refund($code, $payload));
+    }
+
+    /**
+     * The partner turned down its customer's refund, with `reasons`: Travelo records the refund
+     * as disapproved and closed, and the paid booking (IN_PROGRESS only) stays as it is.
+     *
+     * @return array<string, mixed>
+     */
+    public function disapproveRefund(string $code, array|RequestPayload $payload = []): array
+    {
+        return $this->client->data(
+            $this->client->post(self::BASE . '/' . rawurlencode($code) . ApiPaths::DISAPPROVE_REFUND, $this->payload($payload)),
+        );
+    }
+
+    public function disapproveRefundResource(string $code, array|RequestPayload $payload = []): PartnerBookingResource
+    {
+        return PartnerBookingResource::fromArray($this->disapproveRefund($code, $payload));
     }
 
     /**
