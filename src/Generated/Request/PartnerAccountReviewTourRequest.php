@@ -10,21 +10,22 @@ use TheOneDigi\TourSdk\Common\RequestPayload;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI operation partnerCheckoutRequestRefund (POST /bookings/{code}/request-refund).
+ * Generated from OpenAPI operation partnerAccountReviewTour (POST /bookings/{code}/review).
  *
  * Everything outside MANUAL BODY is rewritten by composer generate:contract.
  * MANUAL BODY survives regeneration: override normalizeManual() there to fold
  * travelo-api's backward-compatible query aliases onto one canonical key before
  * fromArray() maps them.
  */
-class PartnerCheckoutRequestRefundRequest implements RequestPayload
+class PartnerAccountReviewTourRequest implements RequestPayload
 {
     use BuildsPayload;
 
     public function __construct(
-        public readonly ?string $reasons = null,
-        public readonly ?float $refundTotal = null,
-        public readonly ?string $feedbackStaff = null,
+        public readonly float $rating,
+        public readonly string $review,
+        public readonly ?string $reviewerName = null,
+        public readonly ?array $images = null,
         /**
          * Payload keys fromArray() actually saw, so an explicit null survives
          * toArray(). Empty when the request is built with named arguments.
@@ -44,9 +45,10 @@ class PartnerCheckoutRequestRefundRequest implements RequestPayload
         $payload = static::normalizeManual($payload);
 
         return new static(
-            reasons: (array_key_exists('reasons', $payload) && $payload['reasons'] !== null ? (string) $payload['reasons'] : null),
-            refundTotal: (array_key_exists('refund_total', $payload) && $payload['refund_total'] !== null ? (float) $payload['refund_total'] : null),
-            feedbackStaff: (array_key_exists('feedback_staff', $payload) && $payload['feedback_staff'] !== null ? (string) $payload['feedback_staff'] : null),
+            rating: (float) ($payload['rating'] ?? 0),
+            review: (string) ($payload['review'] ?? ''),
+            reviewerName: (array_key_exists('reviewer_name', $payload) && $payload['reviewer_name'] !== null ? (string) $payload['reviewer_name'] : null),
+            images: (array_key_exists('images', $payload) && is_array($payload['images']) ? $payload['images'] : null),
             providedKeys: array_keys($payload),
         );
     }
@@ -57,9 +59,10 @@ class PartnerCheckoutRequestRefundRequest implements RequestPayload
     public function toArray(): array
     {
         return $this->withoutNulls([
-            'reasons' => $this->reasons,
-            'refund_total' => $this->refundTotal,
-            'feedback_staff' => $this->feedbackStaff,
+            'rating' => $this->rating,
+            'review' => $this->review,
+            'reviewer_name' => $this->reviewerName,
+            'images' => $this->images,
         ]);
     }
 

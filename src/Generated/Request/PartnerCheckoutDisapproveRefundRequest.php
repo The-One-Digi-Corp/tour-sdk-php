@@ -10,21 +10,19 @@ use TheOneDigi\TourSdk\Common\RequestPayload;
 /* END MANUAL IMPORTS */
 
 /**
- * Generated from OpenAPI operation partnerCheckoutRequestRefund (POST /bookings/{code}/request-refund).
+ * Generated from OpenAPI operation partnerCheckoutDisapproveRefund (POST /bookings/{code}/disapprove-refund).
  *
  * Everything outside MANUAL BODY is rewritten by composer generate:contract.
  * MANUAL BODY survives regeneration: override normalizeManual() there to fold
  * travelo-api's backward-compatible query aliases onto one canonical key before
  * fromArray() maps them.
  */
-class PartnerCheckoutRequestRefundRequest implements RequestPayload
+class PartnerCheckoutDisapproveRefundRequest implements RequestPayload
 {
     use BuildsPayload;
 
     public function __construct(
         public readonly ?string $reasons = null,
-        public readonly ?float $refundTotal = null,
-        public readonly ?string $feedbackStaff = null,
         /**
          * Payload keys fromArray() actually saw, so an explicit null survives
          * toArray(). Empty when the request is built with named arguments.
@@ -45,8 +43,6 @@ class PartnerCheckoutRequestRefundRequest implements RequestPayload
 
         return new static(
             reasons: (array_key_exists('reasons', $payload) && $payload['reasons'] !== null ? (string) $payload['reasons'] : null),
-            refundTotal: (array_key_exists('refund_total', $payload) && $payload['refund_total'] !== null ? (float) $payload['refund_total'] : null),
-            feedbackStaff: (array_key_exists('feedback_staff', $payload) && $payload['feedback_staff'] !== null ? (string) $payload['feedback_staff'] : null),
             providedKeys: array_keys($payload),
         );
     }
@@ -58,8 +54,6 @@ class PartnerCheckoutRequestRefundRequest implements RequestPayload
     {
         return $this->withoutNulls([
             'reasons' => $this->reasons,
-            'refund_total' => $this->refundTotal,
-            'feedback_staff' => $this->feedbackStaff,
         ]);
     }
 

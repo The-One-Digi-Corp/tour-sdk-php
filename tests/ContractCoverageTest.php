@@ -83,8 +83,14 @@ final class ContractCoverageTest extends TestCase
             'GET /bookings/{code}' => fn () => $client->bookings()->show('TB-1'),
             'POST /bookings/{code}/confirm' => fn () => $client->bookings()->confirm('TB-1'),
             'POST /bookings/{code}/cancel' => fn () => $client->bookings()->cancel('TB-1'),
+            'POST /bookings/{code}/complete' => fn () => $client->bookings()->complete('TB-1'),
             'POST /bookings/{code}/applicant/{id}' => fn () => $client->bookings()->updateApplicant('TB-1', 7, []),
             'POST /bookings/{code}/request-refund' => fn () => $client->bookings()->requestRefund('TB-1', ['reasons' => 'test']),
+            'POST /bookings/{code}/disapprove-refund' => fn () => $client->bookings()->disapproveRefund('TB-1', ['reasons' => 'test']),
+            'POST /bookings/{code}/refund' => fn () => $client->bookings()->refund('TB-1', ['refund_total' => 10]),
+            'POST /bookings/{code}/review' => fn () => $client->bookings()->review('TB-1', ['rating' => 5, 'review' => 'test']),
+
+            'POST /uploads/pre-signed-url' => fn () => $client->bookings()->reviewPhotoUploadResource('jpeg'),
         ];
     }
 
