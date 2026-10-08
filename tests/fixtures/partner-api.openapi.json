@@ -2893,6 +2893,18 @@
                         }
                     },
                     {
+                        "name": "country",
+                        "in": "query",
+                        "description": "A country code (countries.code, e.g. AU): tours leaving from or going to one of its cities.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 5
+                        }
+                    },
+                    {
                         "name": "travel_style",
                         "in": "query",
                         "schema": {
@@ -3105,7 +3117,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1790916000"
+                        "example": "1791429465"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3470,6 +3482,18 @@
                         }
                     },
                     {
+                        "name": "country",
+                        "in": "query",
+                        "description": "A country code (countries.code, e.g. AU): tours leaving from or going to one of its cities.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 5
+                        }
+                    },
+                    {
                         "name": "travel_style",
                         "in": "query",
                         "schema": {
@@ -3643,7 +3667,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1790916000"
+                        "example": "1791429465"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3821,7 +3845,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1790916000"
+                        "example": "1791429465"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -8491,6 +8515,37 @@
                         "type": "string",
                         "description": "inbound: runs inside Vietnam | outbound: runs abroad"
                     },
+                    "routes": {
+                        "type": "array",
+                        "description": "Its legs in order, by city code and the city's country code: the `country` filter\nof the tour list matches a destination's country.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "order": {
+                                    "type": "integer"
+                                },
+                                "departure_location_code": {
+                                    "type": "string"
+                                },
+                                "departure_country_code": {
+                                    "type": "string"
+                                },
+                                "destination_location_code": {
+                                    "type": "string"
+                                },
+                                "destination_country_code": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "order",
+                                "departure_location_code",
+                                "departure_country_code",
+                                "destination_location_code",
+                                "destination_country_code"
+                            ]
+                        }
+                    },
                     "base_price": {
                         "type": "number"
                     },
@@ -8616,6 +8671,7 @@
                     "code",
                     "currency",
                     "tour_direction",
+                    "routes",
                     "base_price",
                     "day",
                     "night",

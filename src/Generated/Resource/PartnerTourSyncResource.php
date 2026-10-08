@@ -22,6 +22,8 @@ class PartnerTourSyncResource extends ArrayBackedResource
     public readonly string $code;
     public readonly string $currency;
     public readonly string $tourDirection;
+    /** @var array<string, mixed>|list<mixed> */
+    public readonly array $routes;
     public readonly float $basePrice;
     public readonly int $day;
     public readonly int $night;
@@ -58,6 +60,7 @@ class PartnerTourSyncResource extends ArrayBackedResource
         $this->code = $this->string('code');
         $this->currency = $this->string('currency');
         $this->tourDirection = $this->string('tour_direction');
+        $this->routes = $this->array('routes');
         $this->basePrice = $this->float('base_price');
         $this->day = $this->int('day');
         $this->night = $this->int('night');
