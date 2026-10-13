@@ -23,6 +23,10 @@ class PartnerBookingRefundResource extends ArrayBackedResource
     public readonly int $status;
     public readonly string $statusText;
     public readonly string $currency;
+    public readonly ?string $reasons;
+    public readonly ?string $feedbackStaff;
+    public readonly ?string $feedbackManager;
+    public readonly ?string $createdAt;
     /* END AUTO FIELDS */
 
     /* BEGIN MANUAL FIELDS */
@@ -41,6 +45,10 @@ class PartnerBookingRefundResource extends ArrayBackedResource
         $this->status = $this->int('status');
         $this->statusText = $this->string('status_text');
         $this->currency = $this->string('currency');
+        $this->reasons = $this->nullableString('reasons');
+        $this->feedbackStaff = $this->nullableString('feedback_staff');
+        $this->feedbackManager = $this->nullableString('feedback_manager');
+        $this->createdAt = $this->nullableString('created_at');
         /* END AUTO HYDRATION */
 
         $this->hydrateManual();

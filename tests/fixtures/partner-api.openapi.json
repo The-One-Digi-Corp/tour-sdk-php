@@ -1909,28 +1909,57 @@
                         "content": {
                             "application\/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 409
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 409
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "This tour has already departed, so the booking can no longer be paid."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
                                         },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Booking cannot be confirmed in its current state."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 409
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Booking cannot be confirmed in its current state."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
                                         }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
                                     ]
                                 }
                             }
@@ -2189,10 +2218,10 @@
                 ]
             }
         },
-        "\/bookings\/{code}\/request-refund": {
+        "\/bookings\/{code}\/complete": {
             "post": {
-                "operationId": "partnerCheckoutRequestRefund",
-                "summary": "Requests a refund for the paid booking, or updates the pending one: a partner that reviews\nrefunds itself sends each step, `refund_total` (the amount it means to refund, at most the\nbooking total; the whole total when left out) and `feedback_staff` (its staff's review)",
+                "operationId": "partnerCheckoutCompleteBooking",
+                "summary": "The partner finished serving the paid booking: In Progress \u2192 Completed. Safe to call more than once",
                 "tags": [
                     "PartnerBooking"
                 ],
@@ -2223,7 +2252,219 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1791366341"
+                        "example": "1790916000"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error completing booking."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "enum": [
+                                                "Booking is already completed.",
+                                                "Booking completed successfully."
+                                            ]
+                                        },
+                                        "data": {
+                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 409
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Only a booking in progress can be completed."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Booking not found."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/bookings\/{code}\/request-refund": {
+            "post": {
+                "operationId": "partnerCheckoutRequestRefund",
+                "summary": "Requests a refund for the paid booking, or updates the pending one: a partner that reviews\nrefunds itself sends each step, `refund_total` (the amount it means to refund, at most the\nbooking's net total, what the partner paid; the whole of it when left out) and\n`feedback_staff` (its staff's review)",
+                "tags": [
+                    "PartnerBooking"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -2450,7 +2691,7 @@
                                                             "prefixItems": [
                                                                 {
                                                                     "type": "string",
-                                                                    "const": "The refund cannot exceed the booking total."
+                                                                    "const": "The refund cannot exceed the booking net total."
                                                                 }
                                                             ],
                                                             "minItems": 1,
@@ -2486,7 +2727,7 @@
                                                 },
                                                 "errors": {
                                                     "type": "array",
-                                                    "items": {}
+                                                    "items": []
                                                 },
                                                 "data": {
                                                     "type": "null"
@@ -2521,6 +2762,655 @@
                                         },
                                         "errors": {
                                             "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/bookings\/{code}\/refund": {
+            "post": {
+                "operationId": "partnerCheckoutRefund",
+                "summary": "The partner has refunded its customer and decided the amount itself: the refund is recorded\nas approved, with no review at Travelo, and the paid booking becomes Refunded, as an admin\napproval does. `refund_total` is in the booking's currency, at most its net total. The partner\nsends the whole refund to keep: the customer's `reasons`, its staff's `feedback_staff` and\nthe approver's `feedback_manager` (the `reasons` when left out)",
+                "tags": [
+                    "PartnerBooking"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1790916000"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "refund_total": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "reasons": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 2000
+                                    },
+                                    "feedback_staff": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 2000
+                                    },
+                                    "feedback_manager": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 2000
+                                    }
+                                },
+                                "required": [
+                                    "refund_total"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error refunding booking."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Booking refunded successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 422
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Validation error"
+                                                },
+                                                "errors": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "refund_total": {
+                                                            "type": "array",
+                                                            "prefixItems": [
+                                                                {
+                                                                    "type": "string",
+                                                                    "const": "The refund cannot exceed the booking net total."
+                                                                }
+                                                            ],
+                                                            "minItems": 1,
+                                                            "maxItems": 1,
+                                                            "additionalItems": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "refund_total"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 422
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Validation error"
+                                                },
+                                                "errors": {
+                                                    "type": "array",
+                                                    "items": []
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 409
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "This refund request has already been closed."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 409
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Only a paid booking in progress can be refunded."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Booking not found."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
+        "\/bookings\/{code}\/disapprove-refund": {
+            "post": {
+                "operationId": "partnerCheckoutDisapproveRefund",
+                "summary": "The partner turned down its customer's refund: the refund is recorded as disapproved, as an\nadmin disapproval does, and the paid booking stays In Progress. Like there, it is closed:\nthe booking takes no other refund",
+                "tags": [
+                    "PartnerBooking"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1790916000"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reasons": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 2000
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error disapproving refund."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 200
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "enum": [
+                                                "Refund is already disapproved.",
+                                                "Refund disapproved successfully."
+                                            ]
+                                        },
+                                        "data": {
+                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 409
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "This refund request has already been closed."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "status": {
+                                                    "type": "integer",
+                                                    "const": 409
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Only a paid booking in progress can have its refund disapproved."
+                                                },
+                                                "errors": {
+                                                    "type": "string"
+                                                },
+                                                "data": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "required": [
+                                                "status",
+                                                "message",
+                                                "errors",
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Booking not found."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 422
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Validation error"
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": []
                                         },
                                         "data": {
                                             "type": "null"
@@ -2852,6 +3742,236 @@
                 ]
             }
         },
+        "\/bookings\/{code}\/review": {
+            "post": {
+                "operationId": "partnerAccountReviewTour",
+                "summary": "The booking's customer reviews its tour. The partner decides when its customer may, even\nbefore the tour (the service, the site): the review belongs to the tour, as one written on\nthe website does, and the booking only names the tour and its user. `reviewer_name` is who\nthe partner site knows the reviewer as, shown instead of that user's name. Photos are files\nuploaded first through `uploads\/pre-signed-url`",
+                "tags": [
+                    "PartnerBooking"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Partner-Client-Id",
+                        "in": "header",
+                        "required": true,
+                        "description": "The partner's API client ID.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_client_id"
+                    },
+                    {
+                        "name": "X-Partner-Timestamp",
+                        "in": "header",
+                        "required": true,
+                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "1790916000"
+                    },
+                    {
+                        "name": "X-Partner-Signature",
+                        "in": "header",
+                        "required": true,
+                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "your_hmac_signature"
+                    },
+                    {
+                        "name": "X-Currency",
+                        "in": "header",
+                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "en"
+                    },
+                    {
+                        "name": "X-Partner-Idempotency-Key",
+                        "in": "header",
+                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "rating": {
+                                        "type": "number",
+                                        "minimum": 1,
+                                        "maximum": 5
+                                    },
+                                    "review": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "reviewer_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 100
+                                    },
+                                    "images": {
+                                        "type": [
+                                            "array",
+                                            "null"
+                                        ],
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "rating",
+                                    "review"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "500": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 500
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Error adding review."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 201
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Review added successfully."
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "review": {
+                                                    "$ref": "#\/components\/schemas\/TourReviewResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "review"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "const": 404
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Booking not found."
+                                        },
+                                        "errors": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "message",
+                                        "errors",
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#\/components\/responses\/ValidationException"
+                    }
+                },
+                "security": [
+                    {
+                        "PartnerClientId": [],
+                        "PartnerTimestamp": [],
+                        "PartnerSignature": []
+                    }
+                ]
+            }
+        },
         "\/tours": {
             "get": {
                 "operationId": "partnerToursSearch",
@@ -3117,7 +4237,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1791429465"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3667,7 +4787,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1791429465"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -3845,7 +4965,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1791429465"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -6240,236 +7360,6 @@
                 ]
             }
         },
-        "\/bookings\/{code}\/review": {
-            "post": {
-                "operationId": "partnerAccountReviewTour",
-                "summary": "The booking's customer reviews its tour. The partner decides when its customer may, even\nbefore the tour (the service, the site): the review belongs to the tour, as one written on\nthe website does, and the booking only names the tour and its user. `reviewer_name` is who\nthe partner site knows the reviewer as, shown instead of that user's name. Photos are files\nuploaded first through `uploads\/pre-signed-url`",
-                "tags": [
-                    "PartnerBooking"
-                ],
-                "parameters": [
-                    {
-                        "name": "code",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "X-Partner-Client-Id",
-                        "in": "header",
-                        "required": true,
-                        "description": "The partner's API client ID.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_client_id"
-                    },
-                    {
-                        "name": "X-Partner-Timestamp",
-                        "in": "header",
-                        "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "1791356860"
-                    },
-                    {
-                        "name": "X-Partner-Signature",
-                        "in": "header",
-                        "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_hmac_signature"
-                    },
-                    {
-                        "name": "X-Currency",
-                        "in": "header",
-                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "USD"
-                    },
-                    {
-                        "name": "Accept-Language",
-                        "in": "header",
-                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "en"
-                    },
-                    {
-                        "name": "X-Partner-Idempotency-Key",
-                        "in": "header",
-                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "rating": {
-                                        "type": "number",
-                                        "minimum": 1,
-                                        "maximum": 5
-                                    },
-                                    "review": {
-                                        "type": "string",
-                                        "maxLength": 2000
-                                    },
-                                    "reviewer_name": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 100
-                                    },
-                                    "images": {
-                                        "type": [
-                                            "array",
-                                            "null"
-                                        ],
-                                        "items": {
-                                            "type": "string",
-                                            "maxLength": 255
-                                        }
-                                    }
-                                },
-                                "required": [
-                                    "rating",
-                                    "review"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 500
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Error adding review."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 201
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Review added successfully."
-                                        },
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "review": {
-                                                    "$ref": "#\/components\/schemas\/TourReviewResource"
-                                                }
-                                            },
-                                            "required": [
-                                                "review"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 404
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Booking not found."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#\/components\/responses\/ValidationException"
-                    }
-                },
-                "security": [
-                    {
-                        "PartnerClientId": [],
-                        "PartnerTimestamp": [],
-                        "PartnerSignature": []
-                    }
-                ]
-            }
-        },
         "\/uploads\/pre-signed-url": {
             "post": {
                 "operationId": "partnerUploadsPreSignedUrl",
@@ -6495,7 +7385,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "example": "1791356860"
+                        "example": "1790916000"
                     },
                     {
                         "name": "X-Partner-Signature",
@@ -6600,867 +7490,6 @@
                     },
                     "422": {
                         "$ref": "#\/components\/responses\/ValidationException"
-                    }
-                },
-                "security": [
-                    {
-                        "PartnerClientId": [],
-                        "PartnerTimestamp": [],
-                        "PartnerSignature": []
-                    }
-                ]
-            }
-        },
-        "\/bookings\/{code}\/refund": {
-            "post": {
-                "operationId": "partnerCheckoutRefund",
-                "summary": "The partner has refunded its customer and decided the amount itself: the refund is recorded\nas approved, with no review at Travelo, and the paid booking becomes Refunded, as an admin\napproval does. `refund_total` is in the booking's currency, at most its total. The partner\nsends the whole refund to keep: the customer's `reasons`, its staff's `feedback_staff` and\nthe approver's `feedback_manager` (the `reasons` when left out)",
-                "tags": [
-                    "PartnerBooking"
-                ],
-                "parameters": [
-                    {
-                        "name": "code",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "X-Partner-Client-Id",
-                        "in": "header",
-                        "required": true,
-                        "description": "The partner's API client ID.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_client_id"
-                    },
-                    {
-                        "name": "X-Partner-Timestamp",
-                        "in": "header",
-                        "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "1791366341"
-                    },
-                    {
-                        "name": "X-Partner-Signature",
-                        "in": "header",
-                        "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_hmac_signature"
-                    },
-                    {
-                        "name": "X-Currency",
-                        "in": "header",
-                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "USD"
-                    },
-                    {
-                        "name": "Accept-Language",
-                        "in": "header",
-                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "en"
-                    },
-                    {
-                        "name": "X-Partner-Idempotency-Key",
-                        "in": "header",
-                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "refund_total": {
-                                        "type": "number",
-                                        "minimum": 0
-                                    },
-                                    "reasons": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 2000
-                                    },
-                                    "feedback_staff": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 2000
-                                    },
-                                    "feedback_manager": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 2000
-                                    }
-                                },
-                                "required": [
-                                    "refund_total"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 500
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Error refunding booking."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 200
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Booking refunded successfully."
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "integer",
-                                                    "const": 422
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Validation error"
-                                                },
-                                                "errors": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "refund_total": {
-                                                            "type": "array",
-                                                            "prefixItems": [
-                                                                {
-                                                                    "type": "string",
-                                                                    "const": "The refund cannot exceed the booking total."
-                                                                }
-                                                            ],
-                                                            "minItems": 1,
-                                                            "maxItems": 1,
-                                                            "additionalItems": false
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "refund_total"
-                                                    ]
-                                                },
-                                                "data": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "errors",
-                                                "data"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "integer",
-                                                    "const": 422
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Validation error"
-                                                },
-                                                "errors": {
-                                                    "type": "array",
-                                                    "items": {}
-                                                },
-                                                "data": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "errors",
-                                                "data"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "integer",
-                                                    "const": 409
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "This refund request has already been closed."
-                                                },
-                                                "errors": {
-                                                    "type": "string"
-                                                },
-                                                "data": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "errors",
-                                                "data"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "integer",
-                                                    "const": 409
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Only a paid booking in progress can be refunded."
-                                                },
-                                                "errors": {
-                                                    "type": "string"
-                                                },
-                                                "data": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "errors",
-                                                "data"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 404
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Booking not found."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "PartnerClientId": [],
-                        "PartnerTimestamp": [],
-                        "PartnerSignature": []
-                    }
-                ]
-            }
-        },
-        "\/bookings\/{code}\/disapprove-refund": {
-            "post": {
-                "operationId": "partnerCheckoutDisapproveRefund",
-                "summary": "The partner turned down its customer's refund: the refund is recorded as disapproved, as an\nadmin disapproval does, and the paid booking stays In Progress. Like there, it is closed:\nthe booking takes no other refund",
-                "tags": [
-                    "PartnerBooking"
-                ],
-                "parameters": [
-                    {
-                        "name": "code",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "X-Partner-Client-Id",
-                        "in": "header",
-                        "required": true,
-                        "description": "The partner's API client ID.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_client_id"
-                    },
-                    {
-                        "name": "X-Partner-Timestamp",
-                        "in": "header",
-                        "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "1791366341"
-                    },
-                    {
-                        "name": "X-Partner-Signature",
-                        "in": "header",
-                        "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_hmac_signature"
-                    },
-                    {
-                        "name": "X-Currency",
-                        "in": "header",
-                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "USD"
-                    },
-                    {
-                        "name": "Accept-Language",
-                        "in": "header",
-                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "en"
-                    },
-                    {
-                        "name": "X-Partner-Idempotency-Key",
-                        "in": "header",
-                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "reasons": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 2000
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 500
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Error disapproving refund."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 200
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "enum": [
-                                                "Refund is already disapproved.",
-                                                "Refund disapproved successfully."
-                                            ]
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "integer",
-                                                    "const": 409
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "This refund request has already been closed."
-                                                },
-                                                "errors": {
-                                                    "type": "string"
-                                                },
-                                                "data": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "errors",
-                                                "data"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "status": {
-                                                    "type": "integer",
-                                                    "const": 409
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Only a paid booking in progress can have its refund disapproved."
-                                                },
-                                                "errors": {
-                                                    "type": "string"
-                                                },
-                                                "data": {
-                                                    "type": "null"
-                                                }
-                                            },
-                                            "required": [
-                                                "status",
-                                                "message",
-                                                "errors",
-                                                "data"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 404
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Booking not found."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 422
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Validation error"
-                                        },
-                                        "errors": {
-                                            "type": "array",
-                                            "items": {}
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "PartnerClientId": [],
-                        "PartnerTimestamp": [],
-                        "PartnerSignature": []
-                    }
-                ]
-            }
-        },
-        "\/bookings\/{code}\/complete": {
-            "post": {
-                "operationId": "partnerCheckoutCompleteBooking",
-                "summary": "The partner finished serving the paid booking: In Progress \u2192 Completed. Safe to call more than once",
-                "tags": [
-                    "PartnerBooking"
-                ],
-                "parameters": [
-                    {
-                        "name": "code",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "X-Partner-Client-Id",
-                        "in": "header",
-                        "required": true,
-                        "description": "The partner's API client ID.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_client_id"
-                    },
-                    {
-                        "name": "X-Partner-Timestamp",
-                        "in": "header",
-                        "required": true,
-                        "description": "UNIX timestamp of the request (seconds). Max clock skew allowed is 300 seconds. (time = Date.now() \/ 1000)",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "1791366341"
-                    },
-                    {
-                        "name": "X-Partner-Signature",
-                        "in": "header",
-                        "required": true,
-                        "description": "Hex HMAC-SHA256 of: clientId + \"\\n\" + timestamp + \"\\n\" + METHOD + \"\\n\" + pathWithoutQuery + \"\\n\" + sha256(rawBody). Example: POST http:\/\/localhost\/api\/partner\/bookings\/BKG123456\/cancel signs path api\/partner\/bookings\/BKG123456\/cancel with empty-body SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. Do not include domain or query string.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "your_hmac_signature"
-                    },
-                    {
-                        "name": "X-Currency",
-                        "in": "header",
-                        "description": "Display\/input currency for price filters and responses. Defaults to USD.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "USD"
-                    },
-                    {
-                        "name": "Accept-Language",
-                        "in": "header",
-                        "description": "Preferred locale for localized labels\/messages when supported. Recognises en and vi; anything else falls back to en.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "en"
-                    },
-                    {
-                        "name": "X-Partner-Idempotency-Key",
-                        "in": "header",
-                        "description": "Retry-safe key for POST \/bookings: the same key returns the existing booking instead of creating a second one. Also accepted as the `idempotency_key` body field, which takes precedence. Ignored by every other endpoint. Generate and persist it BEFORE calling \u2014 a create that times out has an unknown outcome, and the key is what makes retrying safe.",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "3f1b9c2e-8a4d-4c77-9d1e-2b5a7c6e0f11"
-                    }
-                ],
-                "responses": {
-                    "500": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 500
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Error completing booking."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 200
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "enum": [
-                                                "Booking is already completed.",
-                                                "Booking completed successfully."
-                                            ]
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/PartnerBookingResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 409
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Only a booking in progress can be completed."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "integer",
-                                            "const": 404
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Booking not found."
-                                        },
-                                        "errors": {
-                                            "type": "string"
-                                        },
-                                        "data": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "status",
-                                        "message",
-                                        "errors",
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
                     }
                 },
                 "security": [
@@ -7904,6 +7933,30 @@
                     },
                     "currency": {
                         "type": "string"
+                    },
+                    "reasons": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "feedback_staff": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "feedback_manager": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -7911,7 +7964,11 @@
                     "refund_total",
                     "status",
                     "status_text",
-                    "currency"
+                    "currency",
+                    "reasons",
+                    "feedback_staff",
+                    "feedback_manager",
+                    "created_at"
                 ],
                 "title": "PartnerBookingRefundResource"
             },
